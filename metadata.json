@@ -1,0 +1,9 @@
+{
+  "name": "Vou Lá",
+  "description": "O aplicativo social definitivo para descobrir rolês, interagir com a galera e dominar a noite. Mapa interativo, rankings e gamificação.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation",
+    "microphone"
+  ]
+}
