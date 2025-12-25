@@ -13,7 +13,7 @@ import { OnboardingTutorial } from './components/OnboardingTutorial';
 import { InstallPWA } from './components/InstallPWA';
 import { usePWA } from './hooks/usePWA';
 import { useGeoLocation } from './hooks/useGeoLocation';
-import { Tab, Place, User, FeedItem, CheckIn, PlaceType, Chat } from './types';
+import { Tab, Place, User, FeedItem, CheckIn, PlaceType, Chat, Moment, Ticket } from './types';
 import { Map, List, User as UserIcon, MessageCircle, LayoutGrid, X, Loader2 } from 'lucide-react';
 import { PlaceCard } from './components/PlaceCard';
 import { MoreOptionsModal } from './components/MoreOptionsModal';
@@ -35,6 +35,8 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<User>(MOCK_USER);
   const [places, setPlaces] = useState<Place[]>([]);
   const [feed, setFeed] = useState<FeedItem[]>([]);
+  const [moments, setMoments] = useState<Moment[]>([]);
+  const [selectedMoment, setSelectedMoment] = useState<Moment | null>(null);
   const [showTutorial, setShowTutorial] = useState(false);
 
   // Apply theme globally
@@ -45,6 +47,13 @@ export default function App() {
       document.documentElement.style.setProperty('--primary', themeData.primary);
       document.documentElement.style.setProperty('--primary-glow', themeData.primaryGlow);
       document.documentElement.style.setProperty('--on-primary', themeData.onPrimary);
+      // New semantic variables
+      if (themeData.background) document.documentElement.style.setProperty('--background', themeData.background);
+      if (themeData.surface) document.documentElement.style.setProperty('--surface', themeData.surface);
+      if (themeData.surfaceHighlight) document.documentElement.style.setProperty('--surface-highlight', themeData.surfaceHighlight);
+      if (themeData.text) document.documentElement.style.setProperty('--text-main', themeData.text);
+      if (themeData.textMuted) document.documentElement.style.setProperty('--text-muted', themeData.textMuted);
+      if (themeData.border) document.documentElement.style.setProperty('--border', themeData.border);
     }
   }, [currentUser.theme]);
 
@@ -83,14 +92,16 @@ export default function App() {
   }, [selectedPlace, showMoreMenu, activeTab]);
 
   const loadData = useCallback(async (optimisticUser?: User) => {
-    const [fetchedUser, allPlaces, allFeed] = await Promise.all([
+    const [fetchedUser, allPlaces, allFeed, allMoments] = await Promise.all([
       db.user.get(),
       db.places.get(),
-      db.feed.get()
+      db.feed.get(),
+      db.moments.list()
     ]);
 
     setPlaces(allPlaces);
     setFeed(allFeed);
+    setMoments(allMoments);
 
     if (allPlaces.length === 0) {
       await db.seed();
@@ -205,12 +216,93 @@ export default function App() {
     }
   };
 
+  const handleShowMoment = (moment: Moment) => {
+    setSelectedMoment(moment);
+  };
+
+  const handleAddMoment = async () => {
+    // Logic to open camera and post moment
+    // For now, simulator:
+    const checkIn = currentUser.history[0];
+    if (!checkIn) {
+      alert("Você precisa estar em algum lugar para postar um Momento!");
+      return;
+    }
+
+    const newMoment: Omit<Moment, 'id' | 'createdAt' | 'expiresAt'> = {
+      userId: currentUser.id,
+      userName: currentUser.name,
+      userAvatar: currentUser.avatar,
+      placeId: checkIn.placeId,
+      placeName: checkIn.placeName,
+      contentUrl: checkIn.snapshotImageUrl,
+      contentType: 'image'
+    };
+
+    await db.moments.add(newMoment);
+    const updatedMoments = await db.moments.list();
+    setMoments(updatedMoments);
+  };
+
+  const handleBuyTicket = async (ticketId: string) => {
+    const success = await db.wallet.buy(ticketId);
+    if (success) {
+      const updatedUser = await db.user.get();
+      setCurrentUser(updatedUser);
+      loadData();
+    }
+    return success;
+  };
+
   const handleLogout = async () => {
     await db.auth.logout();
     setAppState('LOGIN');
     setActiveTab(Tab.HOME);
     setCurrentUser(MOCK_USER);
   };
+
+  // AI Concierge Proactive Logic
+  useEffect(() => {
+    if (appState !== 'MAIN' || !currentUser) return;
+
+    const checkHype = () => {
+      const explodingPlace = places.find(p => p.capacityPercentage > 90 && p.isTrending);
+      if (explodingPlace) {
+        // Check if friends are there
+        const friendCount = explodingPlace.friendsPresent?.length || 0;
+        if (friendCount > 0) {
+          const msg = `Ei! ${explodingPlace.name} está pegando fogo 🔥 ${friendCount} amigos seus estão lá. Bora?`;
+          // Add to notifications (simulator for now)
+          console.log("AI CONCIERGE NOTIFICATION:", msg);
+        }
+      }
+    };
+
+    const interval = setInterval(checkHype, 60000); // Every minute
+    return () => clearInterval(interval);
+  }, [appState, places, currentUser]);
+
+  // Achievement Check Logic
+  useEffect(() => {
+    if (appState === 'MAIN' && currentUser) {
+      const checkAchievements = async () => {
+        const unlocked = currentUser.achievements || [];
+
+        // Check: First Check-in
+        if (currentUser.history.length > 0 && !unlocked.includes('first_checkin')) {
+          await db.achievements.award(currentUser.id, 'first_checkin');
+          console.log("ACHIEVEMENT UNLOCKED: Desbravador!");
+        }
+
+        // Check: Regular Attendee (5 checkins)
+        if (currentUser.history.length >= 5 && !unlocked.includes('regular')) {
+          await db.achievements.award(currentUser.id, 'regular');
+          console.log("ACHIEVEMENT UNLOCKED: Ruleiro Raiz!");
+        }
+      };
+      checkAchievements();
+    }
+  }, [appState, currentUser?.history?.length]);
 
   const handleCheckIn = async (placeId: string) => {
     const target = places.find(p => p.id === placeId);
@@ -300,6 +392,14 @@ export default function App() {
                 setCurrentUser(u);
                 db.user.save(u);
               }}
+              moments={moments}
+              onShowMoment={handleShowMoment}
+              onAddMoment={handleAddMoment}
+              hasCheckedIn={currentUser.history.some(h => {
+                const now = new Date();
+                const checkDate = new Date(h.timestamp);
+                return (now.getTime() - checkDate.getTime()) < 12 * 60 * 60 * 1000; // 12h window
+              })}
             />
           )}
           {activeTab === Tab.RADAR && (
@@ -362,6 +462,33 @@ export default function App() {
             </button>
           </div>
           <PlaceCard place={selectedPlace} onCheckIn={handleCheckIn} expanded={true} isCheckedIn={currentUser.history.some(h => h.placeId === selectedPlace.id)} isSaved={currentUser.savedPlaces?.includes(selectedPlace.id)} />
+        </div>
+      )}
+
+      {selectedMoment && (
+        <div className="fixed inset-0 z-[110] bg-black flex flex-col items-center justify-center animate-[fadeIn_0.3s_ease-out]">
+          <div className="absolute top-safe right-4 pt-2 z-[120]">
+            <button onClick={() => setSelectedMoment(null)} className="p-3 rounded-full bg-white/10 text-white backdrop-blur-xl border border-white/10 active:scale-90">
+              <X className="w-7 h-7" />
+            </button>
+          </div>
+          <div className="w-full h-full relative">
+            <img src={selectedMoment.contentUrl} className="w-full h-full object-cover" alt="Moment" />
+            <div className="absolute bottom-0 left-0 right-0 p-10 pb-16 bg-gradient-to-t from-black via-black/40 to-transparent">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-full p-1 bg-gradient-to-tr from-[var(--primary)] to-cyan-400">
+                  <img src={selectedMoment.userAvatar} className="w-full h-full rounded-full border-2 border-black object-cover" alt={selectedMoment.userName} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-white italic tracking-tighter">{selectedMoment.userName}</h3>
+                  <p className="text-sm font-bold text-[var(--primary)] uppercase tracking-widest flex items-center gap-2">
+                    <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_#ef4444]"></span>
+                    Ao vivo em {selectedMoment.placeName}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { MOCK_USER, FALLBACK_IMAGE } from '../constants';
-import { Place, PlaceType, User } from '../types';
+import { Place, PlaceType, User, Moment } from '../types';
 import { Bell, Bookmark } from 'lucide-react';
 import { PlaceCard } from '../components/PlaceCard';
+import { StoryBar } from '../components/StoryBar';
 import { Skeleton } from '../components/Skeleton';
 import { useHaptic } from '../hooks/useHaptic';
 
@@ -16,6 +17,10 @@ interface HomeProps {
   savedPlaces: string[];
   onToggleSave: (id: string) => void;
   initialFilter?: PlaceType | 'ALL' | 'SAVED';
+  moments: Moment[];
+  onShowMoment: (moment: Moment) => void;
+  onAddMoment: () => void;
+  hasCheckedIn: boolean;
 }
 
 export const Home: React.FC<HomeProps> = ({
@@ -26,7 +31,11 @@ export const Home: React.FC<HomeProps> = ({
   onOpenNotifications,
   savedPlaces,
   onToggleSave,
-  initialFilter = 'ALL'
+  initialFilter = 'ALL',
+  moments,
+  onShowMoment,
+  onAddMoment,
+  hasCheckedIn
 }) => {
   const { trigger } = useHaptic();
   const [filter, setFilter] = useState<PlaceType | 'ALL' | 'SAVED'>(initialFilter);
@@ -56,6 +65,7 @@ export const Home: React.FC<HomeProps> = ({
 
   const sortedPlaces = [...filteredPlaces].sort((a, b) => {
     if (filter === 'SAVED') return 0;
+    // Sort by capacity percentage descending
     return b.capacityPercentage - a.capacityPercentage;
   });
 
@@ -130,6 +140,16 @@ export const Home: React.FC<HomeProps> = ({
               {f.label}
             </button>
           ))}
+        </div>
+
+        {/* Story Bar Section */}
+        <div className="mt-1 -mx-1">
+          <StoryBar
+            moments={moments}
+            onShowMoment={onShowMoment}
+            onAddMoment={onAddMoment}
+            hasCheckedIn={hasCheckedIn}
+          />
         </div>
       </div>
 

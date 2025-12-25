@@ -332,6 +332,32 @@ export const Profile: React.FC<ProfileProps> = ({ currentUser = MOCK_USER, onLog
           <p className="relative z-10 text-[10px] text-slate-500 mt-2 text-right">Faltam {nextLevelXp - user.points} XP</p>
         </div>
 
+        <div className="mb-8">
+          <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2 ml-1">
+            <Award className="w-4 h-4 text-amber-500" /> Minhas Conquistas
+          </h3>
+          <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-2">
+            {(!user.achievements || user.achievements.length === 0) ? (
+              <div className="w-full py-6 text-center bg-white/5 rounded-3xl border border-dashed border-white/10">
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Nenhuma conquista ainda. Bora pro rolê!</p>
+              </div>
+            ) : (
+              user.achievements.map((achId) => (
+                <div key={achId} className="flex flex-col items-center gap-2 shrink-0">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 p-0.5 shadow-lg shadow-orange-500/20">
+                    <div className="w-full h-full rounded-[0.9rem] bg-slate-900 flex items-center justify-center">
+                      <Award className="w-8 h-8 text-amber-400" />
+                    </div>
+                  </div>
+                  <span className="text-[8px] font-black text-white uppercase text-center w-16 leading-tight">
+                    {achId.replace('_', ' ')}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
         <div className="pb-10">
           <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest mb-5 flex items-center gap-2 ml-1">
             <Clock className="w-4 h-4" /> Histórico Recente

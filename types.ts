@@ -153,14 +153,49 @@ export interface CheckIn {
   snapshotImageUrl: string;
 }
 
+export interface Moment {
+  id: string;
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  placeId: string;
+  placeName: string;
+  contentUrl: string;
+  contentType: 'image' | 'video';
+  createdAt: string;
+  expiresAt: string;
+}
+
 export interface Ticket {
   id: string;
   title: string;
+  placeId: string;
   placeName: string;
   qrCodeData: string;
   status: 'valid' | 'used' | 'expired';
   type: string;
+  price: number;
   date?: string;
+  purchasedAt?: string;
+}
+
+export interface TicketCatalog {
+  id: string;
+  placeId: string;
+  name: string;
+  price: number;
+  description: string;
+  benefits: string[];
+}
+
+export interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  unlockedAt?: string;
+  progress?: number;
+  total?: number;
 }
 
 export interface User {
@@ -174,9 +209,10 @@ export interface User {
   level: number;
   points: number;
   badges: string[];
+  achievements?: Achievement[];
   memberSince: string;
   bio?: string;
-  theme?: 'purple' | 'neon' | 'cyan' | 'pink';
+  theme?: 'purple' | 'neon' | 'cyan' | 'pink' | 'light' | 'dark';
   history: CheckIn[];
   savedPlaces: string[];
   ownedPlaceId?: string;

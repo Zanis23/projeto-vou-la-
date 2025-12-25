@@ -266,6 +266,12 @@ export const Social: React.FC<SocialProps> = ({ feed, onToggleLike, onComment, o
                 </div>
               </div>
               <div className="flex gap-2">
+                <button
+                  onClick={() => { trigger('medium'); alert('Função "Pagar um Drink" em breve!'); }}
+                  className="bg-[var(--primary)] text-black px-3 py-1.5 rounded-xl font-black text-[10px] uppercase tracking-tighter flex items-center gap-1.5 shadow-lg shadow-[var(--primary)]/20 active:scale-90 transition-transform"
+                >
+                  <ImageIcon className="w-4 h-4" /> Pagar Drink
+                </button>
                 <button onClick={handleBlockUser} className="p-2 text-red-500/50 hover:text-red-500"><Ban className="w-5 h-5" /></button>
               </div>
             </div>

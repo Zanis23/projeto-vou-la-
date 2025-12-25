@@ -1,5 +1,5 @@
 
-import { User, Place, FeedItem, Chat, StaffCall, Message, AppNotification } from '../types';
+import { User, Place, FeedItem, Chat, StaffCall, Message, AppNotification, Moment, Ticket, Achievement } from '../types';
 import { MOCK_USER, MOCK_PLACES, MOCK_FEED, MOCK_CHATS } from '../constants';
 import { supabase } from '../services/supabase';
 
@@ -667,6 +667,122 @@ export const db = {
         }
       } catch (e) { }
       return [];
+    }
+  },
+
+  moments: {
+    list: async (placeId?: string): Promise<Moment[]> => {
+      try {
+        let q = supabase.from('moments').select('*').gt('expires_at', new Date().toISOString());
+        if (placeId) q = q.eq('place_id', placeId);
+
+        const { data } = await q.order('created_at', { ascending: false });
+        if (data) {
+          return data.map(m => ({
+            id: m.id,
+            userId: m.user_id,
+            userName: m.user_name,
+            userAvatar: m.user_avatar,
+            placeId: m.place_id,
+            placeName: m.place_name,
+            contentUrl: m.content_url,
+            contentType: m.content_type as 'image' | 'video',
+            createdAt: m.created_at,
+            expiresAt: m.expires_at
+          }));
+        }
+      } catch (e) { }
+      return [];
+    },
+    add: async (moment: Omit<Moment, 'id' | 'createdAt' | 'expiresAt'>) => {
+      try {
+        const { data: user } = await supabase.auth.getUser();
+        if (!user.user) return;
+
+        await supabase.from('moments').insert([{
+          user_id: user.user.id,
+          user_name: moment.userName,
+          user_avatar: moment.userAvatar,
+          place_id: moment.placeId,
+          place_name: moment.placeName,
+          content_url: moment.contentUrl,
+          content_type: moment.contentType
+        }]);
+      } catch (e) { }
+    }
+  },
+
+  wallet: {
+    getTickets: async (): Promise<Ticket[]> => {
+      try {
+        const user = await db.user.get();
+        if (!user || !user.id) return [];
+
+        const { data } = await supabase.from('ticket_purchases')
+          .select('*, ticket_catalog:ticket_id(*)')
+          .eq('user_id', user.id);
+
+        if (data) {
+          return data.map(p => ({
+            id: p.id,
+            title: p.ticket_catalog?.name || 'Ingresso',
+            placeId: p.ticket_catalog?.place_id || '',
+            placeName: p.ticket_catalog?.place_name || 'Vou Lá Exclusive',
+            qrCodeData: p.qr_code,
+            status: p.status as 'valid' | 'used' | 'expired',
+            type: 'Convite',
+            price: p.ticket_catalog?.price || 0,
+            purchasedAt: p.purchased_at
+          }));
+        }
+      } catch (e) { }
+      return [];
+    },
+    buy: async (ticketId: string): Promise<boolean> => {
+      try {
+        const user = await db.user.get();
+        if (!user) return false;
+
+        const { data: ticket } = await supabase.from('tickets_catalog').select('*').eq('id', ticketId).single();
+        if (!ticket) return false;
+
+        const { error } = await supabase.from('ticket_purchases').insert({
+          user_id: user.id,
+          ticket_id: ticketId,
+          qr_code: `VOU-${Math.random().toString(36).substring(2, 11).toUpperCase()}`
+        });
+
+        if (!error) {
+          // Award points for buying
+          await db.user.save({ ...user, points: (user.points || 0) + 50 });
+          return true;
+        }
+        return false;
+      } catch (e) { return false; }
+    }
+  },
+
+  achievements: {
+    list: async (userId: string): Promise<Achievement[]> => {
+      try {
+        const { data } = await supabase.from('user_achievements').select('*').eq('user_id', userId);
+        // Map to full achievement info (would normally fetch from a master table)
+        return (data || []).map(a => ({
+          id: a.achievement_id,
+          title: a.achievement_id.replace('_', ' ').toUpperCase(),
+          description: 'Desbloqueado com sucesso!',
+          icon: 'Award',
+          unlockedAt: a.unlocked_at
+        }));
+      } catch (e) { return []; }
+    },
+    award: async (userId: string, achievementId: string) => {
+      try {
+        await supabase.from('user_achievements').upsert({
+          user_id: userId,
+          achievement_id: achievementId
+        });
+      } catch (e) { }
     }
   }
 };

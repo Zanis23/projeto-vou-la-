@@ -12,7 +12,7 @@ interface SettingsScreenProps {
     onClose: () => void;
     onLogout: () => void;
     onDeleteAccount?: () => void;
-    onUpdateSettings?: (settings: PrivacySettings, theme?: 'purple' | 'neon' | 'cyan' | 'pink') => void;
+    onUpdateSettings?: (settings: PrivacySettings, theme?: 'purple' | 'neon' | 'cyan' | 'pink' | 'light' | 'dark') => void;
     onUpdateUser?: (user: Partial<User>) => void;
     onEditProfile?: () => void; // Kept for backward compatibility if needed, but we use internal flow now
 }
@@ -114,7 +114,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ user, onClose, o
         });
     };
 
-    const handleThemeChange = (newTheme: 'purple' | 'neon' | 'cyan' | 'pink') => {
+    const handleThemeChange = (newTheme: 'purple' | 'neon' | 'cyan' | 'pink' | 'light' | 'dark') => {
         trigger('medium');
         setTheme(newTheme);
 
@@ -376,11 +376,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ user, onClose, o
                                 <span className="text-white font-bold text-sm">Tema do App</span>
                             </div>
 
-                            <div className="flex justify-between px-2">
+                            <div className="flex flex-wrap justify-between gap-y-4 px-2">
                                 <ThemeOption color="#ccff00" label="Neon" active={theme === 'neon'} onClick={() => handleThemeChange('neon')} />
                                 <ThemeOption color="#c026d3" label="Roxo" active={theme === 'purple'} onClick={() => handleThemeChange('purple')} />
                                 <ThemeOption color="#06b6d4" label="Azul" active={theme === 'cyan'} onClick={() => handleThemeChange('cyan')} />
                                 <ThemeOption color="#ec4899" label="Pink" active={theme === 'pink'} onClick={() => handleThemeChange('pink')} />
+                                {/* New Mode Toggles */}
+                                <ThemeOption color="#f8fafc" label="Light" active={theme === 'light'} onClick={() => handleThemeChange('light')} isMode />
+                                <ThemeOption color="#020617" label="Dark" active={theme === 'dark'} onClick={() => handleThemeChange('dark')} isMode />
                             </div>
                         </div>
                     </section>
@@ -520,128 +523,140 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ user, onClose, o
                     </div>
 
                 </div>
-            </div>
+            </div >
 
             {/* STICKY SAVE BUTTON FOR SETTINGS */}
-            {hasSettingsChanges && (
-                <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-[var(--background)] via-[var(--background)] to-transparent pb-safe z-20 animate-[slideUp_0.3s_ease-out]">
-                    <Button fullWidth variant="neon" onClick={handleSaveSettings}>
-                        SALVAR ALTERAÇÕES
-                    </Button>
-                </div>
-            )}
+            {
+                hasSettingsChanges && (
+                    <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-[var(--background)] via-[var(--background)] to-transparent pb-safe z-20 animate-[slideUp_0.3s_ease-out]">
+                        <Button fullWidth variant="neon" onClick={handleSaveSettings}>
+                            SALVAR ALTERAÇÕES
+                        </Button>
+                    </div>
+                )
+            }
 
             {/* --- MODALS --- */}
 
             {/* Password Modal */}
-            {showPasswordModal && (
-                <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur flex items-center justify-center p-6 animate-[fadeIn_0.2s_ease-out]">
-                    <div className="bg-[#1e293b] w-full max-w-sm rounded-3xl p-6 border border-slate-700 shadow-2xl">
-                        <h3 className="text-xl font-black text-white italic mb-4">Alterar Senha</h3>
-                        <div className="space-y-3 mb-6">
-                            <input type="password" placeholder="Senha Atual" className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white focus:border-[#ccff00] focus:outline-none" value={passwordForm.current} onChange={e => setPasswordForm({ ...passwordForm, current: e.target.value })} />
-                            <input type="password" placeholder="Nova Senha" className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white focus:border-[#ccff00] focus:outline-none" value={passwordForm.new} onChange={e => setPasswordForm({ ...passwordForm, new: e.target.value })} />
-                            <input type="password" placeholder="Confirmar Nova Senha" className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white focus:border-[#ccff00] focus:outline-none" value={passwordForm.confirm} onChange={e => setPasswordForm({ ...passwordForm, confirm: e.target.value })} />
-                        </div>
-                        <div className="flex gap-3">
-                            <button onClick={() => setShowPasswordModal(false)} className="flex-1 py-3 rounded-xl font-bold text-slate-400 hover:bg-slate-800">Cancelar</button>
-                            <button onClick={handleChangePassword} className="flex-1 py-3 rounded-xl font-bold bg-[#ccff00] text-black hover:bg-[#b3ff00]">Salvar</button>
+            {
+                showPasswordModal && (
+                    <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur flex items-center justify-center p-6 animate-[fadeIn_0.2s_ease-out]">
+                        <div className="bg-[#1e293b] w-full max-w-sm rounded-3xl p-6 border border-slate-700 shadow-2xl">
+                            <h3 className="text-xl font-black text-white italic mb-4">Alterar Senha</h3>
+                            <div className="space-y-3 mb-6">
+                                <input type="password" placeholder="Senha Atual" className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white focus:border-[#ccff00] focus:outline-none" value={passwordForm.current} onChange={e => setPasswordForm({ ...passwordForm, current: e.target.value })} />
+                                <input type="password" placeholder="Nova Senha" className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white focus:border-[#ccff00] focus:outline-none" value={passwordForm.new} onChange={e => setPasswordForm({ ...passwordForm, new: e.target.value })} />
+                                <input type="password" placeholder="Confirmar Nova Senha" className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white focus:border-[#ccff00] focus:outline-none" value={passwordForm.confirm} onChange={e => setPasswordForm({ ...passwordForm, confirm: e.target.value })} />
+                            </div>
+                            <div className="flex gap-3">
+                                <button onClick={() => setShowPasswordModal(false)} className="flex-1 py-3 rounded-xl font-bold text-slate-400 hover:bg-slate-800">Cancelar</button>
+                                <button onClick={handleChangePassword} className="flex-1 py-3 rounded-xl font-bold bg-[#ccff00] text-black hover:bg-[#b3ff00]">Salvar</button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Text Modal (Terms/Help) */}
-            {showTextModal && (
-                <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur flex items-center justify-center p-6 animate-[fadeIn_0.2s_ease-out]" onClick={() => setShowTextModal(null)}>
-                    <div className="bg-[#1e293b] w-full max-w-sm rounded-3xl p-6 border border-slate-700 shadow-2xl" onClick={e => e.stopPropagation()}>
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-xl font-black text-white italic">{showTextModal.title}</h3>
-                            <button onClick={() => setShowTextModal(null)}><X className="w-6 h-6 text-slate-400" /></button>
+            {
+                showTextModal && (
+                    <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur flex items-center justify-center p-6 animate-[fadeIn_0.2s_ease-out]" onClick={() => setShowTextModal(null)}>
+                        <div className="bg-[#1e293b] w-full max-w-sm rounded-3xl p-6 border border-slate-700 shadow-2xl" onClick={e => e.stopPropagation()}>
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-xl font-black text-white italic">{showTextModal.title}</h3>
+                                <button onClick={() => setShowTextModal(null)}><X className="w-6 h-6 text-slate-400" /></button>
+                            </div>
+                            <div className="max-h-[60vh] overflow-y-auto mb-6 pr-2">
+                                {showTextModal.content}
+                            </div>
+                            <button onClick={() => setShowTextModal(null)} className="w-full py-3 rounded-xl font-bold bg-slate-800 text-white hover:bg-slate-700">Entendi</button>
                         </div>
-                        <div className="max-h-[60vh] overflow-y-auto mb-6 pr-2">
-                            {showTextModal.content}
-                        </div>
-                        <button onClick={() => setShowTextModal(null)} className="w-full py-3 rounded-xl font-bold bg-slate-800 text-white hover:bg-slate-700">Entendi</button>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Delete Confirm Modal */}
-            {showDeleteConfirm && (
-                <div className="fixed inset-0 z-[110] bg-red-900/40 backdrop-blur flex items-center justify-center p-6 animate-[fadeIn_0.2s_ease-out]">
-                    <div className="bg-[#1e293b] w-full max-w-sm rounded-3xl p-6 border-2 border-red-500 shadow-[0_0_30px_rgba(239,68,68,0.3)]">
-                        <div className="flex flex-col items-center text-center mb-6">
-                            <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-4 text-red-500">
-                                <AlertTriangle className="w-8 h-8" />
-                            </div>
-                            <h3 className="text-xl font-black text-white italic mb-2">Tem certeza?</h3>
-                            <p className="text-slate-400 text-sm">Essa ação apagará todos os seus dados, histórico e XP. Não há como desfazer.</p>
-                        </div>
-                        {isProcessing ? (
-                            <div className="flex justify-center py-4"><RefreshCw className="w-6 h-6 animate-spin text-white" /></div>
-                        ) : (
-                            <div className="flex gap-3">
-                                <button onClick={() => setShowDeleteConfirm(false)} className="flex-1 py-3 rounded-xl font-bold text-white bg-slate-800 hover:bg-slate-700">Cancelar</button>
-                                <button onClick={async () => {
-                                    setIsProcessing(true);
-                                    const res = await db.auth.deleteAccount();
-                                    setIsProcessing(false);
-                                    if (res.success) {
-                                        alert("Conta excluída com sucesso.");
-                                        window.location.reload();
-                                    } else {
-                                        alert(`Erro: ${res.message} `);
-                                    }
-                                }} className="flex-1 py-3 rounded-xl font-bold bg-red-500 text-white hover:bg-red-600">Sim, Excluir Cadaço</button>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
-
-            {/* Blocked Users Modal */}
-            {showBlockedModal && (
-                <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur flex items-center justify-center p-6 animate-[fadeIn_0.2s_ease-out]">
-                    <div className="bg-[#1e293b] w-full max-w-sm rounded-3xl p-6 border border-slate-700 shadow-2xl flex flex-col max-h-[80vh]">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-xl font-black text-white italic">Bloqueados</h3>
-                            <button onClick={() => setShowBlockedModal(false)}><X className="w-6 h-6 text-slate-400" /></button>
-                        </div>
-                        <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
-                            {blockedUsers.length > 0 ? blockedUsers.map(id => (
-                                <div key={id} className="flex items-center justify-between p-3 bg-slate-900/50 rounded-xl border border-slate-800">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-[var(--primary)]/10 flex items-center justify-center text-[10px] font-bold text-[var(--primary)]">UID</div>
-                                        <span className="text-white text-sm font-bold">IDs: {id.slice(0, 10)}...</span>
-                                    </div>
-                                    <button onClick={() => handleUnblock(id)} className="px-3 py-1.5 bg-slate-800 text-xs font-bold text-slate-300 rounded-lg hover:text-white transition-colors">Desbloquear</button>
+            {
+                showDeleteConfirm && (
+                    <div className="fixed inset-0 z-[110] bg-red-900/40 backdrop-blur flex items-center justify-center p-6 animate-[fadeIn_0.2s_ease-out]">
+                        <div className="bg-[#1e293b] w-full max-w-sm rounded-3xl p-6 border-2 border-red-500 shadow-[0_0_30px_rgba(239,68,68,0.3)]">
+                            <div className="flex flex-col items-center text-center mb-6">
+                                <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-4 text-red-500">
+                                    <AlertTriangle className="w-8 h-8" />
                                 </div>
-                            )) : (
-                                <div className="text-center py-10 text-slate-500 italic text-sm">Ninguém foi bloqueado ainda.</div>
+                                <h3 className="text-xl font-black text-white italic mb-2">Tem certeza?</h3>
+                                <p className="text-slate-400 text-sm">Essa ação apagará todos os seus dados, histórico e XP. Não há como desfazer.</p>
+                            </div>
+                            {isProcessing ? (
+                                <div className="flex justify-center py-4"><RefreshCw className="w-6 h-6 animate-spin text-white" /></div>
+                            ) : (
+                                <div className="flex gap-3">
+                                    <button onClick={() => setShowDeleteConfirm(false)} className="flex-1 py-3 rounded-xl font-bold text-white bg-slate-800 hover:bg-slate-700">Cancelar</button>
+                                    <button onClick={async () => {
+                                        setIsProcessing(true);
+                                        const res = await db.auth.deleteAccount();
+                                        setIsProcessing(false);
+                                        if (res.success) {
+                                            alert("Conta excluída com sucesso.");
+                                            window.location.reload();
+                                        } else {
+                                            alert(`Erro: ${res.message} `);
+                                        }
+                                    }} className="flex-1 py-3 rounded-xl font-bold bg-red-500 text-white hover:bg-red-600">Sim, Excluir Cadaço</button>
+                                </div>
                             )}
                         </div>
-                        <button onClick={() => setShowBlockedModal(false)} className="w-full mt-6 py-3 rounded-xl font-bold bg-slate-800 text-white hover:bg-slate-700">Fechar</button>
                     </div>
-                </div>
-            )}
+                )
+            }
+
+            {/* Blocked Users Modal */}
+            {
+                showBlockedModal && (
+                    <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur flex items-center justify-center p-6 animate-[fadeIn_0.2s_ease-out]">
+                        <div className="bg-[#1e293b] w-full max-w-sm rounded-3xl p-6 border border-slate-700 shadow-2xl flex flex-col max-h-[80vh]">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-xl font-black text-white italic">Bloqueados</h3>
+                                <button onClick={() => setShowBlockedModal(false)}><X className="w-6 h-6 text-slate-400" /></button>
+                            </div>
+                            <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                                {blockedUsers.length > 0 ? blockedUsers.map(id => (
+                                    <div key={id} className="flex items-center justify-between p-3 bg-slate-900/50 rounded-xl border border-slate-800">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-[var(--primary)]/10 flex items-center justify-center text-[10px] font-bold text-[var(--primary)]">UID</div>
+                                            <span className="text-white text-sm font-bold">IDs: {id.slice(0, 10)}...</span>
+                                        </div>
+                                        <button onClick={() => handleUnblock(id)} className="px-3 py-1.5 bg-slate-800 text-xs font-bold text-slate-300 rounded-lg hover:text-white transition-colors">Desbloquear</button>
+                                    </div>
+                                )) : (
+                                    <div className="text-center py-10 text-slate-500 italic text-sm">Ninguém foi bloqueado ainda.</div>
+                                )}
+                            </div>
+                            <button onClick={() => setShowBlockedModal(false)} className="w-full mt-6 py-3 rounded-xl font-bold bg-slate-800 text-white hover:bg-slate-700">Fechar</button>
+                        </div>
+                    </div>
+                )
+            }
 
             {/* Data Modal */}
-            {showDataModal && (
-                <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur flex items-center justify-center p-6 animate-[fadeIn_0.2s_ease-out]">
-                    <div className="bg-[#1e293b] w-full max-w-sm rounded-3xl p-6 border border-slate-700 shadow-2xl">
-                        <h3 className="text-xl font-black text-white italic mb-2">Exportar Dados</h3>
-                        <p className="text-slate-400 text-sm mb-6">Estamos preparando um arquivo com todo o seu histórico de check-ins, medalhas e conquistas. Você receberá o link por e-mail em breve.</p>
-                        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 mb-6 flex items-center gap-3">
-                            <FileText className="w-6 h-6 text-emerald-500" />
-                            <div className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Solicitação registrada</div>
+            {
+                showDataModal && (
+                    <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur flex items-center justify-center p-6 animate-[fadeIn_0.2s_ease-out]">
+                        <div className="bg-[#1e293b] w-full max-w-sm rounded-3xl p-6 border border-slate-700 shadow-2xl">
+                            <h3 className="text-xl font-black text-white italic mb-2">Exportar Dados</h3>
+                            <p className="text-slate-400 text-sm mb-6">Estamos preparando um arquivo com todo o seu histórico de check-ins, medalhas e conquistas. Você receberá o link por e-mail em breve.</p>
+                            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 mb-6 flex items-center gap-3">
+                                <FileText className="w-6 h-6 text-emerald-500" />
+                                <div className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Solicitação registrada</div>
+                            </div>
+                            <button onClick={() => setShowDataModal(false)} className="w-full py-3 rounded-xl font-bold bg-[#ccff00] text-black hover:bg-[#b3ff00]">Ok, Valeu!</button>
                         </div>
-                        <button onClick={() => setShowDataModal(false)} className="w-full py-3 rounded-xl font-bold bg-[#ccff00] text-black hover:bg-[#b3ff00]">Ok, Valeu!</button>
                     </div>
-                </div>
-            )}
+                )
+            }
 
-        </div>
+        </div >
     );
 };
 

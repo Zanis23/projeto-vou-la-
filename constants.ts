@@ -2,10 +2,33 @@
 import { Place, PlaceType, User, FeedItem, Chat, FriendRequest, Mission, SocialPlan, MatchProfile } from './types';
 
 export const THEMES = {
-  neon: { primary: '#ccff00', primaryGlow: 'rgba(204, 255, 0, 0.4)', onPrimary: '#000000' },
-  purple: { primary: '#c026d3', primaryGlow: 'rgba(192, 38, 211, 0.4)', onPrimary: '#ffffff' },
-  cyan: { primary: '#06b6d4', primaryGlow: 'rgba(6, 182, 212, 0.4)', onPrimary: '#ffffff' },
-  pink: { primary: '#ec4899', primaryGlow: 'rgba(236, 72, 153, 0.4)', onPrimary: '#ffffff' }
+  // Classic Dark Themes
+  neon: {
+    primary: '#ccff00', primaryGlow: 'rgba(204, 255, 0, 0.4)', onPrimary: '#000000',
+    background: '#0E1121', surface: '#1e293b', surfaceHighlight: '#334155', text: '#ffffff', textMuted: '#94a3b8', border: 'rgba(255, 255, 255, 0.05)'
+  },
+  purple: {
+    primary: '#c026d3', primaryGlow: 'rgba(192, 38, 211, 0.4)', onPrimary: '#ffffff',
+    background: '#0E1121', surface: '#1e293b', surfaceHighlight: '#334155', text: '#ffffff', textMuted: '#94a3b8', border: 'rgba(255, 255, 255, 0.05)'
+  },
+  cyan: {
+    primary: '#06b6d4', primaryGlow: 'rgba(6, 182, 212, 0.4)', onPrimary: '#ffffff',
+    background: '#0E1121', surface: '#1e293b', surfaceHighlight: '#334155', text: '#ffffff', textMuted: '#94a3b8', border: 'rgba(255, 255, 255, 0.05)'
+  },
+  pink: {
+    primary: '#ec4899', primaryGlow: 'rgba(236, 72, 153, 0.4)', onPrimary: '#ffffff',
+    background: '#0E1121', surface: '#1e293b', surfaceHighlight: '#334155', text: '#ffffff', textMuted: '#94a3b8', border: 'rgba(255, 255, 255, 0.05)'
+  },
+  // Dedicated Light Mode
+  light: {
+    primary: '#ccff00', primaryGlow: 'rgba(204, 255, 0, 0.2)', onPrimary: '#000000',
+    background: '#f8fafc', surface: '#ffffff', surfaceHighlight: '#f1f5f9', text: '#0f172a', textMuted: '#64748b', border: 'rgba(0, 0, 0, 0.05)'
+  },
+  // Dedicated Dark Mode
+  dark: {
+    primary: '#ccff00', primaryGlow: 'rgba(204, 255, 0, 0.4)', onPrimary: '#000000',
+    background: '#020617', surface: '#0f172a', surfaceHighlight: '#1e293b', text: '#f8fafc', textMuted: '#94a3b8', border: 'rgba(255, 255, 255, 0.05)'
+  }
 };
 
 export const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1514525253361-bee8a197c0c1?q=80&w=800&auto=format&fit=crop';

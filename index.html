@@ -36,6 +36,9 @@
             surface: 'var(--surface)',
             background: 'var(--background)',
             'surface-highlight': 'var(--surface-highlight)',
+            'text-main': 'var(--text-main)',
+            'text-muted': 'var(--text-muted)',
+            'border-subtle': 'var(--border)',
           },
           spacing: {
             'safe-top': 'var(--sat)',
@@ -56,12 +59,16 @@
 
   <style>
     :root {
+      /* Default Dark Mode (Neon) */
       --primary: #ccff00;
       --primary-glow: rgba(204, 255, 0, 0.4);
       --on-primary: #000000;
       --background: #0E1121;
       --surface: #1e293b;
       --surface-highlight: #334155;
+      --text-main: #ffffff;
+      --text-muted: #94a3b8;
+      --border: rgba(255, 255, 255, 0.05);
 
       --sat: env(safe-area-inset-top, 0px);
       --sab: env(safe-area-inset-bottom, 0px);
