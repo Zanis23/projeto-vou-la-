@@ -266,10 +266,17 @@ export interface MatchProfile {
 
 export interface AppNotification {
   id: string;
+  userId: string; // recipient
+  type: 'match_like' | 'message' | 'check_in' | 'hype' | 'alert' | 'invite';
+  senderId?: string;
+  senderName?: string;
+  senderAvatar?: string;
   title: string;
   message: string;
-  time: string;
+  timestamp: string;
   read: boolean;
-  type: 'hype' | 'alert' | 'invite';
+  chatId?: string;
   placeId?: string;
+  placeName?: string;
 }
+

@@ -1,5 +1,5 @@
 
-import { User, Place, FeedItem, Chat, StaffCall, Message } from '../types';
+import { User, Place, FeedItem, Chat, StaffCall, Message, AppNotification } from '../types';
 import { MOCK_USER, MOCK_PLACES, MOCK_FEED, MOCK_CHATS } from '../constants';
 import { supabase } from '../services/supabase';
 
@@ -555,6 +555,72 @@ export const db = {
           }
         };
         await db.user.save(updatedUser);
+      }
+    }
+  },
+
+  notifications: {
+    get: async (): Promise<AppNotification[]> => {
+      try {
+        const user = await db.user.get();
+        if (!user || !user.id) return [];
+
+        const { data } = await supabase.from('notifications')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        if (data) {
+          return data.map(n => ({
+            id: n.id,
+            userId: n.user_id,
+            type: n.type,
+            senderId: n.sender_id,
+            senderName: n.sender_name,
+            senderAvatar: n.sender_avatar,
+            title: n.title,
+            message: n.message,
+            timestamp: n.created_at,
+            read: n.read || false,
+            chatId: n.chat_id,
+            placeId: n.place_id,
+            placeName: n.place_name
+          }));
+        }
+      } catch (e) {
+        console.error("Failed to fetch notifications", e);
+      }
+      return [];
+    },
+
+    add: async (notification: Omit<AppNotification, 'id' | 'timestamp'>) => {
+      try {
+        await supabase.from('notifications').insert([{
+          user_id: notification.userId,
+          type: notification.type,
+          sender_id: notification.senderId,
+          sender_name: notification.senderName,
+          sender_avatar: notification.senderAvatar,
+          title: notification.title,
+          message: notification.message,
+          read: false,
+          chat_id: notification.chatId,
+          place_id: notification.placeId,
+          place_name: notification.placeName
+        }]);
+      } catch (e) {
+        console.error("Failed to add notification", e);
+      }
+    },
+
+    markAsRead: async (notificationId: string) => {
+      try {
+        await supabase.from('notifications')
+          .update({ read: true })
+          .eq('id', notificationId);
+      } catch (e) {
+        console.error("Failed to mark notification as read", e);
       }
     }
   },
