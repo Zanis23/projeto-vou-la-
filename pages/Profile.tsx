@@ -257,10 +257,39 @@ export const Profile: React.FC<ProfileProps> = ({ currentUser = MOCK_USER, onLog
           </p>
 
           <div className="flex gap-4 mt-6">
-            {user.instagram && <SocialButton icon={<Instagram className="w-5 h-5" />} />}
-            {user.tiktok && <SocialButton icon={<Video className="w-5 h-5" />} />}
-            {user.twitter && <SocialButton icon={<Twitter className="w-5 h-5" />} />}
-            <button className="w-12 h-12 rounded-2xl bg-[var(--surface)] border border-[var(--surface-highlight)] flex items-center justify-center text-slate-400 hover:text-white transition-colors active:scale-95">
+            {user.instagram && (
+              <SocialButton
+                platform="instagram"
+                username={user.instagram}
+                icon={<Instagram className="w-5 h-5" />}
+              />
+            )}
+            {user.tiktok && (
+              <SocialButton
+                platform="tiktok"
+                username={user.tiktok}
+                icon={<Video className="w-5 h-5" />}
+              />
+            )}
+            {user.twitter && (
+              <SocialButton
+                platform="twitter"
+                username={user.twitter}
+                icon={<Twitter className="w-5 h-5" />}
+              />
+            )}
+            <button
+              onClick={() => {
+                if (navigator.share) {
+                  navigator.share({
+                    title: `Perfil de ${user.name} - Vou Lá`,
+                    text: `Me siga no Vou Lá! Meu código ID é ${user.userCode}`,
+                    url: window.location.href,
+                  });
+                }
+              }}
+              className="w-12 h-12 rounded-2xl bg-[var(--surface)] border border-[var(--surface-highlight)] flex items-center justify-center text-slate-400 hover:text-white transition-colors active:scale-95"
+            >
               <Share2 className="w-5 h-5" />
             </button>
           </div>
@@ -282,7 +311,9 @@ export const Profile: React.FC<ProfileProps> = ({ currentUser = MOCK_USER, onLog
               <Calendar className="w-5 h-5 text-purple-400" />
             </div>
             <div className="relative z-10">
-              <span className="text-xl font-black text-white block truncate">{user.memberSince ? new Date(user.memberSince).toLocaleDateString() : '2024'}</span>
+              <span className="text-xl font-black text-white block truncate">
+                {user.memberSince ? new Date(user.memberSince).toLocaleDateString('pt-BR', { month: '2-digit', year: 'numeric' }) : '---'}
+              </span>
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Membro Desde</span>
             </div>
             <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-purple-500/10 rounded-full blur-xl"></div>
@@ -360,8 +391,29 @@ export const Profile: React.FC<ProfileProps> = ({ currentUser = MOCK_USER, onLog
   );
 };
 
-const SocialButton = ({ icon }: { icon: React.ReactNode }) => (
-  <button className="w-12 h-12 rounded-2xl bg-[var(--surface)] border border-[var(--surface-highlight)] flex items-center justify-center text-slate-400 hover:text-white hover:border-[var(--primary)] hover:bg-[var(--primary)]/10 transition-all active:scale-95">
-    {icon}
-  </button>
-);
+const SocialButton = ({ icon, platform, username }: { icon: React.ReactNode, platform: string, username: string }) => {
+  const handleClick = () => {
+    if (!username) return;
+
+    let url = '';
+    if (username.startsWith('http')) {
+      url = username;
+    } else {
+      const cleanUser = username.replace('@', '');
+      if (platform === 'instagram') url = `https://instagram.com/${cleanUser}`;
+      if (platform === 'tiktok') url = `https://tiktok.com/@${cleanUser}`;
+      if (platform === 'twitter') url = `https://twitter.com/${cleanUser}`;
+    }
+
+    if (url) window.open(url, '_blank');
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      className="w-12 h-12 rounded-2xl bg-[var(--surface)] border border-[var(--surface-highlight)] flex items-center justify-center text-slate-400 hover:text-white hover:border-[var(--primary)] hover:bg-[var(--primary)]/10 transition-all active:scale-95"
+    >
+      {icon}
+    </button>
+  );
+};
