@@ -168,6 +168,9 @@ export interface User {
   name: string;
   avatar: string;
   email?: string;
+  phone?: string;
+  age?: number;
+  city?: string;
   level: number;
   points: number;
   badges: string[];
@@ -184,6 +187,8 @@ export interface User {
   status?: string;
   wallet?: Ticket[];
   userCode?: string;
+  termsAcceptedAt?: string;
+  privacyAcceptedAt?: string;
   lastSync?: number;
 }
 

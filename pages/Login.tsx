@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Button } from '../components/Button';
 import { Logo } from '../components/Logo';
+import { TermsModal } from '../components/TermsModal';
 import { Building2, ChevronRight, AlertCircle, Loader2, MapPin, Star } from 'lucide-react';
 import { db, generateUserCode } from '../utils/storage';
 import { useHaptic } from '../hooks/useHaptic';
@@ -19,19 +20,37 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBusinessClick }) => {
   const [isRegister, setIsRegister] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [termsModalType, setTermsModalType] = useState<'terms' | 'privacy'>('terms');
 
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    password: ''
+    password: '',
+    phone: '',
+    age: '',
+    city: '',
+    acceptTerms: false,
+    acceptPrivacy: false
   });
 
-  const handleChange = (field: string, value: string) => {
+  const handleChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (error) setError(null);
   };
 
+  const formatPhone = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length <= 11) {
+      return numbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3').substring(0, 15);
+    }
+    return value.substring(0, 15);
+  };
 
+  const validatePhone = (phone: string) => {
+    const numbers = phone.replace(/\D/g, '');
+    return numbers.length === 11;
+  };
 
   const handleSubmit = async () => {
     if (!formData.email || !formData.password) {
@@ -40,10 +59,37 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBusinessClick }) => {
       return;
     }
 
-    if (isRegister && !formData.name) {
-      setError("Digite seu nome.");
-      trigger('error');
-      return;
+    if (isRegister) {
+      if (!formData.name) {
+        setError("Digite seu nome completo.");
+        trigger('error');
+        return;
+      }
+
+      if (!formData.phone || !validatePhone(formData.phone)) {
+        setError("Digite um telefone válido (11 dígitos).");
+        trigger('error');
+        return;
+      }
+
+      const age = parseInt(formData.age);
+      if (!formData.age || isNaN(age) || age < 18) {
+        setError("Você deve ter pelo menos 18 anos.");
+        trigger('error');
+        return;
+      }
+
+      if (!formData.city || formData.city.trim().length < 2) {
+        setError("Digite sua cidade.");
+        trigger('error');
+        return;
+      }
+
+      if (!formData.acceptTerms || !formData.acceptPrivacy) {
+        setError("Você deve aceitar os Termos de Uso e a Política de Privacidade.");
+        trigger('error');
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -51,18 +97,24 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBusinessClick }) => {
 
     try {
       if (isRegister) {
+        const now = new Date().toISOString();
         const newUser: User = {
           id: `u_${Date.now()}`,
           name: formData.name,
+          email: formData.email,
+          phone: formData.phone.replace(/\D/g, ''),
+          age: parseInt(formData.age),
+          city: formData.city.trim(),
           avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.name}`,
           level: 1,
           points: 0,
           badges: [],
-          memberSince: new Date().toISOString(),
+          memberSince: now,
           history: [],
           savedPlaces: [],
-          email: formData.email,
-          userCode: generateUserCode()
+          userCode: generateUserCode(),
+          termsAcceptedAt: now,
+          privacyAcceptedAt: now
         };
 
         const res = await db.auth.register(newUser, formData.password);
@@ -92,6 +144,11 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBusinessClick }) => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const openTermsModal = (type: 'terms' | 'privacy') => {
+    setTermsModalType(type);
+    setShowTermsModal(true);
   };
 
   return (
@@ -135,13 +192,40 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBusinessClick }) => {
 
             <div className="space-y-3">
               {isRegister && (
-                <input
-                  type="text"
-                  placeholder="Nome completo"
-                  value={formData.name}
-                  onChange={e => handleChange('name', e.target.value)}
-                  className="w-full bg-[#0E1121] border border-white/5 rounded-xl px-4 py-3.5 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-[var(--primary)] focus:bg-[#0E1121] transition-all"
-                />
+                <>
+                  <input
+                    type="text"
+                    placeholder="Nome completo"
+                    value={formData.name}
+                    onChange={e => handleChange('name', e.target.value)}
+                    className="w-full bg-[#0E1121] border border-white/5 rounded-xl px-4 py-3.5 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-[var(--primary)] focus:bg-[#0E1121] transition-all"
+                  />
+                  <input
+                    type="tel"
+                    placeholder="Telefone (11) 99999-9999"
+                    value={formData.phone}
+                    onChange={e => handleChange('phone', formatPhone(e.target.value))}
+                    className="w-full bg-[#0E1121] border border-white/5 rounded-xl px-4 py-3.5 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-[var(--primary)] focus:bg-[#0E1121] transition-all"
+                  />
+                  <div className="grid grid-cols-2 gap-3">
+                    <input
+                      type="number"
+                      placeholder="Idade"
+                      value={formData.age}
+                      onChange={e => handleChange('age', e.target.value)}
+                      min="18"
+                      max="120"
+                      className="w-full bg-[#0E1121] border border-white/5 rounded-xl px-4 py-3.5 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-[var(--primary)] focus:bg-[#0E1121] transition-all"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Cidade"
+                      value={formData.city}
+                      onChange={e => handleChange('city', e.target.value)}
+                      className="w-full bg-[#0E1121] border border-white/5 rounded-xl px-4 py-3.5 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-[var(--primary)] focus:bg-[#0E1121] transition-all"
+                    />
+                  </div>
+                </>
               )}
               <input
                 type="text"
@@ -157,6 +241,47 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBusinessClick }) => {
                 onChange={e => handleChange('password', e.target.value)}
                 className="w-full bg-[#0E1121] border border-white/5 rounded-xl px-4 py-3.5 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-[var(--primary)] focus:bg-[#0E1121] transition-all"
               />
+
+              {isRegister && (
+                <div className="space-y-2 pt-2">
+                  <label className="flex items-start gap-2 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={formData.acceptTerms}
+                      onChange={e => handleChange('acceptTerms', e.target.checked)}
+                      className="mt-0.5 w-4 h-4 rounded border-white/20 bg-[#0E1121] text-[var(--primary)] focus:ring-[var(--primary)] focus:ring-offset-0"
+                    />
+                    <span className="text-xs text-slate-400 group-hover:text-slate-300 transition-colors">
+                      Aceito os{' '}
+                      <button
+                        type="button"
+                        onClick={() => openTermsModal('terms')}
+                        className="text-[var(--primary)] hover:underline font-medium"
+                      >
+                        Termos de Uso
+                      </button>
+                    </span>
+                  </label>
+                  <label className="flex items-start gap-2 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={formData.acceptPrivacy}
+                      onChange={e => handleChange('acceptPrivacy', e.target.checked)}
+                      className="mt-0.5 w-4 h-4 rounded border-white/20 bg-[#0E1121] text-[var(--primary)] focus:ring-[var(--primary)] focus:ring-offset-0"
+                    />
+                    <span className="text-xs text-slate-400 group-hover:text-slate-300 transition-colors">
+                      Aceito a{' '}
+                      <button
+                        type="button"
+                        onClick={() => openTermsModal('privacy')}
+                        className="text-[var(--primary)] hover:underline font-medium"
+                      >
+                        Política de Privacidade
+                      </button>
+                    </span>
+                  </label>
+                </div>
+              )}
             </div>
 
             <div className="pt-2">
@@ -207,6 +332,12 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBusinessClick }) => {
         </p>
 
       </div>
+
+      <TermsModal
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+        type={termsModalType}
+      />
 
       <style>{`
         @keyframes shake {

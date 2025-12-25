@@ -46,6 +46,9 @@ const mapProfileToUser = async (profile: any): Promise<User> => {
     id: profile.id,
     email: profile.email,
     name: profile.name || 'Usuário',
+    phone: profile.phone,
+    age: profile.age,
+    city: profile.city,
     avatar: profile.avatar || MOCK_USER.avatar,
     points: profile.points || 0,
     level: profile.level || 1,
@@ -61,6 +64,8 @@ const mapProfileToUser = async (profile: any): Promise<User> => {
     badges: profile.badges || [],
     savedPlaces: profile.saved_places || [],
     status: profile.status || '',
+    termsAcceptedAt: profile.terms_accepted_at,
+    privacyAcceptedAt: profile.privacy_accepted_at,
     settings: {
       ghostMode: rawSettings.ghostMode ?? false,
       publicProfile: rawSettings.publicProfile ?? true,
@@ -158,11 +163,16 @@ export const db = {
           options: {
             data: {
               name: user.name,
+              phone: user.phone,
+              age: user.age,
+              city: user.city,
               avatar: user.avatar,
               owned_place_id: user.ownedPlaceId, // Critical: Pass ownership info
               level: user.level,
               points: user.points,
-              badges: user.badges
+              badges: user.badges,
+              terms_accepted_at: user.termsAcceptedAt,
+              privacy_accepted_at: user.privacyAcceptedAt
             }
           }
         });
@@ -176,11 +186,16 @@ export const db = {
             id: data.user.id,
             email: user.email,
             name: user.name,
+            phone: user.phone,
+            age: user.age,
+            city: user.city,
             avatar: user.avatar,
             owned_place_id: user.ownedPlaceId,
             level: user.level || 1,
             points: user.points || 0,
             user_code: generateUserCode(),
+            terms_accepted_at: user.termsAcceptedAt,
+            privacy_accepted_at: user.privacyAcceptedAt,
             history: []
           };
           await supabase.from('profiles').upsert(profileData);
@@ -314,6 +329,9 @@ export const db = {
         const { error } = await supabase.from('profiles').upsert({
           id: user.id,
           name: user.name,
+          phone: user.phone,
+          age: user.age,
+          city: user.city,
           avatar: user.avatar,
           points: user.points,
           level: user.level,
@@ -325,6 +343,8 @@ export const db = {
           owned_place_id: user.ownedPlaceId,
           user_code: user.userCode,
           theme: user.theme || 'neon',
+          terms_accepted_at: user.termsAcceptedAt,
+          privacy_accepted_at: user.privacyAcceptedAt,
           settings: user.settings
         });
 
