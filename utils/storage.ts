@@ -168,6 +168,7 @@ export const db = {
           await supabase.from('profiles').upsert(profileData);
         }
 
+        localStorage.removeItem('voula_tutorial_seen_v1');
         return { success: true, data };
       } catch (e: any) {
         return { success: false, message: e.message };

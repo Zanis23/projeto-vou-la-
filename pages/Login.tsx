@@ -76,6 +76,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBusinessClick }) => {
 
         const res = await db.auth.register(newUser, formData.password);
         if (res.success) {
+          localStorage.removeItem('voula_tutorial_seen_v1');
           alert("Conta criada! Confirme seu e-mail ou faça login.");
           setIsRegister(false);
         } else {

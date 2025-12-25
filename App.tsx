@@ -172,6 +172,9 @@ export default function App() {
 
   const handleLogin = (name: string, isNewUser: boolean, user?: User) => {
     if (user) {
+      if (isNewUser) {
+        localStorage.removeItem('voula_tutorial_seen_v1');
+      }
       setCurrentUser(user);
       loadData();
       setAppState('MAIN');
@@ -288,15 +291,16 @@ export default function App() {
             />
           )}
 
-          {/* Tutorial Overlay */}
-          {showTutorial && (
-            <OnboardingTutorial onComplete={() => {
-              localStorage.setItem('voula_tutorial_seen_v1', 'true');
-              setShowTutorial(false);
-            }} />
-          )}
         </div>
       </main>
+
+      {/* Tutorial Overlay (Fixed outside tab scroll container) */}
+      {showTutorial && (
+        <OnboardingTutorial onComplete={() => {
+          localStorage.setItem('voula_tutorial_seen_v1', 'true');
+          setShowTutorial(false);
+        }} />
+      )}
 
       {selectedPlace && (
         <div className="fixed inset-0 z-[100] bg-[var(--background)] animate-[slideUp_0.4s_cubic-bezier(0.16,1,0.3,1)] flex flex-col">
