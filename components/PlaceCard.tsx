@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { Place, MenuItem, OrderItem, StaffCall } from '../types';
-import { MapPin, Crown, Check, ChevronRight, User, Music, Star, Clock, Map, Car, ArrowUpRight, Bookmark, Flame, Utensils, BellRing, ThumbsUp, ThumbsDown, Zap, Users, X, Beer, Pizza, Loader2, CheckCircle2, Play, Disc, Plus, Minus, Receipt, HelpCircle, History, BarChart3, Sparkles, ClipboardList, CreditCard, QrCode, ShoppingBag } from 'lucide-react';
+import { MapPin, Crown, Check, ChevronRight, User, Music, Star, Clock, Map as MapIcon, Car, ArrowUpRight, Bookmark, Flame, Utensils, BellRing, ThumbsUp, ThumbsDown, Zap, Users, X, Beer, Pizza, Loader2, CheckCircle2, Play, Disc, Plus, Minus, Receipt, HelpCircle, History, BarChart3, Sparkles, ClipboardList, CreditCard, QrCode, ShoppingBag } from 'lucide-react';
 import { Skeleton } from './Skeleton';
 import { useHaptic } from '../hooks/useHaptic';
 import { FALLBACK_IMAGE, getUserById } from '../constants';
@@ -125,6 +125,12 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
     const handleGeoCheckIn = () => {
         if (!place || !onCheckIn || isCheckedIn) return;
 
+        // BETA BYPASS: Distance check disabled for testing
+        trigger('success');
+        onCheckIn(place.id);
+
+        /* 
+        // ORIGINALLY:
         // Se o lugar não tem coordenadas, bypass (para testes) ou erro
         if (!place.lat || !place.lng) {
             trigger('medium');
@@ -178,6 +184,7 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
             },
             { enableHighAccuracy: true, timeout: 5000 }
         );
+        */
     };
 
     if (loading) {
@@ -534,7 +541,7 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                             </div>
                         </div>
                         <div className="flex flex-wrap gap-2 text-[10px] text-slate-300 font-bold uppercase tracking-wider">
-                            <span className="flex items-center gap-1.5 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5"><MapPin className="w-3.5 h-3.5 text-[var(--primary)]" /> {place.distance}</span>
+                            <span className="flex items-center gap-1.5 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5"><MapPin className="w-3.5 h-3.5 text-[var(--primary)]" /> {place.distance} • {place.address || 'Endereço não disponível'}</span>
                             <span className="flex items-center gap-1.5 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5"><Clock className="w-3.5 h-3.5 text-[var(--primary)]" /> {place.openingHours}</span>
                         </div>
                     </div>
@@ -542,6 +549,40 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
 
                 {/* BODY */}
                 <div className="px-5 xs:px-6 -mt-4 relative z-10 space-y-6 pb-40">
+                    <div className="grid grid-cols-2 gap-3 xs:gap-4">
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                trigger('light');
+                                const query = encodeURIComponent(place.address || place.name);
+                                window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
+                            }}
+                            className="bg-slate-800/40 border border-slate-700/50 p-4 rounded-2xl flex items-center justify-center gap-2 active:bg-slate-800 transition-all"
+                        >
+                            <MapIcon className="w-5 h-5 text-blue-400" />
+                            <span className="text-[10px] font-black text-white uppercase tracking-wider">Abrir Maps</span>
+                        </button>
+
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                trigger('light');
+                                const dropoffName = encodeURIComponent(place.name);
+                                let url = `https://m.uber.com/ul/?action=setPickup&pickup=my_location&dropoff[nickname]=${dropoffName}`;
+                                if (place.lat && place.lng) {
+                                    url += `&dropoff[latitude]=${place.lat}&dropoff[longitude]=${place.lng}`;
+                                } else {
+                                    url += `&dropoff[formatted_address]=${encodeURIComponent(place.address || place.name)}`;
+                                }
+                                window.open(url, '_blank');
+                            }}
+                            className="bg-slate-800/40 border border-slate-700/50 p-4 rounded-2xl flex items-center justify-center gap-2 active:bg-slate-800 transition-all"
+                        >
+                            <Car className="w-5 h-5 text-white" />
+                            <span className="text-[10px] font-black text-white uppercase tracking-wider">Chamar Uber</span>
+                        </button>
+                    </div>
+
                     <button onClick={(e) => { e.stopPropagation(); handleGeoCheckIn(); }} disabled={isCheckedIn || checkingDistance} className={`w-full py-5 xs:py-6 rounded-2xl xs:rounded-[2rem] font-black uppercase text-sm xs:text-base tracking-widest flex items-center justify-center gap-3 shadow-2xl transition-all active:scale-[0.97]
                 ${isCheckedIn ? 'bg-green-600 text-white' : 'bg-[var(--primary)] text-[var(--on-primary)] shadow-[0_0_25px_var(--primary-glow)]'} ${checkingDistance ? 'opacity-80' : ''}`}>
                         {checkingDistance
