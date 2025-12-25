@@ -199,7 +199,7 @@ export const Social: React.FC<SocialProps> = ({ feed, onToggleLike, onComment, o
               <input
                 autoFocus
                 type="text"
-                placeholder="Buscar por nome..."
+                placeholder="Nome ou código (VOU-1234)..."
                 className="bg-transparent text-white w-full focus:outline-none placeholder:text-slate-500"
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
@@ -215,9 +215,12 @@ export const Social: React.FC<SocialProps> = ({ feed, onToggleLike, onComment, o
                 className="w-full flex items-center gap-4 p-4 bg-slate-800/40 rounded-2xl hover:bg-slate-800/60 border border-slate-800 transition-colors"
               >
                 <img src={user.avatar} className="w-12 h-12 rounded-full object-cover border border-slate-700" alt="" />
-                <div className="text-left">
-                  <h4 className="font-bold text-white">{user.name}</h4>
-                  <p className="text-xs text-slate-500">{user.bio || 'Membro do Vou Lá'}</p>
+                <div className="text-left flex-1 min-w-0">
+                  <h4 className="font-bold text-white truncate">{user.name}</h4>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded font-mono font-bold">{user.userCode}</span>
+                    <p className="text-[10px] text-slate-500 truncate">{user.bio || 'Membro do Vou Lá'}</p>
+                  </div>
                 </div>
                 <UserPlus className="ml-auto w-5 h-5 text-[var(--primary)]" />
               </button>

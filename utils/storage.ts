@@ -28,6 +28,8 @@ const getLocal = (key: string, fallback: any) => {
   }
 };
 
+const generateUserCode = () => `VOU-${Math.floor(1000 + Math.random() * 9000)}`;
+
 export const db = {
   // Popula o banco se estiver vazio (Primeiro acesso)
   seed: async () => {
@@ -136,11 +138,9 @@ export const db = {
             owned_place_id: user.ownedPlaceId,
             level: user.level || 1,
             points: user.points || 0,
+            user_code: generateUserCode(),
             history: []
           };
-          // We use INSERT IGNORE logic (on conflict do nothing) via upsert with ignoreDuplicates?
-          // Actually upsert is better to ensure latest data, but trigger might race.
-          // Let's use upsert which is safe.
           await supabase.from('profiles').upsert(profileData);
         }
 
@@ -265,7 +265,8 @@ export const db = {
           bio: user.bio,
           history: user.history,
           owned_place_id: user.ownedPlaceId,
-          blocked_users: user.settings?.blockedUsers || []
+          blocked_users: user.settings?.blockedUsers || [],
+          user_code: user.userCode
         });
 
         if (error) {
@@ -280,10 +281,13 @@ export const db = {
     },
     search: async (query: string): Promise<User[]> => {
       try {
+        const q = query.trim();
+        // Search by name OR user_code
         const { data } = await supabase.from('profiles')
           .select('*')
-          .ilike('name', `%${query}%`)
+          .or(`name.ilike.%${q}%,user_code.ilike.%${q}%`)
           .limit(10);
+
         return (data || []).map(p => ({
           ...MOCK_USER,
           id: p.id,
@@ -291,7 +295,8 @@ export const db = {
           avatar: p.avatar,
           bio: p.bio,
           points: p.points || 0,
-          level: p.level || 1
+          level: p.level || 1,
+          userCode: p.user_code
         }));
       } catch (e) {
         return [];

@@ -200,8 +200,18 @@ export const Profile: React.FC<ProfileProps> = ({ currentUser = MOCK_USER, onLog
 
           <h2 className="text-3xl font-black text-white italic tracking-tighter drop-shadow-lg text-center mb-1">{user.name}</h2>
 
+          <div className="flex items-center gap-2 mb-2">
+            <span className="bg-[var(--surface)] border border-[var(--surface-highlight)] px-3 py-1.5 rounded-2xl text-[10px] font-mono font-black text-slate-300 uppercase tracking-wider flex items-center gap-2 group active:scale-95 transition-all cursor-pointer" onClick={() => {
+              navigator.clipboard.writeText(user.userCode || '');
+              alert('Código copiado!');
+            }}>
+              #{user.userCode || '---'}
+              <Share2 className="w-3 h-3 text-[var(--primary)] group-hover:scale-110 transition-transform" />
+            </span>
+          </div>
+
           <div className="flex items-center gap-2 mb-4">
-            <span className="bg-[var(--surface)] border border-[var(--surface-highlight)] px-3 py-1 rounded-full text-[10px] font-bold text-[var(--primary)] uppercase tracking-wider flex items-center gap-1">
+            <span className="bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-full text-[10px] font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-1">
               <Award className="w-3 h-3" /> Nível {level}
             </span>
             <span className="text-slate-500 text-xs font-bold uppercase tracking-wide">

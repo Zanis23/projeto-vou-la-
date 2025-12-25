@@ -183,6 +183,7 @@ export interface User {
   twitter?: string;
   status?: string;
   wallet?: Ticket[];
+  userCode?: string;
 }
 
 export interface FeedItem {
