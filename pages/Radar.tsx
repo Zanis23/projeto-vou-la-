@@ -36,14 +36,14 @@ const PinMarker: React.FC<{ place: Place; zoom: number; onSelect: (p: Place) => 
   );
 };
 
-export const Radar: React.FC<RadarProps> = ({ places, onPlaceSelect }) => {
+export const Radar: React.FC<RadarProps> = ({ places, onPlaceSelect, center, userLocation }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
   const [currentZoom, setCurrentZoom] = useState(14);
   const [gpsActive, setGpsActive] = useState(false);
   const [findingLocation, setFindingLocation] = useState(false);
-  const userMarkerRef = useRef<any>(null); // Ref for user marker
+  const userLocationMarkerRef = useRef<any>(null); // Ref for user location marker
 
   useEffect(() => {
     if (!mapContainerRef.current || !window.L) return;
@@ -54,10 +54,13 @@ export const Radar: React.FC<RadarProps> = ({ places, onPlaceSelect }) => {
       return;
     }
 
+    const initialLat = center?.lat || -22.2238;
+    const initialLng = center?.lng || -54.8064;
+
     const map = window.L.map(mapContainerRef.current, {
       zoomControl: false,
       attributionControl: false
-    }).setView([-22.2238, -54.8064], 14);
+    }).setView([initialLat, initialLng], 14);
 
     window.L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       maxZoom: 19,
@@ -90,6 +93,24 @@ export const Radar: React.FC<RadarProps> = ({ places, onPlaceSelect }) => {
     });
   }, [currentZoom, places, onPlaceSelect]);
 
+  // Sync prop userLocation with map
+  useEffect(() => {
+    if (!mapInstanceRef.current || !window.L || !userLocation) return;
+
+    const { lat, lng } = userLocation;
+
+    if (userLocationMarkerRef.current) {
+      userLocationMarkerRef.current.setLatLng([lat, lng]);
+    } else {
+      const userIcon = window.L.divIcon({
+        html: `<div class="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg animate-pulse"></div>`,
+        className: 'bg-transparent',
+        iconSize: [20, 20]
+      });
+      userLocationMarkerRef.current = window.L.marker([lat, lng], { icon: userIcon }).addTo(mapInstanceRef.current);
+    }
+  }, [userLocation]);
+
   const handleRecenter = () => {
     if (!mapInstanceRef.current || !window.L) return;
     setFindingLocation(true);
@@ -101,15 +122,15 @@ export const Radar: React.FC<RadarProps> = ({ places, onPlaceSelect }) => {
         setFindingLocation(false);
 
         // Update User Marker
-        if (userMarkerRef.current) {
-          userMarkerRef.current.setLatLng([latitude, longitude]);
+        if (userLocationMarkerRef.current) {
+          userLocationMarkerRef.current.setLatLng([latitude, longitude]);
         } else {
           const userIcon = window.L.divIcon({
             html: `<div class="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg animate-pulse"></div>`,
             className: 'bg-transparent',
             iconSize: [20, 20]
           });
-          userMarkerRef.current = window.L.marker([latitude, longitude], { icon: userIcon }).addTo(mapInstanceRef.current);
+          userLocationMarkerRef.current = window.L.marker([latitude, longitude], { icon: userIcon }).addTo(mapInstanceRef.current);
         }
       },
       () => { setFindingLocation(false); alert('GPS indisponível.'); }

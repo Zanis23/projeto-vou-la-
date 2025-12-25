@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Home } from './pages/Home';
 import { Radar } from './pages/Radar';
@@ -11,6 +10,9 @@ import { Store } from './pages/Store';
 import { Challenges } from './pages/Challenges';
 import { BusinessRegistration } from './pages/BusinessRegistration';
 import { OnboardingTutorial } from './components/OnboardingTutorial';
+import { InstallPWA } from './components/InstallPWA';
+import { usePWA } from './hooks/usePWA';
+import { useGeoLocation } from './hooks/useGeoLocation';
 import { Tab, Place, User, FeedItem, CheckIn, PlaceType, Chat } from './types';
 import { Map, List, User as UserIcon, MessageCircle, LayoutGrid, X, Loader2 } from 'lucide-react';
 import { PlaceCard } from './components/PlaceCard';
@@ -24,6 +26,7 @@ type AppState = 'LOADING' | 'LOGIN' | 'MAIN' | 'BUSINESS_REG';
 
 export default function App() {
   const [appState, setAppState] = useState<AppState>('LOADING');
+  const userLocation = useGeoLocation();
   const [activeTab, setActiveTab] = useState<Tab>(Tab.HOME);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
@@ -233,7 +236,7 @@ export default function App() {
     await db.user.save(updatedUser);
 
     const newItem: FeedItem = {
-      id: `f_${Date.now()}`,
+      id: `f_${Date.now()} `,
       userId: currentUser.id,
       userName: currentUser.name,
       userAvatar: currentUser.avatar,
@@ -281,6 +284,7 @@ export default function App() {
 
       <main className="flex-1 overflow-hidden relative">
         <div key={activeTab} className="h-full scroll-container">
+          <InstallPWA />
           {activeTab === Tab.HOME && (
             <Home
               currentUser={currentUser}
@@ -298,7 +302,13 @@ export default function App() {
               }}
             />
           )}
-          {activeTab === Tab.RADAR && <Radar places={places} onPlaceSelect={setSelectedPlace} />}
+          {activeTab === Tab.RADAR && (
+            <Radar
+              places={places}
+              center={userLocation.coordinates || { lat: -22.2232, lng: -54.8125 }}
+              userLocation={userLocation.coordinates}
+            />
+          )}
           {activeTab === Tab.AI_FINDER && <AiConcierge />}
           {activeTab === Tab.SOCIAL && <Social feed={feed} onToggleLike={async (id) => { /* update */ }} onComment={(id) => { /* logic */ }} onPlaceSelect={setSelectedPlace} places={places} />}
           {activeTab === Tab.PROFILE && (
@@ -381,7 +391,7 @@ export default function App() {
         <NavButton active={activeTab === Tab.RADAR} onClick={() => setActiveTab(Tab.RADAR)} icon={<Map className="w-5 h-5" />} label="Radar" />
 
         <div className="relative -top-6 xs:-top-7">
-          <button onClick={() => setShowMoreMenu(true)} className={`w-14 h-14 rounded-full flex items-center justify-center transition-all active:scale-90 border-4 border-[var(--background)] ${showMoreMenu ? 'bg-white text-black' : 'bg-[var(--primary)] text-[var(--on-primary)] shadow-[0_0_20px_var(--primary-glow)]'}`}>
+          <button onClick={() => setShowMoreMenu(true)} className={`w - 14 h - 14 rounded - full flex items - center justify - center transition - all active: scale - 90 border - 4 border - [var(--background)] ${showMoreMenu ? 'bg-white text-black' : 'bg-[var(--primary)] text-[var(--on-primary)] shadow-[0_0_20px_var(--primary-glow)]'} `}>
             <LayoutGrid className="w-6 h-6 fill-current" />
           </button>
         </div>
@@ -391,31 +401,31 @@ export default function App() {
       </nav>
 
       <style>{`
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          25% { transform: translateX(-5px); }
-          75% { transform: translateX(5px); }
-        }
-        @keyframes fadeIn {
+@keyframes shake {
+  0 %, 100 % { transform: translateX(0); }
+  25 % { transform: translateX(-5px); }
+  75 % { transform: translateX(5px); }
+}
+@keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 1; }
-        }
-        @keyframes slideUp {
+}
+@keyframes slideUp {
           from { transform: translateY(20px); opacity: 0; }
           to { transform: translateY(0); opacity: 1; }
-        }
-        @keyframes slideLeft {
+}
+@keyframes slideLeft {
           from { transform: translateX(20px); opacity: 0; }
           to { transform: translateX(0); opacity: 1; }
-        }
-      `}</style>
+}
+`}</style>
     </div>
   );
 }
 
 const NavButton = ({ active, onClick, icon, label }: any) => (
-  <button onClick={onClick} className={`flex flex-col items-center gap-1 p-2 transition-all active:scale-95 ${active ? 'text-[var(--primary)]' : 'text-slate-500'}`}>
-    {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: `${(icon as any).props.className} ${active ? 'fill-current' : ''}` })}
+  <button onClick={onClick} className={`flex flex - col items - center gap - 1 p - 2 transition - all active: scale - 95 ${active ? 'text-[var(--primary)]' : 'text-slate-500'} `}>
+    {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: `${(icon as any).props.className} ${active ? 'fill-current' : ''} ` })}
     <span className="text-[9px] font-black uppercase tracking-wider">{label}</span>
   </button>
 );

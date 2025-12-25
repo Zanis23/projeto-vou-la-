@@ -1,11 +1,11 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { User, PrivacySettings } from '../types';
-import { X, Moon, Bell, Shield, Lock, LogOut, ChevronRight, UserMinus, Palette, Globe, HelpCircle, FileText, Smartphone, Database, RefreshCw, Edit3, KeyRound, AlertTriangle, ArrowLeft, Camera, Instagram, Twitter, Video, User as UserIcon } from 'lucide-react';
+import { X, Moon, Bell, Shield, Lock, LogOut, ChevronRight, UserMinus, Palette, Globe, HelpCircle, FileText, Smartphone, Database, RefreshCw, Edit3, KeyRound, AlertTriangle, ArrowLeft, Camera, Instagram, Twitter, Video, User as UserIcon, Download } from 'lucide-react';
 import { useHaptic } from '../hooks/useHaptic';
 import { Button } from './Button';
 import { db } from '../utils/storage';
 import { checkSupabaseConnection } from '../services/supabase';
+import { usePWA } from '../hooks/usePWA';
 
 interface SettingsScreenProps {
     user: User;
@@ -40,6 +40,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ user, onClose, o
     const [showTextModal, setShowTextModal] = useState<{ title: string, content: React.ReactNode } | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [isEditingProfile, setIsEditingProfile] = useState(false); // New Internal Edit Mode
+
+    // PWA Hook
+    const { deferredPrompt, install, isInstalled } = usePWA();
 
     // -- PROFILE EDIT FORM STATE --
     const [profileForm, setProfileForm] = useState<Partial<User>>({
@@ -190,7 +193,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ user, onClose, o
             setPasswordForm({ current: '', new: '', confirm: '' });
         } else {
             trigger('error');
-            alert(`Erro: ${res.message}`);
+            alert(`Erro: ${res.message} `);
         }
     };
 
@@ -502,7 +505,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ user, onClose, o
 
                         <div className="mt-6 px-2 flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-red-500 animate-pulse'}`}></div>
+                                <div className={`w - 2 h - 2 rounded - full ${isConnected ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-red-500 animate-pulse'} `}></div>
                                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                                     Servidor: {isConnected === null ? 'Checando...' : (isConnected ? 'Online' : 'Offline')}
                                 </span>
@@ -588,7 +591,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ user, onClose, o
                                         alert("Conta excluída com sucesso.");
                                         window.location.reload();
                                     } else {
-                                        alert(`Erro: ${res.message}`);
+                                        alert(`Erro: ${res.message} `);
                                     }
                                 }} className="flex-1 py-3 rounded-xl font-bold bg-red-500 text-white hover:bg-red-600">Sim, Excluir Cadaço</button>
                             </div>
@@ -675,9 +678,9 @@ const SettingsToggle = ({ icon, title, subtitle, checked, onChange }: any) => (
         </div>
         <button
             onClick={onChange}
-            className={`w-12 h-7 rounded-full transition-colors relative shrink-0 ${checked ? 'bg-[#ccff00]' : 'bg-slate-700 border border-slate-600'}`}
+            className={`w - 12 h - 7 rounded - full transition - colors relative shrink - 0 ${checked ? 'bg-[#ccff00]' : 'bg-slate-700 border border-slate-600'} `}
         >
-            <div className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-transform shadow-md ${checked ? 'left-6' : 'left-1'}`}></div>
+            <div className={`absolute top - 1 w - 5 h - 5 bg - white rounded - full transition - transform shadow - md ${checked ? 'left-6' : 'left-1'} `}></div>
         </button>
     </div>
 );
@@ -685,12 +688,12 @@ const SettingsToggle = ({ icon, title, subtitle, checked, onChange }: any) => (
 const ThemeOption = ({ color, label, active, onClick }: any) => (
     <button onClick={onClick} className="flex flex-col items-center gap-2 group">
         <div
-            className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all ${active ? 'border-white scale-110 shadow-[0_0_15px_rgba(255,255,255,0.3)]' : 'border-slate-700 hover:border-slate-500'}`}
+            className={`w - 12 h - 12 rounded - full border - 2 flex items - center justify - center transition - all ${active ? 'border-white scale-110 shadow-[0_0_15px_rgba(255,255,255,0.3)]' : 'border-slate-700 hover:border-slate-500'} `}
             style={{ backgroundColor: active ? color : 'transparent' }}
         >
             <div className="w-6 h-6 rounded-full" style={{ backgroundColor: color }}></div>
         </div>
-        <span className={`text-[10px] font-bold uppercase tracking-wide ${active ? 'text-white' : 'text-slate-500'}`}>
+        <span className={`text - [10px] font - bold uppercase tracking - wide ${active ? 'text-white' : 'text-slate-500'} `}>
             {label}
         </span>
     </button>
