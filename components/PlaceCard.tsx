@@ -367,8 +367,22 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                     </button>
 
                     <button
+                        onClick={(e) => { e.stopPropagation(); window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name + " " + (place.address || ""))}`, '_blank'); }}
+                        className="p-2 rounded-xl text-slate-400 hover:text-white transition-all active:scale-95"
+                    >
+                        <MapIcon className="w-5 h-5" />
+                    </button>
+
+                    <button
+                        onClick={(e) => { e.stopPropagation(); window.open(`https://m.uber.com/ul/?action=setPickup&client_id=YOUR_CLIENT_ID&pickup=my_location&dropoff[formatted_address]=${encodeURIComponent(place.address || "")}&dropoff[nickname]=${encodeURIComponent(place.name)}`, '_blank'); }}
+                        className="p-2 rounded-xl text-slate-400 hover:text-white transition-all active:scale-95"
+                    >
+                        <Car className="w-5 h-5" />
+                    </button>
+
+                    <button
                         onClick={handleActionClick}
-                        className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all shadow-lg
+                        className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all shadow-lg mt-2
                         ${isCheckedIn ? 'bg-[var(--primary)] text-black shadow-[0_0_20px_var(--primary-glow)]' :
                                 checkInState === 'checking' ? 'bg-indigo-600 animate-pulse text-white' : 'bg-white/5 border border-white/10 text-white'}`}
                     >

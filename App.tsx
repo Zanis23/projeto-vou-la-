@@ -44,19 +44,12 @@ export default function App() {
   useEffect(() => {
     const mode = currentUser.appMode || 'dark';
     const accent = currentUser.themeColor || 'neon';
-
-    const modeData = MODES[mode as keyof typeof MODES];
     const accentData = ACCENTS[accent as keyof typeof ACCENTS];
 
-    if (modeData) {
-      document.documentElement.style.setProperty('--background', modeData.background);
-      document.documentElement.style.setProperty('--surface', modeData.surface);
-      document.documentElement.style.setProperty('--surface-highlight', modeData.surfaceHighlight);
-      document.documentElement.style.setProperty('--text-main', modeData.text);
-      document.documentElement.style.setProperty('--text-muted', modeData.textMuted);
-      document.documentElement.style.setProperty('--border', modeData.border);
-    }
+    // MAJOR FIX: Use data-attribute for Mode (Light/Dark) to let CSS handle it
+    document.documentElement.setAttribute('data-mode', mode);
 
+    // Only inject Dynamic Brand Colors via JS
     if (accentData) {
       document.documentElement.style.setProperty('--primary', accentData.primary);
       document.documentElement.style.setProperty('--primary-glow', accentData.primaryGlow);
