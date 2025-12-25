@@ -212,7 +212,8 @@ export interface User {
   achievements?: Achievement[];
   memberSince: string;
   bio?: string;
-  theme?: 'purple' | 'neon' | 'cyan' | 'pink' | 'light' | 'dark';
+  appMode?: 'light' | 'dark';
+  themeColor?: 'purple' | 'neon' | 'cyan' | 'pink';
   history: CheckIn[];
   savedPlaces: string[];
   ownedPlaceId?: string;

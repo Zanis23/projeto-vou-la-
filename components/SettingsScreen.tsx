@@ -12,7 +12,7 @@ interface SettingsScreenProps {
     onClose: () => void;
     onLogout: () => void;
     onDeleteAccount?: () => void;
-    onUpdateSettings?: (settings: PrivacySettings, theme?: 'purple' | 'neon' | 'cyan' | 'pink' | 'light' | 'dark') => void;
+    onUpdateSettings?: (settings: PrivacySettings, mode?: 'light' | 'dark', accent?: 'purple' | 'neon' | 'cyan' | 'pink') => void;
     onUpdateUser?: (user: Partial<User>) => void;
     onEditProfile?: () => void; // Kept for backward compatibility if needed, but we use internal flow now
 }
@@ -32,7 +32,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ user, onClose, o
         }
     });
 
-    const [theme, setTheme] = useState(user.theme || 'neon');
+    const [appMode, setAppMode] = useState<'light' | 'dark'>(user.appMode || 'dark');
+    const [themeColor, setThemeColor] = useState<'purple' | 'neon' | 'cyan' | 'pink'>(user.themeColor || 'neon');
     const [clearingCache, setClearingCache] = useState(false);
 
     // -- MODALS / INTERNAL NAVIGATION STATE --
@@ -70,7 +71,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ user, onClose, o
                 allowTagging: true,
                 notifications: { hypeAlerts: true, chatMessages: true, friendActivity: true }
             });
-            setTheme(user.theme || 'neon');
+            setAppMode(user.appMode || 'dark');
+            setThemeColor(user.themeColor || 'neon');
             setProfileForm({
                 name: user.name,
                 bio: user.bio,
@@ -114,13 +116,19 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ user, onClose, o
         });
     };
 
-    const handleThemeChange = (newTheme: 'purple' | 'neon' | 'cyan' | 'pink' | 'light' | 'dark') => {
+    const handleAccentChange = (accent: 'purple' | 'neon' | 'cyan' | 'pink') => {
         trigger('medium');
-        setTheme(newTheme);
-
-        // Immediate preview: trigger parent update without saving to DB yet
+        setThemeColor(accent);
         if (onUpdateSettings) {
-            onUpdateSettings(settings, newTheme);
+            onUpdateSettings(settings, appMode, accent);
+        }
+    };
+
+    const handleModeChange = (mode: 'light' | 'dark') => {
+        trigger('medium');
+        setAppMode(mode);
+        if (onUpdateSettings) {
+            onUpdateSettings(settings, mode, themeColor);
         }
     };
 
@@ -128,9 +136,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ user, onClose, o
 
     const handleSaveSettings = () => {
         trigger('success');
-        // Push changes to parent
         if (onUpdateSettings) {
-            onUpdateSettings(settings, theme);
+            onUpdateSettings(settings, appMode, themeColor);
         }
         onClose();
     };
@@ -246,7 +253,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ user, onClose, o
     };
 
     // Detect Changes
-    const hasSettingsChanges = JSON.stringify(settings) !== JSON.stringify(user.settings) || theme !== user.theme;
+    const hasSettingsChanges = JSON.stringify(settings) !== JSON.stringify(user.settings) || appMode !== user.appMode || themeColor !== user.themeColor;
 
     // Detect Profile Changes (Internal Mode)
     const hasProfileChanges =
@@ -373,17 +380,34 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ user, onClose, o
                         <div className="bg-slate-800/40 rounded-2xl border border-slate-700/50 overflow-hidden p-4 backdrop-blur-sm">
                             <div className="flex items-center gap-3 mb-4">
                                 <Palette className="w-5 h-5 text-fuchsia-400" />
-                                <span className="text-white font-bold text-sm">Tema do App</span>
+                                <span className="text-white font-bold text-sm">Modo do App</span>
+                            </div>
+                            <div className="flex gap-4 px-2 mb-8">
+                                <button
+                                    onClick={() => handleModeChange('light')}
+                                    className={`flex-1 py-4 rounded-2xl flex flex-col items-center gap-2 transition-all border-2 ${appMode === 'light' ? 'bg-white text-slate-900 border-[var(--primary)]' : 'bg-slate-900 text-slate-500 border-slate-800'}`}
+                                >
+                                    <div className="w-6 h-6 rounded-full bg-white border border-slate-200" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Light</span>
+                                </button>
+                                <button
+                                    onClick={() => handleModeChange('dark')}
+                                    className={`flex-1 py-4 rounded-2xl flex flex-col items-center gap-2 transition-all border-2 ${appMode === 'dark' ? 'bg-slate-900 text-white border-[var(--primary)]' : 'bg-slate-900 text-slate-500 border-slate-800'}`}
+                                >
+                                    <div className="w-6 h-6 rounded-full bg-[#020617] border border-slate-700" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Dark</span>
+                                </button>
                             </div>
 
+                            <div className="flex items-center gap-3 mb-4">
+                                <Palette className="w-5 h-5 text-[var(--primary)]" />
+                                <span className="text-white font-bold text-sm">Cor do Tema</span>
+                            </div>
                             <div className="flex flex-wrap justify-between gap-y-4 px-2">
-                                <ThemeOption color="#ccff00" label="Neon" active={theme === 'neon'} onClick={() => handleThemeChange('neon')} />
-                                <ThemeOption color="#c026d3" label="Roxo" active={theme === 'purple'} onClick={() => handleThemeChange('purple')} />
-                                <ThemeOption color="#06b6d4" label="Azul" active={theme === 'cyan'} onClick={() => handleThemeChange('cyan')} />
-                                <ThemeOption color="#ec4899" label="Pink" active={theme === 'pink'} onClick={() => handleThemeChange('pink')} />
-                                {/* New Mode Toggles */}
-                                <ThemeOption color="#f8fafc" label="Light" active={theme === 'light'} onClick={() => handleThemeChange('light')} isMode />
-                                <ThemeOption color="#020617" label="Dark" active={theme === 'dark'} onClick={() => handleThemeChange('dark')} isMode />
+                                <ThemeOption color="#ccff00" label="Neon" active={themeColor === 'neon'} onClick={() => handleAccentChange('neon')} />
+                                <ThemeOption color="#c026d3" label="Roxo" active={themeColor === 'purple'} onClick={() => handleAccentChange('purple')} />
+                                <ThemeOption color="#06b6d4" label="Azul" active={themeColor === 'cyan'} onClick={() => handleAccentChange('cyan')} />
+                                <ThemeOption color="#ec4899" label="Pink" active={themeColor === 'pink'} onClick={() => handleAccentChange('pink')} />
                             </div>
                         </div>
                     </section>

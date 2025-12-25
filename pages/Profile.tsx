@@ -14,7 +14,7 @@ interface ProfileProps {
   currentUser?: User;
   onLogout?: () => void;
   onUpdateProfile?: (user: Partial<User>) => void;
-  onUpdateSettings?: (settings: PrivacySettings, theme?: 'purple' | 'neon' | 'cyan' | 'pink') => void;
+  onUpdateSettings?: (settings: PrivacySettings, mode?: 'light' | 'dark', accent?: 'purple' | 'neon' | 'cyan' | 'pink') => void;
   editTrigger?: number;
   places: Place[];
 }
@@ -58,8 +58,10 @@ export const Profile: React.FC<ProfileProps> = ({ currentUser = MOCK_USER, onLog
   };
 
   const handleSave = () => {
-    if (onUpdateProfile) onUpdateProfile(editForm);
-    setIsEditing(false);
+    if (onUpdateProfile) {
+      onUpdateProfile(editForm);
+      setIsEditing(false);
+    }
   };
 
   const copyToClipboard = async (text: string) => {

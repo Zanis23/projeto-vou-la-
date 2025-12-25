@@ -18,7 +18,7 @@ import { Map, List, User as UserIcon, MessageCircle, LayoutGrid, X, Loader2 } fr
 import { PlaceCard } from './components/PlaceCard';
 import { MoreOptionsModal } from './components/MoreOptionsModal';
 import { BusinessDashboard } from './components/BusinessDashboard';
-import { MOCK_USER, THEMES } from './constants';
+import { MOCK_USER, ACCENTS, MODES } from './constants';
 import { db } from './utils/storage';
 import { supabase } from './services/supabase';
 
@@ -41,21 +41,27 @@ export default function App() {
 
   // Apply theme globally
   useEffect(() => {
-    const themeName = currentUser.theme || 'neon';
-    const themeData = THEMES[themeName as keyof typeof THEMES];
-    if (themeData) {
-      document.documentElement.style.setProperty('--primary', themeData.primary);
-      document.documentElement.style.setProperty('--primary-glow', themeData.primaryGlow);
-      document.documentElement.style.setProperty('--on-primary', themeData.onPrimary);
-      // New semantic variables
-      if (themeData.background) document.documentElement.style.setProperty('--background', themeData.background);
-      if (themeData.surface) document.documentElement.style.setProperty('--surface', themeData.surface);
-      if (themeData.surfaceHighlight) document.documentElement.style.setProperty('--surface-highlight', themeData.surfaceHighlight);
-      if (themeData.text) document.documentElement.style.setProperty('--text-main', themeData.text);
-      if (themeData.textMuted) document.documentElement.style.setProperty('--text-muted', themeData.textMuted);
-      if (themeData.border) document.documentElement.style.setProperty('--border', themeData.border);
+    const mode = currentUser.appMode || 'dark';
+    const accent = currentUser.themeColor || 'neon';
+
+    const modeData = MODES[mode as keyof typeof MODES];
+    const accentData = ACCENTS[accent as keyof typeof ACCENTS];
+
+    if (modeData) {
+      document.documentElement.style.setProperty('--background', modeData.background);
+      document.documentElement.style.setProperty('--surface', modeData.surface);
+      document.documentElement.style.setProperty('--surface-highlight', modeData.surfaceHighlight);
+      document.documentElement.style.setProperty('--text-main', modeData.text);
+      document.documentElement.style.setProperty('--text-muted', modeData.textMuted);
+      document.documentElement.style.setProperty('--border', modeData.border);
     }
-  }, [currentUser.theme]);
+
+    if (accentData) {
+      document.documentElement.style.setProperty('--primary', accentData.primary);
+      document.documentElement.style.setProperty('--primary-glow', accentData.primaryGlow);
+      document.documentElement.style.setProperty('--on-primary', accentData.onPrimary);
+    }
+  }, [currentUser.appMode, currentUser.themeColor]);
 
   // Check tutorial on mount/login
   useEffect(() => {
@@ -421,13 +427,14 @@ export default function App() {
                 setCurrentUser(u);
                 await db.user.save(u);
               }}
-              onUpdateSettings={async (settings, theme) => {
+              onUpdateSettings={async (settings, mode, accent) => {
                 const u = {
                   ...currentUser,
                   settings: { ...currentUser.settings, ...settings },
                   lastSync: new Date().getTime()
                 };
-                if (theme) u.theme = theme;
+                if (mode) u.appMode = mode;
+                if (accent) u.themeColor = accent;
                 setCurrentUser(u);
                 await db.user.save(u);
               }}
