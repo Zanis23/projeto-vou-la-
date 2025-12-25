@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Button } from '../components/Button';
 import { Logo } from '../components/Logo';
-import { Building2, ChevronRight, AlertCircle, Loader2, UserCircle, MapPin, Star } from 'lucide-react';
+import { Building2, ChevronRight, AlertCircle, Loader2, MapPin, Star } from 'lucide-react';
 import { db, generateUserCode } from '../utils/storage';
 import { useHaptic } from '../hooks/useHaptic';
 import { User } from '../types';
@@ -31,16 +31,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBusinessClick }) => {
     if (error) setError(null);
   };
 
-  const handleDemoLogin = async () => {
-    setIsLoading(true);
-    trigger('medium');
-    const res = await db.auth.login('admin', '123');
-    if (res.success && res.user) {
-      trigger('success');
-      onLogin(res.user.name, false, res.user);
-    }
-    setIsLoading(false);
-  };
+
 
   const handleSubmit = async () => {
     if (!formData.email || !formData.password) {
@@ -174,14 +165,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBusinessClick }) => {
               </Button>
             </div>
 
-            {!isRegister && (
-              <button
-                onClick={handleDemoLogin}
-                className="w-full py-3 rounded-xl text-slate-500 text-[10px] font-bold uppercase tracking-widest hover:text-white hover:bg-white/5 transition-all flex items-center justify-center gap-2"
-              >
-                <UserCircle className="w-3 h-3" /> Visitante
-              </button>
-            )}
+
           </div>
         </div>
 
