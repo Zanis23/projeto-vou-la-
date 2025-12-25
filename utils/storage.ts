@@ -256,7 +256,6 @@ export const db = {
     save: async (user: User): Promise<boolean> => {
       saveLocal(KEYS.USER, user);
       try {
-        // Use UPSERT instead of UPDATE for robustness
         const { error } = await supabase.from('profiles').upsert({
           id: user.id,
           name: user.name,
@@ -265,7 +264,8 @@ export const db = {
           level: user.level,
           bio: user.bio,
           history: user.history,
-          owned_place_id: user.ownedPlaceId
+          owned_place_id: user.ownedPlaceId,
+          blocked_users: user.settings?.blockedUsers || []
         });
 
         if (error) {
@@ -276,6 +276,25 @@ export const db = {
       } catch (e) {
         console.error("Exceção ao salvar perfil:", e);
         return false;
+      }
+    },
+    search: async (query: string): Promise<User[]> => {
+      try {
+        const { data } = await supabase.from('profiles')
+          .select('*')
+          .ilike('name', `%${query}%`)
+          .limit(10);
+        return (data || []).map(p => ({
+          ...MOCK_USER,
+          id: p.id,
+          name: p.name,
+          avatar: p.avatar,
+          bio: p.bio,
+          points: p.points || 0,
+          level: p.level || 1
+        }));
+      } catch (e) {
+        return [];
       }
     }
   },
@@ -338,8 +357,7 @@ export const db = {
           upcoming_events: place.upcomingEvents,
           active_promos: place.activePromos,
           sentiment_score: place.sentimentScore,
-          crowd_insights: place.crowdInsights,
-          owner_id: place.ownerId
+          crowd_insights: place.crowdInsights
         };
 
         const { data } = await supabase.from('places').insert([dbPlace]).select().single();
@@ -447,17 +465,58 @@ export const db = {
 
         await supabase.from('chats').upsert({
           id: chat.id,
-          user_id: user.id, // Current user is sender
-          target_id: chat.userId, // Map UI userId to DB target_id
-          user_name: chat.userName, // Target name
-          user_avatar: chat.userAvatar, // Target avatar
+          user_id: user.id,
+          target_id: chat.userId,
+          user_name: chat.userName,
+          user_avatar: chat.userAvatar,
           last_message: chat.lastMessage,
           messages: chat.messages,
+          is_blocked: chat.isBlocked || false,
           updated_at: new Date().toISOString()
         });
       } catch (e) {
         console.error("Chat add/update failed", e);
       }
+    },
+    block: async (targetId: string) => {
+      const me = await db.user.get();
+      if (!me) return;
+      const blocked = me.settings?.blockedUsers || [];
+      if (!blocked.includes(targetId)) {
+        const updatedUser = {
+          ...me,
+          settings: {
+            ...me.settings!,
+            blockedUsers: [...blocked, targetId]
+          }
+        };
+        await db.user.save(updatedUser);
+      }
+    }
+  },
+
+  ranking: {
+    list: async (): Promise<User[]> => {
+      try {
+        const { data } = await supabase.from('profiles')
+          .select('*')
+          .order('points', { ascending: false })
+          .limit(20);
+
+        if (data && data.length > 0) {
+          return data.map(p => ({
+            ...MOCK_USER,
+            id: p.id,
+            name: p.name,
+            avatar: p.avatar,
+            points: p.points || 0,
+            level: p.level || 1,
+            bio: p.bio,
+            badges: p.badges || []
+          }));
+        }
+      } catch (e) { }
+      return [];
     }
   }
 };

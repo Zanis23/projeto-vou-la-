@@ -69,7 +69,26 @@ export const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ placeId, p
     });
     const [isSaving, setIsSaving] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const notificationSoundRef = useRef<HTMLAudioElement | null>(null);
+    const prevCallsCountRef = useRef(place?.activeCalls?.length || 0);
     const isEditingRef = useRef(false);
+
+    // Audio Notification Effect
+    useEffect(() => {
+        if (!notificationSoundRef.current) {
+            notificationSoundRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+        }
+
+        const currentCount = place?.activeCalls?.length || 0;
+        if (currentCount > prevCallsCountRef.current) {
+            const hasPending = place?.activeCalls?.some(c => c.status === 'pending');
+            if (hasPending) {
+                notificationSoundRef.current.play().catch(e => console.log("Audio play blocked by browser", e));
+                trigger('heavy');
+            }
+        }
+        prevCallsCountRef.current = currentCount;
+    }, [place?.activeCalls, trigger]);
 
     // Update form when place changes
     useEffect(() => {
@@ -446,61 +465,67 @@ export const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ placeId, p
                                         <p className="text-sm font-black uppercase tracking-widest italic">Bar tranquilo por enquanto</p>
                                     </div>
                                 ) : (
-                                    place.activeCalls?.map(call => (
-                                        <div key={call.id} className={`p-5 rounded-3xl border transition-all ${call.status === 'pending' ? 'bg-slate-800 border-indigo-500/40 shadow-xl' : 'bg-slate-900 border-slate-800 opacity-60'}`}>
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-4">
-                                                    <div className={`p-3 rounded-2xl ${call.type === 'Pedido' ? 'bg-indigo-500/20 text-indigo-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
-                                                        {call.type === 'Pedido' ? <Utensils className="w-6 h-6" /> : <DollarSign className="w-6 h-6" />}
+                                    place.activeCalls?.map(call => {
+                                        const isUrgent = call.status === 'pending'; // In a real app, compare timestamps
+                                        return (
+                                            <div key={call.id} className={`p-5 rounded-3xl border transition-all ${call.status === 'pending' ? (isUrgent ? 'bg-indigo-900 border-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.4)] animate-pulse' : 'bg-slate-800 border-indigo-500/40 shadow-xl') : 'bg-slate-900 border-slate-800 opacity-60'}`}>
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className={`p-3 rounded-2xl ${call.type === 'Pedido' ? 'bg-indigo-500/20 text-indigo-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                                                            {call.type === 'Pedido' ? <Utensils className="w-6 h-6" /> : <DollarSign className="w-6 h-6" />}
+                                                        </div>
+                                                        <div>
+                                                            <div className="flex items-center gap-2">
+                                                                <p className="text-white font-black text-base italic leading-tight">{call.userName}</p>
+                                                                {isUrgent && <span className="bg-red-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter">Urgente</span>}
+                                                            </div>
+                                                            <p className="text-[9px] text-slate-500 font-bold uppercase mt-1 flex items-center gap-2">
+                                                                <Clock className="w-3 h-3" /> {call.timestamp} • {call.type}
+                                                                {call.status === 'preparing' && <span className="text-amber-500 font-extrabold ml-1 animate-pulse">● Preparando</span>}
+                                                                {call.status === 'ready' && <span className="text-emerald-400 font-extrabold ml-1">● Pronto</span>}
+                                                                {call.status === 'done' && <span className="text-slate-400 font-extrabold ml-1">● Finalizado</span>}
+                                                            </p>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <p className="text-white font-black text-base italic leading-tight">{call.userName}</p>
-                                                        <p className="text-[9px] text-slate-500 font-bold uppercase mt-1 flex items-center gap-2">
-                                                            <Clock className="w-3 h-3" /> {call.timestamp} • {call.type}
-                                                            {call.status === 'preparing' && <span className="text-amber-500 font-extrabold ml-1 animate-pulse">● Preparando</span>}
-                                                            {call.status === 'ready' && <span className="text-emerald-400 font-extrabold ml-1">● Pronto</span>}
-                                                            {call.status === 'done' && <span className="text-slate-400 font-extrabold ml-1">● Finalizado</span>}
-                                                        </p>
+                                                    <div className="flex gap-2">
+                                                        {call.status === 'pending' && (
+                                                            <button
+                                                                onClick={() => updateCallStatus(call.id, 'preparing')}
+                                                                className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase shadow-lg active:scale-95 transition-all"
+                                                            >
+                                                                Atender Pedido
+                                                            </button>
+                                                        )}
+                                                        {call.status === 'preparing' && (
+                                                            <button
+                                                                onClick={() => updateCallStatus(call.id, 'ready')}
+                                                                className="bg-amber-500 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase shadow-lg active:scale-95 transition-all"
+                                                            >
+                                                                Pedido Pronto
+                                                            </button>
+                                                        )}
+                                                        {call.status === 'ready' && (
+                                                            <button
+                                                                onClick={() => updateCallStatus(call.id, 'done')}
+                                                                className="bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase shadow-lg active:scale-95 transition-all"
+                                                            >
+                                                                Entregar / Finalizar
+                                                            </button>
+                                                        )}
+                                                        {call.status === 'done' && (
+                                                            <button
+                                                                onClick={() => deleteCall(call.id)}
+                                                                className="p-2.5 text-slate-600 hover:text-white transition-colors"
+                                                                title="Remover"
+                                                            >
+                                                                <Trash2 className="w-5 h-5" />
+                                                            </button>
+                                                        )}
                                                     </div>
-                                                </div>
-                                                <div className="flex gap-2">
-                                                    {call.status === 'pending' && (
-                                                        <button
-                                                            onClick={() => updateCallStatus(call.id, 'preparing')}
-                                                            className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase shadow-lg active:scale-95 transition-all"
-                                                        >
-                                                            Atender Pedido
-                                                        </button>
-                                                    )}
-                                                    {call.status === 'preparing' && (
-                                                        <button
-                                                            onClick={() => updateCallStatus(call.id, 'ready')}
-                                                            className="bg-amber-500 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase shadow-lg active:scale-95 transition-all"
-                                                        >
-                                                            Pedido Pronto
-                                                        </button>
-                                                    )}
-                                                    {call.status === 'ready' && (
-                                                        <button
-                                                            onClick={() => updateCallStatus(call.id, 'done')}
-                                                            className="bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase shadow-lg active:scale-95 transition-all"
-                                                        >
-                                                            Entregar / Finalizar
-                                                        </button>
-                                                    )}
-                                                    {call.status === 'done' && (
-                                                        <button
-                                                            onClick={() => deleteCall(call.id)}
-                                                            className="p-2.5 text-slate-600 hover:text-white transition-colors"
-                                                            title="Remover"
-                                                        >
-                                                            <Trash2 className="w-5 h-5" />
-                                                        </button>
-                                                    )}
                                                 </div>
                                             </div>
-                                        </div>
-                                    ))
+                                        );
+                                    })
                                 )}
                             </div>
                         )}

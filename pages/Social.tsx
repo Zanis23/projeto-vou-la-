@@ -31,6 +31,7 @@ export const Social: React.FC<SocialProps> = ({ feed, onToggleLike, onComment, o
   const [reportedIds, setReportedIds] = useState<string[]>([]);
   const [blockedUsers, setBlockedUsers] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadChats = useCallback(async () => {
     const chats = await (db.chats as any).get();
@@ -135,6 +136,53 @@ export const Social: React.FC<SocialProps> = ({ feed, onToggleLike, onComment, o
     }
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !activeChatId) return;
+    trigger('medium');
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64 = reader.result as string;
+      const me = await db.user.get();
+      const newMessage: Message = {
+        id: Date.now().toString(),
+        senderId: me.id,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isMe: true,
+        type: 'image',
+        imageUrl: base64
+      };
+
+      const updatedChats = allChats.map(chat => {
+        if (chat.id === activeChatId) {
+          return {
+            ...chat,
+            messages: [...chat.messages, newMessage],
+            lastMessage: '📷 Foto'
+          };
+        }
+        return chat;
+      });
+
+      setAllChats(updatedChats);
+      const chatToSave = updatedChats.find(c => c.id === activeChatId);
+      if (chatToSave) await (db.chats as any).add(chatToSave);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleBlockUser = async () => {
+    if (!activeChat) return;
+    if (confirm(`Deseja bloquear ${activeChat.userName}?`)) {
+      await (db.chats as any).block(activeChat.userId);
+      setBlockedUsers(prev => [...prev, activeChat.userId]);
+      setView('chats');
+      setActiveChatId(null);
+      trigger('warning');
+    }
+  };
+
   const filteredFeed = feed.filter(item => !reportedIds.includes(item.id) && !blockedUsers.includes(item.userId));
 
   return (
@@ -215,7 +263,7 @@ export const Social: React.FC<SocialProps> = ({ feed, onToggleLike, onComment, o
                 </div>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => { }} className="p-2 text-slate-400"><MoreVertical className="w-5 h-5" /></button>
+                <button onClick={handleBlockUser} className="p-2 text-red-500/50 hover:text-red-500"><Ban className="w-5 h-5" /></button>
               </div>
             </div>
           )}
@@ -316,7 +364,11 @@ export const Social: React.FC<SocialProps> = ({ feed, onToggleLike, onComment, o
             {activeChat.messages.map((msg, idx) => (
               <div key={msg.id} className={`flex ${msg.isMe ? 'justify-end' : 'justify-start'} animate-[pop_0.3s_ease-out]`}>
                 <div className={`max-w-[85%] px-3 py-2 text-[14.5px] font-medium shadow-sm ${msg.isMe ? 'bubble-me' : 'bubble-them'}`}>
-                  <p className="leading-relaxed">{msg.text}</p>
+                  {msg.type === 'image' && msg.imageUrl ? (
+                    <img src={msg.imageUrl} className="rounded-lg mb-1 max-h-60 w-auto object-cover" alt="Sent" />
+                  ) : (
+                    <p className="leading-relaxed">{msg.text}</p>
+                  )}
                   <div className={`flex items-center justify-end gap-1 mt-1 ${msg.isMe ? 'opacity-70' : 'text-slate-500'}`}>
                     <span className="text-[10px]">{msg.timestamp}</span>
                     {msg.isMe && <CheckCircle2 className="w-3 h-3 text-[#53bdeb]" />}
@@ -328,8 +380,14 @@ export const Social: React.FC<SocialProps> = ({ feed, onToggleLike, onComment, o
           </div>
 
           <div className="p-3 bg-[#202c33] border-t border-slate-900/50 pb-safe">
+            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
             <div className="flex gap-3 items-center">
-              <button className="text-slate-400 p-1"><Plus className="w-6 h-6" /></button>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="text-slate-400 p-1 hover:text-[var(--primary)] transition-colors"
+              >
+                <Plus className="w-6 h-6" />
+              </button>
               <div className="flex-1 bg-[#2a3942] rounded-xl px-4 py-2.5 shadow-inner">
                 <input
                   type="text"
