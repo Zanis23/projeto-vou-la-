@@ -36,10 +36,14 @@ export default function App() {
 
   // Check tutorial on mount/login
   useEffect(() => {
-    if (appState === 'MAIN' && !localStorage.getItem('voula_tutorial_seen_v1')) {
-      setShowTutorial(true);
+    // Check whenever we enter MAIN state or user changes
+    if (appState === 'MAIN') {
+      const seen = localStorage.getItem('voula_tutorial_seen_v1');
+      if (seen !== 'true') {
+        setShowTutorial(true);
+      }
     }
-  }, [appState]);
+  }, [appState, currentUser?.id]);
 
   // Lógica para lidar com botão Voltar no Android (Nativo)
   useEffect(() => {
@@ -172,6 +176,7 @@ export default function App() {
 
   const handleLogin = (name: string, isNewUser: boolean, user?: User) => {
     if (user) {
+      // Force tutorial check by clearing flag if explicitly new user
       if (isNewUser) {
         localStorage.removeItem('voula_tutorial_seen_v1');
       }
@@ -347,6 +352,26 @@ export default function App() {
         <NavButton active={activeTab === Tab.SOCIAL} onClick={() => setActiveTab(Tab.SOCIAL)} icon={<MessageCircle className="w-5 h-5" />} label="Bonde" />
         <NavButton active={activeTab === Tab.PROFILE} onClick={() => setActiveTab(Tab.PROFILE)} icon={<UserIcon className="w-5 h-5" />} label="Perfil" />
       </nav>
+
+      <style>{`
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-5px); }
+          75% { transform: translateX(5px); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slideUp {
+          from { transform: translateY(20px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes slideLeft {
+          from { transform: translateX(20px); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 }
