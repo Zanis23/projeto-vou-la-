@@ -25,7 +25,7 @@ export const MoreOptionsModal: React.FC<MoreOptionsModalProps> = ({ currentUser,
   }
 
   return (
-    <div className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center animate-[fadeIn_0.2s_ease-out]" onClick={onClose}>
+    <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center animate-[fadeIn_0.2s_ease-out]" onClick={onClose}>
       <div
         className="w-full max-w-md bg-[#0E1121] rounded-t-3xl sm:rounded-3xl border-t sm:border border-slate-800 p-6 animate-[slideUp_0.3s_ease-out] relative"
         onClick={e => e.stopPropagation()}

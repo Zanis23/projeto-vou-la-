@@ -144,9 +144,7 @@ export const Radar: React.FC<RadarProps> = ({ places, onPlaceSelect, center, use
         <button onClick={handleRecenter} className={`w-14 h-14 rounded-full shadow-xl flex items-center justify-center border-2 transition-all active:scale-90 ${gpsActive ? 'bg-blue-500 border-white text-white' : 'bg-slate-800 border-slate-700 text-slate-300'}`}>
           {findingLocation ? <Loader2 className="w-6 h-6 animate-spin" /> : <Navigation className="w-6 h-6" />}
         </button>
-        <button className="w-14 h-14 bg-[var(--primary)] rounded-full text-[var(--on-primary)] shadow-xl border-2 border-white active:scale-90 flex items-center justify-center">
-          <Camera className="w-6 h-6" />
-        </button>
+
       </div>
     </div>
   );
