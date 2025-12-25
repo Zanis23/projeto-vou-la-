@@ -191,88 +191,89 @@ export const Social: React.FC<SocialProps> = ({ feed, onToggleLike, onComment, o
 
       {/* Search Modal */}
       {showSearch && (
-        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md p-4 flex flex-col">
+        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xl p-4 flex flex-col animate-[fadeIn_0.2s_ease-out]">
           <div className="flex items-center gap-3 mb-6 pt-safe">
-            <button onClick={() => setShowSearch(false)} className="p-2 bg-slate-800 rounded-xl text-white"><X className="w-6 h-6" /></button>
-            <div className="flex-1 bg-slate-800 rounded-xl flex items-center px-4 py-2 border border-slate-700">
-              <Search className="w-5 h-5 text-slate-400 mr-2" />
+            <button onClick={() => setShowSearch(false)} className="p-3 bg-[var(--surface)] rounded-2xl text-[var(--text-muted)] hover:text-[var(--text-main)] border border-[var(--surface-highlight)]"><X className="w-6 h-6" /></button>
+            <div className="flex-1 bg-[var(--surface)] rounded-2xl flex items-center px-5 py-3 border border-[var(--surface-highlight)] shadow-lg">
+              <Search className="w-5 h-5 text-[var(--text-muted)] mr-3" />
               <input
                 autoFocus
                 type="text"
                 placeholder="Nome ou código (VOU-1234)..."
-                className="bg-transparent text-white w-full focus:outline-none placeholder:text-slate-500"
+                className="bg-transparent text-[var(--text-main)] w-full focus:outline-none placeholder:text-[var(--text-muted)] font-medium"
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
               />
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto space-y-2">
+          <div className="flex-1 overflow-y-auto space-y-3">
             {searchResults.map(user => (
               <button
                 key={user.id}
                 onClick={() => startNewChat(user)}
-                className="w-full flex items-center gap-4 p-4 bg-slate-800/40 rounded-2xl hover:bg-slate-800/60 border border-slate-800 transition-colors"
+                className="w-full flex items-center gap-4 p-4 bg-[var(--surface)]/80 rounded-[1.5rem] hover:bg-[var(--surface-highlight)] border border-[var(--surface-highlight)] transition-all active:scale-[0.98]"
               >
-                <img src={user.avatar} className="w-12 h-12 rounded-full object-cover border border-slate-700" alt="" />
+                <img src={user.avatar} className="w-14 h-14 rounded-[1.2rem] squircle object-cover border-2 border-[var(--background)] shadow-sm bg-slate-800" alt="" />
                 <div className="text-left flex-1 min-w-0">
-                  <h4 className="font-bold text-white truncate">{user.name}</h4>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[9px] bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded font-mono font-bold">{user.userCode}</span>
-                    <p className="text-[10px] text-slate-500 truncate">{user.bio || 'Membro do Vou Lá'}</p>
+                  <h4 className="font-black text-[var(--text-main)] truncate text-lg">{user.name}</h4>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[9px] bg-[var(--surface-highlight)] text-[var(--text-muted)] px-2 py-0.5 rounded-lg font-mono font-bold uppercase tracking-wider">{user.userCode}</span>
+                    <p className="text-[11px] text-[var(--text-muted)] truncate font-medium">{user.bio || 'Membro do Vou Lá'}</p>
                   </div>
                 </div>
-                <UserPlus className="ml-auto w-5 h-5 text-[var(--primary)]" />
+                <div className="p-3 bg-[var(--primary)]/10 rounded-full text-[var(--primary)]">
+                  <UserPlus className="w-5 h-5" />
+                </div>
               </button>
             ))}
             {searchQuery.length > 2 && searchResults.length === 0 && (
-              <p className="text-center text-slate-500 py-10">Nenhum usuário encontrado</p>
-            )}
-            {searchQuery.length <= 2 && (
-              <div className="text-center py-10 opacity-30 italic text-slate-500">
-                Digite pelo menos 3 letras...
+              <div className="flex flex-col items-center justify-center py-20 text-[var(--text-muted)] opacity-60">
+                <Search className="w-12 h-12 mb-4 opacity-50" />
+                <p className="font-bold uppercase tracking-widest text-xs">Nenhum usuário encontrado</p>
               </div>
             )}
           </div>
         </div>
       )}
 
-      <div className="bg-[var(--background)] sticky top-0 z-20 pt-safe px-4 shadow-xl border-b border-slate-800 shrink-0">
-        <div className="pt-4 pb-2">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-black text-white italic tracking-tighter">SOCIAL</h2>
+      <div className="bg-[var(--background)]/90 backdrop-blur-xl sticky top-0 z-20 pt-safe px-5 shadow-sm border-b border-[var(--border)] shrink-0 transition-colors duration-500">
+        <div className="pt-2 pb-2">
+          <div className="flex justify-between items-center mb-4 mt-2">
+            <h2 className="text-4xl font-black text-[var(--text-main)] italic tracking-tighter drop-shadow-sm">SOCIAL</h2>
             <div className="flex gap-2">
-              <button onClick={() => { trigger('light'); setShowSearch(true); }} className="bg-slate-800 p-2.5 rounded-full text-[var(--primary)] border border-slate-700 active:scale-95 shadow-lg shadow-black/20">
-                <UserPlus className="w-5 h-5" />
+              <button onClick={() => { trigger('light'); setShowSearch(true); }} className="bg-[var(--surface)] p-3 rounded-2xl text-[var(--primary)] border border-[var(--surface-highlight)] active:scale-95 shadow-lg group hover:border-[var(--primary)] transition-colors">
+                <UserPlus className="w-6 h-6 group-hover:scale-110 transition-transform" />
               </button>
             </div>
           </div>
           {view !== 'chat_detail' && (
-            <div className="flex p-1 bg-slate-800/80 backdrop-blur rounded-xl mb-2">
-              <button onClick={() => setView('feed')} className={`flex-1 py-2.5 text-xs font-black uppercase rounded-lg transition-all ${view === 'feed' ? 'bg-[var(--primary)] text-black shadow-lg' : 'text-slate-400'}`}>Feed</button>
-              <button onClick={() => setView('chats')} className={`flex-1 py-2.5 text-xs font-black uppercase rounded-lg transition-all ${view === 'chats' ? 'bg-[var(--primary)] text-black shadow-lg' : 'text-slate-400'}`}>Conversas</button>
+            <div className="flex p-1.5 bg-[var(--surface)] rounded-2xl mb-2 border border-[var(--surface-highlight)] relative">
+              {/* Slider for Tab Indicator could go here for extra polish, simple toggle for now */}
+              <button onClick={() => setView('feed')} className={`flex-1 py-3 text-[10px] font-black uppercase rounded-xl transition-all tracking-widest ${view === 'feed' ? 'bg-[var(--primary)] text-[var(--on-primary)] shadow-md scale-[1.02]' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}>Feed</button>
+              <button onClick={() => setView('chats')} className={`flex-1 py-3 text-[10px] font-black uppercase rounded-xl transition-all tracking-widest ${view === 'chats' ? 'bg-[var(--primary)] text-[var(--on-primary)] shadow-md scale-[1.02]' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}>Conversas</button>
             </div>
           )}
           {view === 'chat_detail' && activeChat && (
             <div className="flex items-center justify-between pb-2">
               <div className="flex items-center gap-3">
-                <button onClick={() => setView('chats')} className="p-2 bg-slate-800 rounded-lg text-white"><ChevronLeft className="w-5 h-5" /></button>
+                <button onClick={() => setView('chats')} className="p-2.5 bg-[var(--surface)] rounded-xl text-[var(--text-muted)] hover:text-[var(--text-main)] border border-[var(--surface-highlight)] active:scale-90"><ChevronLeft className="w-5 h-5" /></button>
                 <div className="flex items-center gap-3">
-                  <img src={activeChat.userAvatar} className="w-10 h-10 rounded-full border-2 border-[var(--primary)] object-cover shadow-lg shadow-[var(--primary)]/20" alt="" />
+                  <img src={activeChat.userAvatar} className="w-10 h-10 rounded-[0.8rem] squircle border border-[var(--primary)] object-cover shadow-lg shadow-[var(--primary)]/20" alt="" />
                   <div>
-                    <h3 className="font-bold text-white text-sm">{activeChat.userName}</h3>
-                    <p className="text-[10px] text-[#00ff73] font-bold uppercase tracking-wider animate-pulse">Online</p>
+                    <h3 className="font-bold text-[var(--text-main)] text-sm">{activeChat.userName}</h3>
+                    <p className="text-[10px] text-[#00ff73] font-bold uppercase tracking-wider animate-pulse flex items-center gap-1"><span className="w-1.5 h-1.5 bg-[#00ff73] rounded-full"></span> Online</p>
                   </div>
                 </div>
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => { trigger('medium'); alert('Função "Pagar um Drink" em breve!'); }}
-                  className="bg-[var(--primary)] text-black px-3 py-1.5 rounded-xl font-black text-[10px] uppercase tracking-tighter flex items-center gap-1.5 shadow-lg shadow-[var(--primary)]/20 active:scale-90 transition-transform"
+                  className="bg-[var(--primary)] text-[var(--on-primary)] px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-tighter flex items-center gap-1.5 shadow-lg shadow-[var(--primary)]/20 active:scale-90 transition-all hover:brightness-110"
                 >
-                  <ImageIcon className="w-4 h-4" /> Pagar Drink
+                  <ImageIcon className="w-4 h-4" /> <span className="hidden xs:inline">Pagar Drink</span>
                 </button>
-                <button onClick={handleBlockUser} className="p-2 text-red-500/50 hover:text-red-500"><Ban className="w-5 h-5" /></button>
+                <button onClick={handleBlockUser} className="p-2.5 bg-red-500/10 rounded-xl text-red-500 hover:bg-red-500 hover:text-white transition-colors"><Ban className="w-5 h-5" /></button>
               </div>
             </div>
           )}
@@ -280,52 +281,59 @@ export const Social: React.FC<SocialProps> = ({ feed, onToggleLike, onComment, o
       </div>
 
       {view === 'feed' && (
-        <div className="flex-1 overflow-y-auto p-4 space-y-8 pb-32 bg-[var(--background)]">
-          <div className="flex gap-4 overflow-x-auto hide-scrollbar pl-1">
-            <div onClick={() => setShowAiStudio(true)} className="flex flex-col items-center gap-1.5 shrink-0 group active:scale-95">
-              <div className="w-[74px] h-[74px] rounded-full bg-slate-800 border-2 border-slate-700 border-dashed flex items-center justify-center text-[var(--primary)] shadow-lg group-hover:border-[var(--primary)] transition-colors">
-                <Camera className="w-7 h-7" />
+        <div className="flex-1 overflow-y-auto p-5 space-y-8 pb-32 bg-[var(--background)]">
+          <div className="flex gap-4 overflow-x-auto hide-scrollbar pl-1 -mx-5 px-5 snap-x">
+            <div onClick={() => setShowAiStudio(true)} className="flex flex-col items-center gap-2 shrink-0 group active:scale-95 snap-center cursor-pointer">
+              <div className="w-[80px] h-[80px] rounded-[1.8rem] squircle bg-[var(--surface)] border-2 border-[var(--border)] border-dashed flex items-center justify-center text-[var(--primary)] shadow-lg group-hover:border-[var(--primary)] transition-all group-hover:shadow-[var(--primary)]/30">
+                <Camera className="w-8 h-8" />
               </div>
-              <span className="text-[10px] font-bold text-slate-400 uppercase">AI Studio</span>
+              <span className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-wide group-hover:text-[var(--primary)] transition-colors">AI Studio</span>
             </div>
             {places.filter(p => p.isTrending).map(place => (
-              <div key={place.id} className="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer" onClick={() => onPlaceSelect?.(place)}>
-                <div className="w-[74px] h-[74px] rounded-full p-[3px] bg-gradient-to-tr from-[var(--primary)] via-[#FF3399] to-[#0CC4FF] shadow-lg">
-                  <img src={place.imageUrl} className="w-full h-full rounded-full object-cover border-2 border-[var(--background)]" alt="" />
+              <div key={place.id} className="flex flex-col items-center gap-2 shrink-0 cursor-pointer snap-center group" onClick={() => onPlaceSelect?.(place)}>
+                <div className="w-[80px] h-[80px] rounded-[1.8rem] squircle p-[3px] bg-gradient-to-tr from-[var(--primary)] via-fuchsia-500 to-cyan-500 shadow-lg group-hover:scale-105 transition-transform">
+                  <img src={place.imageUrl} className="w-full h-full rounded-[1.5rem] squircle object-cover border-2 border-[var(--background)] bg-slate-800" alt="" />
                 </div>
-                <span className="text-[10px] font-bold text-slate-300 truncate w-16 text-center">{place.name}</span>
+                <span className="text-[10px] font-bold text-[var(--text-muted)] truncate w-20 text-center group-hover:text-[var(--text-main)] transition-colors">{place.name}</span>
               </div>
             ))}
           </div>
 
           <div className="space-y-6">
-            {filteredFeed.map((item) => (
-              <div key={item.id} className="bg-slate-800/40 p-4 rounded-3xl border border-slate-700/50 animate-[slideUp_0.4s_ease-out]">
-                <div className="flex justify-between items-start mb-3">
+            {filteredFeed.map((item, i) => (
+              <div key={item.id} className="glass-card p-5 rounded-[2.5rem] border border-[var(--surface-highlight)] hover:border-[var(--primary)]/30 transition-all duration-300" style={{ animationDelay: `${i * 0.1}s` }}>
+                <div className="flex justify-between items-start mb-4">
                   <div className="flex gap-4">
-                    <img src={item.userAvatar} className="w-12 h-12 rounded-full border-2 border-slate-600 object-cover shadow-md" alt="" />
+                    <div className="relative">
+                      <img src={item.userAvatar} className="w-12 h-12 rounded-[1rem] squircle border-2 border-[var(--background)] object-cover shadow-md bg-slate-800" alt="" />
+                      <div className="absolute -bottom-1 -right-1 bg-[var(--primary)] w-4 h-4 rounded-full border-2 border-[var(--background)] flex items-center justify-center">
+                        <div className="w-1.5 h-1.5 bg-black rounded-full animate-pulse"></div>
+                      </div>
+                    </div>
                     <div>
-                      <p className="text-sm text-white leading-tight"><span className="font-bold text-[var(--primary)]">{item.userName}</span> <span className="text-slate-300">{item.action}</span></p>
-                      <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-widest">{item.timeAgo}</p>
+                      <p className="text-sm text-[var(--text-main)] leading-tight"><span className="font-black text-[var(--primary)] tracking-wide">{item.userName}</span> <span className="text-[var(--text-muted)] font-medium">{item.action}</span></p>
+                      <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase mt-1 tracking-widest opacity-70">{item.timeAgo}</p>
                     </div>
                   </div>
-                  <button onClick={() => { trigger('medium'); if (confirm("Deseja denunciar?")) setReportedIds(prev => [...prev, item.id]); }} className="p-2 text-slate-600 hover:text-red-500 transition-colors">
+                  <button onClick={() => { trigger('medium'); if (confirm("Deseja denunciar?")) setReportedIds(prev => [...prev, item.id]); }} className="p-2 text-[var(--text-muted)] hover:text-red-500 transition-colors opacity-50 hover:opacity-100">
                     <ShieldAlert className="w-4 h-4" />
                   </button>
                 </div>
-                <div className="bg-slate-900/50 rounded-2xl p-3 border border-slate-800 flex items-center gap-3 mb-3 cursor-pointer hover:bg-slate-900 transition-colors" onClick={() => { const p = places.find(x => x.name === item.placeName); if (p) onPlaceSelect?.(p); }}>
-                  <div className="bg-slate-800 p-2 rounded-xl text-slate-400"><MapPin className="w-4 h-4" /></div>
-                  <span className="text-sm font-bold text-white">{item.placeName}</span>
+
+                <div className="bg-[var(--background)]/50 rounded-2xl p-4 border border-[var(--surface-highlight)] flex items-center gap-4 mb-4 cursor-pointer hover:bg-[var(--surface-highlight)] transition-colors group" onClick={() => { const p = places.find(x => x.name === item.placeName); if (p) onPlaceSelect?.(p); }}>
+                  <div className="bg-[var(--surface)] p-2.5 rounded-xl text-[var(--primary)] shadow-sm group-hover:scale-110 transition-transform"><MapPin className="w-5 h-5" /></div>
+                  <span className="text-sm font-black text-[var(--text-main)] uppercase tracking-wide group-hover:text-[var(--primary)] transition-colors">{item.placeName}</span>
                 </div>
-                <div className="flex gap-6 pt-3 border-t border-slate-700/50">
-                  <button onClick={() => onToggleLike(item.id)} className={`flex items-center gap-2 text-xs font-bold ${item.liked ? 'text-pink-500' : 'text-slate-400'} active:scale-110 transition-transform`}>
-                    <Heart className={`w-4 h-4 ${item.liked ? 'fill-current' : ''}`} /> {item.likesCount}
+
+                <div className="flex gap-6 pt-3 border-t border-[var(--border)]">
+                  <button onClick={() => onToggleLike(item.id)} className={`flex items-center gap-2 text-xs font-bold ${item.liked ? 'text-pink-500' : 'text-[var(--text-muted)]'} active:scale-110 transition-transform hover:text-pink-400`}>
+                    <Heart className={`w-5 h-5 ${item.liked ? 'fill-current' : ''}`} /> {item.likesCount}
                   </button>
-                  <button className="flex items-center gap-2 text-xs font-bold text-slate-400">
-                    <MessageSquare className="w-4 h-4" /> {item.commentsCount}
+                  <button className="flex items-center gap-2 text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors">
+                    <MessageSquare className="w-5 h-5" /> {item.commentsCount}
                   </button>
-                  <button className="flex items-center gap-2 text-xs font-bold text-slate-400 ml-auto">
-                    <Share2 className="w-4 h-4" />
+                  <button className="flex items-center gap-2 text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text-main)] ml-auto transition-colors">
+                    <Share2 className="w-5 h-5" />
                   </button>
                 </div>
               </div>
@@ -335,30 +343,30 @@ export const Social: React.FC<SocialProps> = ({ feed, onToggleLike, onComment, o
       )}
 
       {view === 'chats' && (
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-32 bg-[var(--background)]">
+        <div className="flex-1 overflow-y-auto p-5 space-y-3 pb-32 bg-[var(--background)]">
           {allChats.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 opacity-50">
-              <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-4">
-                <MessageSquare className="w-10 h-10 text-slate-600" />
+              <div className="w-24 h-24 bg-[var(--surface)] rounded-[2rem] squircle flex items-center justify-center mb-6 shadow-inner">
+                <MessageSquare className="w-10 h-10 text-[var(--text-muted)]" />
               </div>
-              <p className="text-slate-400 font-bold">Nenhuma conversa ativa</p>
-              <button onClick={() => setShowSearch(true)} className="mt-4 text-[var(--primary)] font-bold text-xs uppercase tracking-widest border border-[var(--primary)] px-4 py-2 rounded-full">Procurar amigos</button>
+              <p className="text-[var(--text-muted)] font-bold text-sm uppercase tracking-wider">Nenhuma conversa ativa</p>
+              <button onClick={() => setShowSearch(true)} className="mt-6 text-[var(--on-primary)] bg-[var(--primary)] font-black text-xs uppercase tracking-widest px-6 py-3 rounded-2xl shadow-lg shadow-[var(--primary)]/30 hover:scale-105 transition-transform">Procurar amigos</button>
             </div>
           ) : (
             allChats.map((chat) => (
-              <button key={chat.id} onClick={() => openChat(chat.id)} className="w-full flex items-center gap-4 p-4 bg-slate-800/40 hover:bg-slate-800/60 border border-slate-700/50 rounded-2xl text-left active:scale-[0.98] transition-all">
+              <button key={chat.id} onClick={() => openChat(chat.id)} className="w-full flex items-center gap-4 p-4 bg-[var(--surface)] hover:bg-[var(--surface-highlight)] border border-[var(--surface-highlight)] rounded-[1.5rem] text-left active:scale-[0.98] transition-all shadow-sm">
                 <div className="relative">
-                  <img src={chat.userAvatar} className="w-14 h-14 rounded-full object-cover border border-slate-700" alt="" />
-                  {chat.unreadCount > 0 && <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#00ff73] rounded-full border-2 border-[#0B141A] flex items-center justify-center text-[10px] font-black text-black shadow-lg shadow-[#00ff73]/40">{chat.unreadCount}</div>}
+                  <img src={chat.userAvatar} className="w-14 h-14 rounded-[1.2rem] squircle object-cover border-2 border-[var(--background)] bg-slate-800" alt="" />
+                  {chat.unreadCount > 0 && <div className="absolute -top-1 -right-1 w-6 h-6 bg-[#00ff73] rounded-full border-2 border-[var(--background)] flex items-center justify-center text-[10px] font-black text-black shadow-lg shadow-[#00ff73]/40">{chat.unreadCount}</div>}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-baseline mb-1">
-                    <h3 className="font-bold text-white text-base truncate">{chat.userName}</h3>
-                    <span className="text-[10px] text-slate-500 font-bold">Hoje</span>
+                    <h3 className="font-black text-[var(--text-main)] text-base truncate tracking-tight">{chat.userName}</h3>
+                    <span className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-wider">Hoje</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[#00ff73]"><CheckCircle2 className="w-3 h-3" /></span>
-                    <p className="text-sm truncate text-slate-500 font-medium">{chat.lastMessage}</p>
+                    <span className="text-[#00ff73]"><CheckCircle2 className="w-3.5 h-3.5" /></span>
+                    <p className="text-sm truncate text-[var(--text-muted)] font-medium">{chat.lastMessage}</p>
                   </div>
                 </div>
               </button>
@@ -368,19 +376,20 @@ export const Social: React.FC<SocialProps> = ({ feed, onToggleLike, onComment, o
       )}
 
       {view === 'chat_detail' && activeChat && (
-        <div className="flex flex-col flex-1 chat-bg overflow-hidden relative">
-          <div className="flex-1 p-4 overflow-y-auto space-y-3 pb-10">
+        <div className="flex flex-col flex-1 chat-bg overflow-hidden relative bg-[var(--background)]">
+          <div className="absolute inset-0 opacity-5 pattern-dots pointer-events-none"></div>
+          <div className="flex-1 p-4 overflow-y-auto space-y-3 pb-safe">
             {activeChat.messages.map((msg, idx) => (
               <div key={msg.id} className={`flex ${msg.isMe ? 'justify-end' : 'justify-start'} animate-[pop_0.3s_ease-out]`}>
-                <div className={`max-w-[85%] px-3 py-2 text-[14.5px] font-medium shadow-sm ${msg.isMe ? 'bubble-me' : 'bubble-them'}`}>
+                <div className={`max-w-[85%] px-4 py-3 text-[15px] font-medium shadow-sm rounded-2xl ${msg.isMe ? 'bg-[var(--primary)] text-[var(--on-primary)] rounded-tr-none' : 'bg-[var(--surface)] text-[var(--text-main)] border border-[var(--border)] rounded-tl-none'}`}>
                   {msg.type === 'image' && msg.imageUrl ? (
-                    <img src={msg.imageUrl} className="rounded-lg mb-1 max-h-60 w-auto object-cover" alt="Sent" />
+                    <img src={msg.imageUrl} className="rounded-xl mb-1 max-h-60 w-auto object-cover" alt="Sent" />
                   ) : (
                     <p className="leading-relaxed">{msg.text}</p>
                   )}
-                  <div className={`flex items-center justify-end gap-1 mt-1 ${msg.isMe ? 'opacity-70' : 'text-slate-500'}`}>
-                    <span className="text-[10px]">{msg.timestamp}</span>
-                    {msg.isMe && <CheckCircle2 className="w-3 h-3 text-[#53bdeb]" />}
+                  <div className={`flex items-center justify-end gap-1 mt-1 ${msg.isMe ? 'opacity-70' : 'text-[var(--text-muted)]'}`}>
+                    <span className="text-[9px] font-bold uppercase tracking-wider">{msg.timestamp}</span>
+                    {msg.isMe && <CheckCircle2 className="w-3 h-3" />}
                   </div>
                 </div>
               </div>
@@ -388,34 +397,34 @@ export const Social: React.FC<SocialProps> = ({ feed, onToggleLike, onComment, o
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="p-3 bg-[#202c33] border-t border-slate-900/50 pb-safe">
+          <div className="p-3 bg-[var(--surface)]/90 backdrop-blur-lg border-t border-[var(--border)] pb-safe relative z-20">
             <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
             <div className="flex gap-3 items-center">
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="text-slate-400 p-1 hover:text-[var(--primary)] transition-colors"
+                className="text-[var(--text-muted)] p-2 rounded-full hover:bg-[var(--surface-highlight)] hover:text-[var(--primary)] transition-colors"
               >
                 <Plus className="w-6 h-6" />
               </button>
-              <div className="flex-1 bg-[#2a3942] rounded-xl px-4 py-2.5 shadow-inner">
+              <div className="flex-1 bg-[var(--background)] rounded-2xl px-4 py-3 shadow-inner border border-[var(--border)]">
                 <input
                   type="text"
                   value={chatInputValue}
                   onChange={(e) => setChatInputValue(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSendText()}
-                  placeholder="Mensagem"
-                  className="w-full bg-transparent text-[#e9edef] focus:outline-none placeholder:text-slate-500 text-sm"
+                  placeholder="Digite sua mensagem..."
+                  className="w-full bg-transparent text-[var(--text-main)] focus:outline-none placeholder:text-[var(--text-muted)] text-sm font-medium"
                 />
               </div>
               {chatInputValue.trim() ? (
                 <button
                   onClick={handleSendText}
-                  className="bg-[#00a884] p-3 rounded-full text-white shadow-lg active:scale-95 transition-transform"
+                  className="bg-[var(--primary)] p-3 rounded-full text-[var(--on-primary)] shadow-lg active:scale-95 transition-transform hover:brightness-110"
                 >
                   <Send className="w-5 h-5 fill-current" />
                 </button>
               ) : (
-                <button className="text-slate-400 p-1"><Mic className="w-6 h-6" /></button>
+                <button className="text-[var(--text-muted)] p-2 hover:text-[var(--text-main)]"><Mic className="w-6 h-6" /></button>
               )}
             </div>
           </div>

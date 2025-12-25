@@ -228,15 +228,15 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                                 <Users className="w-4 h-4 text-cyan-400" />
                                 <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Público</span>
                             </div>
-                            <p className="text-3xl font-black text-white">{place.capacityPercentage}%</p>
-                            <p className="text-[10px] text-slate-500 font-bold uppercase mt-1">Lotado agora</p>
+                            <p className="text-3xl font-black text-[var(--text-main)]">{place.capacityPercentage}%</p>
+                            <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase mt-1">Lotado agora</p>
                         </div>
                         <div className="bg-slate-800/20 p-5 rounded-[2rem] border border-slate-700/30">
                             <div className="flex items-center gap-2 mb-3">
                                 <Music className="w-4 h-4 text-fuchsia-400" />
                                 <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Som</span>
                             </div>
-                            <p className="text-lg font-black text-white italic truncate">{place.currentMusic || 'Variada'}</p>
+                            <p className="text-lg font-black text-[var(--text-main)] italic truncate">{place.currentMusic || 'Variada'}</p>
                             <button onClick={() => setShowMusicPoll(true)} className="text-[10px] text-indigo-400 font-bold uppercase mt-2 hover:underline">Votar no próximo</button>
                         </div>
                     </div>

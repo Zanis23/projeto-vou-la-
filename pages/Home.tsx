@@ -94,14 +94,14 @@ export const Home: React.FC<HomeProps> = ({
       <div className="absolute top-0 left-0 right-0 h-64 bg-gradient-to-b from-[#1a1f35] to-transparent pointer-events-none z-0"></div>
       <div className="absolute -top-20 -right-20 w-64 h-64 bg-[var(--primary)] opacity-10 rounded-full blur-[80px] pointer-events-none z-0"></div>
 
-      <div className="px-5 pb-2 z-20 flex flex-col gap-5 sticky top-0 backdrop-blur-md bg-[var(--background)]/80 pt-4 border-b border-transparent transition-colors duration-500">
-        <div className="flex justify-between items-center">
+      <div className="px-5 pb-2 z-20 flex flex-col gap-6 sticky top-0 backdrop-blur-xl bg-[var(--background)]/80 pt-safe transition-colors duration-500 border-b border-white/5">
+        <div className="flex justify-between items-center mt-2">
           <div className="flex items-center gap-4">
-            <div className="relative cursor-pointer active:scale-95 transition-transform">
-              <div className="w-14 h-14 rounded-full p-[2px] bg-gradient-to-br from-[var(--primary)] via-white to-fuchsia-500">
+            <div className="relative cursor-pointer active:scale-95 transition-transform group">
+              <div className="w-14 h-14 rounded-[1.2rem] squircle p-[2px] bg-gradient-to-br from-[var(--primary)] via-white to-fuchsia-500 shadow-lg group-hover:shadow-[var(--primary)]/50 transition-shadow">
                 <img
                   src={currentUser.avatar}
-                  className="w-full h-full rounded-full object-cover border-2 border-[var(--background)] bg-slate-800"
+                  className="w-full h-full rounded-[1rem] squircle object-cover border-2 border-[var(--background)] bg-slate-800"
                   alt="Profile"
                   onError={(e) => e.currentTarget.src = FALLBACK_IMAGE}
                 />
@@ -110,18 +110,18 @@ export const Home: React.FC<HomeProps> = ({
             </div>
 
             <div className="flex flex-col justify-center">
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 flex items-center gap-1">
+              <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-0.5 flex items-center gap-1">
                 {getGreeting()}
               </p>
-              <h2 className="text-3xl font-black text-white italic tracking-tighter leading-none flex items-center gap-2 drop-shadow-md">
-                {firstName} <span className="text-2xl not-italic">|</span>
+              <h2 className="text-3xl font-black text-[var(--text-main)] italic tracking-tighter leading-none flex items-center gap-2 drop-shadow-sm">
+                {firstName} <span className="text-2xl not-italic text-[var(--primary)] animate-pulse">|</span>
               </h2>
             </div>
           </div>
 
           <button
             onClick={() => { trigger('light'); onOpenNotifications(); }}
-            className="relative p-3 bg-[var(--surface)] rounded-full text-slate-300 hover:text-white transition-colors border border-[var(--surface-highlight)] hover:border-[var(--primary)] active:scale-95 group shadow-lg"
+            className="relative p-3 bg-[var(--surface)] rounded-full text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors border border-[var(--surface-highlight)] hover:border-[var(--primary)] active:scale-95 group shadow-lg"
           >
             <Bell className="w-6 h-6 group-hover:rotate-12 transition-transform" />
             {notificationCount > 0 && (
@@ -130,15 +130,15 @@ export const Home: React.FC<HomeProps> = ({
           </button>
         </div>
 
-        <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
+        <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1 -mx-5 px-5 snap-x">
           {filters.map(f => (
             <button
               key={f.id}
               onClick={() => handleFilterChange(f.id as any)}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all border
+              className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border snap-center
                     ${filter === f.id
                   ? 'bg-[var(--primary)] text-[var(--on-primary)] border-[var(--primary)] shadow-[0_0_20px_var(--primary-glow)] scale-105'
-                  : 'bg-[var(--surface)] text-slate-400 border-[var(--surface-highlight)] hover:border-slate-600 hover:text-white'}`}
+                  : 'bg-[var(--surface)] text-[var(--text-muted)] border-[var(--surface-highlight)] hover:border-[var(--text-muted)] hover:text-[var(--text-main)]'}`}
             >
               {f.icon && React.cloneElement(f.icon as any, { className: 'w-3.5 h-3.5' })}
               {f.label}
