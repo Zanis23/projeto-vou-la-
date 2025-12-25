@@ -21,6 +21,8 @@ interface HomeProps {
   onShowMoment: (moment: Moment) => void;
   onAddMoment: () => void;
   hasCheckedIn: boolean;
+  onShowSocialHub: (place: Place) => void;
+  onCheckIn: (placeId: string) => void;
 }
 
 export const Home: React.FC<HomeProps> = ({
@@ -35,7 +37,9 @@ export const Home: React.FC<HomeProps> = ({
   moments,
   onShowMoment,
   onAddMoment,
-  hasCheckedIn
+  hasCheckedIn,
+  onShowSocialHub,
+  onCheckIn
 }) => {
   const { trigger } = useHaptic();
   const [filter, setFilter] = useState<PlaceType | 'ALL' | 'SAVED'>(initialFilter);
@@ -183,6 +187,8 @@ export const Home: React.FC<HomeProps> = ({
                   onClick={() => onPlaceSelect(place)}
                   isSaved={savedPlaces.includes(place.id)}
                   onToggleSave={onToggleSave}
+                  onShowSocialHub={() => onShowSocialHub(place)}
+                  onCheckIn={onCheckIn}
                 />
               </div>
             ))

@@ -17,6 +17,7 @@ import { Tab, Place, User, FeedItem, CheckIn, PlaceType, Chat, Moment, Ticket } 
 import { Map, List, User as UserIcon, MessageCircle, LayoutGrid, X, Loader2 } from 'lucide-react';
 import { PlaceCard } from './components/PlaceCard';
 import { MoreOptionsModal } from './components/MoreOptionsModal';
+import { SocialHub } from './components/SocialHub';
 import { BusinessDashboard } from './components/BusinessDashboard';
 import { MOCK_USER, ACCENTS, MODES } from './constants';
 import { db } from './utils/storage';
@@ -250,6 +251,8 @@ export default function App() {
     setMoments(updatedMoments);
   };
 
+  const [showSocialHub, setShowSocialHub] = useState(false);
+
   const handleBuyTicket = async (ticketId: string) => {
     const success = await db.wallet.buy(ticketId);
     if (success) {
@@ -356,7 +359,7 @@ export default function App() {
 
   if (appState === 'LOADING') {
     return (
-      <div className="h-screen bg-[#0E1121] flex flex-col items-center justify-center">
+      <div className="h-screen bg-[var(--background)] flex flex-col items-center justify-center">
         <Loader2 className="w-12 h-12 text-[var(--primary)] animate-spin mb-4" />
         <p className="text-slate-500 font-black uppercase tracking-[0.3em] text-xs">VOU LÁ</p>
       </div>
@@ -406,6 +409,11 @@ export default function App() {
                 const checkDate = new Date(h.timestamp);
                 return (now.getTime() - checkDate.getTime()) < 12 * 60 * 60 * 1000; // 12h window
               })}
+              onCheckIn={handleCheckIn}
+              onShowSocialHub={(p) => {
+                setSelectedPlace(p);
+                setShowSocialHub(true);
+              }}
             />
           )}
           {activeTab === Tab.RADAR && (
@@ -470,6 +478,14 @@ export default function App() {
           </div>
           <PlaceCard place={selectedPlace} onCheckIn={handleCheckIn} expanded={true} isCheckedIn={currentUser.history.some(h => h.placeId === selectedPlace.id)} isSaved={currentUser.savedPlaces?.includes(selectedPlace.id)} />
         </div>
+      )}
+
+      {showSocialHub && selectedPlace && (
+        <SocialHub
+          place={selectedPlace}
+          currentUser={currentUser}
+          onClose={() => setShowSocialHub(false)}
+        />
       )}
 
       {selectedMoment && (

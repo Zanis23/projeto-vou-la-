@@ -1,6 +1,6 @@
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { AddMenuItemModal } from './AddMenuItemModal';
+import { NotificationToast } from './NotificationToast';
 import { Place, MenuItem, StaffCall, PlaceType, BusinessEvent, FlashPromo, CrowdInsight } from '../types';
 import { db } from '../utils/storage';
 import { useHaptic } from '../hooks/useHaptic';
@@ -59,6 +59,14 @@ export const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ placeId, p
     const [isScanning, setIsScanning] = useState(false);
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingItem, setEditingItem] = useState<MenuItem | undefined>(undefined);
+
+    // Toast State
+    const [toast, setToast] = useState<{ visible: boolean; title: string; message: string; type: 'hype' | 'alert' | 'invite' }>({
+        visible: false, title: '', message: '', type: 'hype'
+    });
+    const showToast = (title: string, message: string, type: 'hype' | 'alert' | 'invite' = 'hype') => {
+        setToast({ visible: true, title, message, type });
+    };
 
     // Local insights and form state
     const [insights, setInsights] = useState<CrowdInsight | null>(place?.crowdInsights || null);
@@ -318,6 +326,39 @@ export const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ placeId, p
                             <KPICard label="Check-ins" value={`${place.peopleCount}`} trend="+14%" icon={<Users className="w-4 h-4 text-indigo-400" />} />
                         </div>
 
+                        {/* Revenue Chart Section */}
+                        <div className="bg-[#1F2937] p-6 rounded-[2rem] border border-slate-700 shadow-xl">
+                            <div className="flex justify-between items-end mb-6">
+                                <div>
+                                    <h3 className="text-xs font-black text-white uppercase tracking-[0.2em] mb-1 flex items-center gap-2">
+                                        <TrendingUp className="w-4 h-4 text-emerald-500" /> Fluxo de Caixa
+                                    </h3>
+                                    <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Últimos 7 dias</p>
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-xs font-black text-emerald-500 uppercase">+R$ 1.420</span>
+                                </div>
+                            </div>
+                            <div className="flex items-end justify-between gap-1 h-32 px-2">
+                                {[40, 65, 45, 90, 55, 75, 85].map((h, i) => (
+                                    <div key={i} className="flex-1 group relative">
+                                        <div
+                                            className={`w-full rounded-t-lg transition-all duration-500 hover:brightness-125
+                                            ${i === 6 ? 'bg-gradient-to-t from-indigo-600 to-cyan-400' : 'bg-slate-700'}`}
+                                            style={{ height: `${h}%` }}
+                                        >
+                                            <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-slate-800 text-[8px] font-bold text-white px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                                                {h * 10}
+                                            </div>
+                                        </div>
+                                        <div className="text-[8px] font-bold text-slate-600 uppercase text-center mt-2">
+                                            {['S', 'T', 'Q', 'Q', 'S', 'S', 'D'][i]}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
                         <div className="bg-[#1F2937] p-6 rounded-[2rem] border border-slate-700 shadow-xl">
                             <h3 className="text-xs font-black text-white uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
                                 <PieChart className="w-4 h-4 text-fuchsia-500" /> Perfil do Público
@@ -574,41 +615,90 @@ export const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ placeId, p
                 {
                     activeModule === 'growth' && (
                         <div className="space-y-6 animate-[fadeIn_0.3s_ease-out]">
-                            <div className="bg-gradient-to-br from-fuchsia-600 to-indigo-700 p-6 rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
+                            <div className="bg-gradient-to-br from-[#6366F1] to-[#4F46E5] p-8 rounded-[3rem] shadow-2xl relative overflow-hidden group border border-white/20">
                                 <div className="relative z-10 flex flex-col items-center text-center">
                                     {!isScanning ? (
                                         <>
-                                            <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mb-4 backdrop-blur-md border border-white/30">
-                                                <ScanLine className="w-8 h-8 text-white" />
+                                            <div className="w-20 h-20 bg-white/10 rounded-[2rem] flex items-center justify-center mb-6 backdrop-blur-xl border border-white/20 shadow-inner group-hover:scale-110 transition-transform duration-500">
+                                                <ScanLine className="w-10 h-10 text-white animate-pulse" />
                                             </div>
-                                            <h3 className="text-xl font-black text-white italic tracking-tight mb-2 uppercase">Validar Portaria</h3>
-                                            <p className="text-white/70 text-[10px] font-black uppercase tracking-widest mb-6">Scanner de Ingressos & Vouchers</p>
-                                            <button onClick={() => setIsScanning(true)} className="w-full py-4 bg-white text-indigo-700 rounded-2xl font-black uppercase text-xs shadow-xl active:scale-95 transition-all">
-                                                ABRIR CÂMERA
+                                            <h3 className="text-2xl font-black text-white italic tracking-tight mb-2 uppercase">Validar Portaria</h3>
+                                            <p className="text-indigo-100/70 text-[10px] font-black uppercase tracking-[0.3em] mb-8">Controle de Acesso em Tempo Real</p>
+
+                                            <div className="w-full grid grid-cols-2 gap-3 mb-8">
+                                                <div className="bg-white/5 rounded-2xl p-3 border border-white/10">
+                                                    <p className="text-[10px] font-black text-indigo-200 uppercase mb-1">Entradas Hoje</p>
+                                                    <p className="text-xl font-black text-white italic">142</p>
+                                                </div>
+                                                <div className="bg-white/5 rounded-2xl p-3 border border-white/10">
+                                                    <p className="text-[10px] font-black text-indigo-200 uppercase mb-1">VIPs</p>
+                                                    <p className="text-xl font-black text-white italic">28</p>
+                                                </div>
+                                            </div>
+
+                                            <button
+                                                onClick={() => setIsScanning(true)}
+                                                className="w-full py-5 bg-white text-indigo-600 rounded-[1.5rem] font-black uppercase text-xs tracking-[0.2em] shadow-[0_10px_30px_rgba(255,255,255,0.2)] active:scale-95 transition-all flex items-center justify-center gap-3"
+                                            >
+                                                <Camera className="w-5 h-5" />
+                                                INICIAR SCANNER
                                             </button>
                                         </>
                                     ) : (
                                         <div className="w-full">
-                                            <div id="reader" className="w-full rounded-2xl overflow-hidden mb-4 bg-black"></div>
-                                            <button onClick={() => setIsScanning(false)} className="px-6 py-2 bg-white/20 text-white rounded-xl text-xs font-bold uppercase">
-                                                Cancelar
-                                            </button>
+                                            <div className="relative aspect-square w-full max-w-[280px] mx-auto mb-6 rounded-[2.5rem] overflow-hidden border-4 border-white/30 shadow-2xl">
+                                                <div id="reader" className="w-full h-full bg-black scale-110"></div>
+                                                {/* Scanning Overlay */}
+                                                <div className="absolute inset-0 pointer-events-none">
+                                                    <div className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-white rounded-tl-2xl"></div>
+                                                    <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-white rounded-tr-2xl"></div>
+                                                    <div className="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-white rounded-bl-2xl"></div>
+                                                    <div className="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-white rounded-br-2xl"></div>
+                                                    <div className="absolute top-1/2 left-4 right-4 h-0.5 bg-white/50 animate-[scan_2s_infinite]"></div>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-col items-center gap-4">
+                                                <p className="text-white/80 text-[10px] font-black uppercase tracking-widest animate-pulse">Aguardando QR Code...</p>
+                                                <button
+                                                    onClick={() => setIsScanning(false)}
+                                                    className="px-8 py-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest border border-white/10 transition-all"
+                                                >
+                                                    Fechar Câmera
+                                                </button>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
-                                <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+
+                                {/* Background Decorations */}
+                                <div className="absolute -left-10 -bottom-10 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>
+                                <div className="absolute -right-20 -top-20 w-64 h-64 bg-indigo-400/20 rounded-full blur-3xl"></div>
                             </div>
 
                             {/* Scanner Configuration Effect */}
                             {isScanning && (
                                 <ScannerController
-                                    onScanSuccess={(decodedText) => {
-                                        trigger('success');
-                                        setIsScanning(false);
-                                        alert(`Ingresso Válido! Cód: ${decodedText}`);
+                                    onScanSuccess={async (decodedText) => {
+                                        try {
+                                            const audio = new Audio('https://fetcukelzifdyrepeobj.supabase.co/storage/v1/object/public/ui-assets/scanner-success.mp3');
+                                            audio.play().catch(() => { });
+
+                                            // Real-world logic: Update place attendance
+                                            await db.places.update({
+                                                id: placeId,
+                                                peopleCount: (place.peopleCount || 0) + 1
+                                            });
+
+                                            setIsScanning(false);
+                                            showToast("CHECK-IN VALIDADO", `Cliente: ${decodedText.split(':')[0] || 'Visitante'}`, 'hype');
+                                        } catch (err) {
+                                            console.error("Scan error:", err);
+                                            showToast("ERRO NA LEITURA", "Tente escanear o código novamente.", 'alert');
+                                        }
                                     }}
                                     onScanFailure={(error) => {
-                                        // console.warn(error);
+                                        // Standard library failure handler (can be noisy)
                                     }}
                                 />
                             )}
@@ -618,25 +708,35 @@ export const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ placeId, p
                                     <Flame className="w-4 h-4 text-orange-500" /> Promoções Instantâneas
                                 </h3>
                                 <div className="grid grid-cols-1 gap-3">
-                                    <button className="bg-[#1F2937] p-5 rounded-[2rem] border border-slate-700 flex items-center justify-between active:scale-[0.98] transition-all group">
-                                        <div className="flex items-center gap-4">
+                                    <button className="bg-[#1F2937] p-5 rounded-[2.5rem] border border-slate-700 flex items-center justify-between active:scale-[0.98] transition-all group relative overflow-hidden">
+                                        <div className="flex items-center gap-4 relative z-10">
                                             <div className="p-3 bg-orange-500/10 rounded-2xl border border-orange-500/20 group-hover:bg-orange-500 transition-all"><Beer className="w-6 h-6 text-orange-500 group-hover:text-white" /></div>
                                             <div className="text-left">
                                                 <h4 className="text-sm font-black text-white italic uppercase leading-none">Flash Happy Hour</h4>
                                                 <p className="text-[10px] text-slate-500 font-bold mt-1.5 uppercase">Dobro de Chopp por 30min</p>
+                                                <div className="flex gap-3 mt-2">
+                                                    <span className="text-[8px] font-black text-emerald-500 uppercase bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 whitespace-nowrap">84 Usos</span>
+                                                    <span className="text-[8px] font-black text-cyan-400 uppercase bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-500/20 whitespace-nowrap">2.4x ROI</span>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-500 transition-colors group-hover:text-white"><Plus className="w-5 h-5" /></div>
+                                        <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-500 transition-colors group-hover:text-white relative z-10"><Plus className="w-5 h-5" /></div>
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 blur-3xl rounded-full"></div>
                                     </button>
-                                    <button className="bg-[#1F2937] p-5 rounded-[2rem] border border-slate-700 flex items-center justify-between active:scale-[0.98] transition-all group">
-                                        <div className="flex items-center gap-4">
+                                    <button className="bg-[#1F2937] p-5 rounded-[2.5rem] border border-slate-700 flex items-center justify-between active:scale-[0.98] transition-all group relative overflow-hidden">
+                                        <div className="flex items-center gap-4 relative z-10">
                                             <div className="p-3 bg-fuchsia-500/10 rounded-2xl border border-fuchsia-500/20 group-hover:bg-fuchsia-500 transition-all"><Users className="w-6 h-6 text-fuchsia-500 group-hover:text-white" /></div>
                                             <div className="text-left">
                                                 <h4 className="text-sm font-black text-white italic uppercase leading-none">Bonde Free</h4>
                                                 <p className="text-[10px] text-slate-500 font-bold mt-1.5 uppercase">Free p/ Grupos de 5+ pessoas</p>
+                                                <div className="flex gap-3 mt-2">
+                                                    <span className="text-[8px] font-black text-indigo-400 uppercase bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20 whitespace-nowrap">12 Ativados</span>
+                                                    <span className="text-[8px] font-black text-amber-500 uppercase bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 whitespace-nowrap">+15% Volume</span>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-500 transition-colors group-hover:text-white"><Plus className="w-5 h-5" /></div>
+                                        <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-500 transition-colors group-hover:text-white relative z-10"><Plus className="w-5 h-5" /></div>
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-fuchsia-500/5 blur-3xl rounded-full"></div>
                                     </button>
                                 </div>
                             </div>
@@ -693,12 +793,28 @@ export const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ placeId, p
                                     <h4 className="text-red-500 font-black uppercase text-xs tracking-widest italic mb-1">Encerrar Noite</h4>
                                     <p className="text-slate-500 text-[10px] font-bold uppercase leading-tight">Limpa o mapa e arquiva faturamento</p>
                                 </div>
-                                <button onClick={async () => { if (confirm("Deseja fechar a casa?")) { await db.places.update({ id: placeId, peopleCount: 0, capacityPercentage: 0, activeCalls: [] }); alert("Noite encerrada!"); onClose?.(); } }} className="bg-red-500 text-white px-5 py-3 rounded-2xl text-[10px] font-black uppercase active:scale-95 transition-all shadow-lg shadow-red-500/20">FECHAR CASA</button>
+                                <button onClick={async () => {
+                                    if (confirm("Deseja fechar a casa?")) {
+                                        await db.places.update({ id: placeId, peopleCount: 0, capacityPercentage: 0, activeCalls: [] });
+                                        showToast("NOITE ENCERRADA", "Mapa limpo e dados arquivados.", 'alert');
+                                        setTimeout(() => onClose?.(), 2000);
+                                    }
+                                }} className="bg-red-500 text-white px-5 py-3 rounded-2xl text-[10px] font-black uppercase active:scale-95 transition-all shadow-lg shadow-red-500/20">FECHAR CASA</button>
                             </div>
                         </div>
                     )
                 }
             </div >
+
+            {toast.visible && (
+                <NotificationToast
+                    title={toast.title}
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(prev => ({ ...prev, visible: false }))}
+                    onAction={() => setToast(prev => ({ ...prev, visible: false }))}
+                />
+            )}
 
             {
                 showAddModal && (

@@ -108,6 +108,7 @@ export interface Place {
   peopleCount: number;
   capacityPercentage: number;
   imageUrl: string;
+  images?: string[];
   isTrending: boolean;
   description: string;
   coordinates: { x: number; y: number };

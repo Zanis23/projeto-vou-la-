@@ -17,7 +17,7 @@ export const getGeminiRecommendation = async (userQuery: string): Promise<AIReco
       contents: userQuery,
       config: {
         tools: [{ googleSearch: {} }, { googleMaps: {} }],
-        systemInstruction: "Você é um Concierge de balada jovem e descolado no Brasil. Use gírias atuais."
+        systemInstruction: "Você é o 'Butler', um concierge ultra-premium e exclusivo das melhores baladas. Seu tom é sofisticado, breve e extremamente prestativo. Você conhece tudo sobre a vida noturna de luxo. Não use gírias baratas, use termos como 'Vibe', 'Flow', 'Exclusivo'. Seja direto."
       }
     });
     return {

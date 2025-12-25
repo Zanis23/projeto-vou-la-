@@ -152,12 +152,12 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBusinessClick }) => {
   };
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center overflow-hidden bg-[#0E1121]">
+    <div className="min-h-screen relative flex items-center justify-center overflow-hidden bg-[var(--background)]">
       {/* Dynamic Background */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1a1f35] via-[#0E1121] to-black opacity-90"></div>
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[120px] mix-blend-screen animate-pulse"></div>
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-fuchsia-600/10 rounded-full blur-[120px] mix-blend-screen pointer-events-none"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-[var(--surface)] via-[var(--background)] to-black opacity-90"></div>
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[var(--primary)]/10 rounded-full blur-[120px] mix-blend-screen animate-pulse"></div>
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-fuchsia-600/5 rounded-full blur-[120px] mix-blend-screen pointer-events-none"></div>
       </div>
 
       <div className="relative z-10 w-full max-w-[360px] p-6 animate-[fadeIn_0.5s_ease-out]">
@@ -182,7 +182,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBusinessClick }) => {
         </div>
 
         {/* Login Form */}
-        <div className="bg-[#161b2e]/80 backdrop-blur-xl border border-white/5 rounded-3xl p-2 shadow-2xl mb-6">
+        <div className="bg-[var(--surface)]/80 backdrop-blur-xl border border-[var(--border)] rounded-3xl p-2 shadow-2xl mb-6">
           <div className="p-4 space-y-4">
             {error && (
               <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-xl flex items-center gap-3 text-red-400 text-xs font-bold animate-[shake_0.4s_ease-in-out]">
@@ -198,14 +198,14 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBusinessClick }) => {
                     placeholder="Nome completo"
                     value={formData.name}
                     onChange={e => handleChange('name', e.target.value)}
-                    className="w-full bg-[#0E1121] border border-white/5 rounded-xl px-4 py-3.5 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-[var(--primary)] focus:bg-[#0E1121] transition-all"
+                    className="w-full bg-[var(--background)] border border-[var(--border)] rounded-xl px-4 py-3.5 text-[var(--text-main)] text-sm placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--primary)] focus:bg-[var(--background)] transition-all"
                   />
                   <input
                     type="tel"
                     placeholder="Telefone (11) 99999-9999"
                     value={formData.phone}
                     onChange={e => handleChange('phone', formatPhone(e.target.value))}
-                    className="w-full bg-[#0E1121] border border-white/5 rounded-xl px-4 py-3.5 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-[var(--primary)] focus:bg-[#0E1121] transition-all"
+                    className="w-full bg-[var(--background)] border border-[var(--border)] rounded-xl px-4 py-3.5 text-[var(--text-main)] text-sm placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--primary)] focus:bg-[var(--background)] transition-all"
                   />
                   <div className="grid grid-cols-2 gap-3">
                     <input
@@ -215,14 +215,14 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBusinessClick }) => {
                       onChange={e => handleChange('age', e.target.value)}
                       min="18"
                       max="120"
-                      className="w-full bg-[#0E1121] border border-white/5 rounded-xl px-4 py-3.5 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-[var(--primary)] focus:bg-[#0E1121] transition-all"
+                      className="w-full bg-[var(--background)] border border-[var(--border)] rounded-xl px-4 py-3.5 text-[var(--text-main)] text-sm placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--primary)] focus:bg-[var(--background)] transition-all"
                     />
                     <input
                       type="text"
                       placeholder="Cidade"
                       value={formData.city}
                       onChange={e => handleChange('city', e.target.value)}
-                      className="w-full bg-[#0E1121] border border-white/5 rounded-xl px-4 py-3.5 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-[var(--primary)] focus:bg-[#0E1121] transition-all"
+                      className="w-full bg-[var(--background)] border border-[var(--border)] rounded-xl px-4 py-3.5 text-[var(--text-main)] text-sm placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--primary)] focus:bg-[var(--background)] transition-all"
                     />
                   </div>
                 </>
@@ -232,14 +232,14 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBusinessClick }) => {
                 placeholder="E-mail"
                 value={formData.email}
                 onChange={e => handleChange('email', e.target.value)}
-                className="w-full bg-[#0E1121] border border-white/5 rounded-xl px-4 py-3.5 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-[var(--primary)] focus:bg-[#0E1121] transition-all"
+                className="w-full bg-[var(--background)] border border-[var(--border)] rounded-xl px-4 py-3.5 text-[var(--text-main)] text-sm placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--primary)] focus:bg-[var(--background)] transition-all"
               />
               <input
                 type="password"
                 placeholder="Senha"
                 value={formData.password}
                 onChange={e => handleChange('password', e.target.value)}
-                className="w-full bg-[#0E1121] border border-white/5 rounded-xl px-4 py-3.5 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-[var(--primary)] focus:bg-[#0E1121] transition-all"
+                className="w-full bg-[var(--background)] border border-[var(--border)] rounded-xl px-4 py-3.5 text-[var(--text-main)] text-sm placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--primary)] focus:bg-[var(--background)] transition-all"
               />
 
               {isRegister && (
@@ -314,15 +314,15 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBusinessClick }) => {
             className="w-full group relative overflow-hidden rounded-2xl p-[1px]"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-[var(--primary)] to-fuchsia-600 opacity-50 group-hover:opacity-100 transition-opacity"></div>
-            <div className="relative bg-[#161b2e] rounded-2xl p-4 flex items-center gap-4 transition-transform group-active:scale-[0.98]">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--primary)] to-indigo-700 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
+            <div className="relative bg-[var(--surface)] rounded-2xl p-4 flex items-center gap-4 transition-transform group-active:scale-[0.98]">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--primary)] to-indigo-700 flex items-center justify-center text-[var(--on-primary)] shadow-lg shadow-indigo-500/30">
                 <Building2 className="w-5 h-5" />
               </div>
               <div className="flex-1 text-left">
-                <div className="text-white font-bold text-sm">PARA EMPRESAS</div>
-                <div className="text-[var(--primary-light)] text-[10px] font-medium">Cadastre seu estabelecimento</div>
+                <div className="text-[var(--text-main)] font-bold text-sm">PARA EMPRESAS</div>
+                <div className="text-[var(--text-muted)] text-[10px] font-medium">Cadastre seu estabelecimento</div>
               </div>
-              <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-white group-hover:translate-x-1 transition-all" />
+              <ChevronRight className="w-5 h-5 text-[var(--text-muted)] group-hover:text-[var(--text-main)] group-hover:translate-x-1 transition-all" />
             </div>
           </button>
         </div>
