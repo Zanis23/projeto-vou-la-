@@ -678,9 +678,9 @@ const SettingsToggle = ({ icon, title, subtitle, checked, onChange }: any) => (
         </div>
         <button
             onClick={onChange}
-            className={`w - 12 h - 7 rounded - full transition - colors relative shrink - 0 ${checked ? 'bg-[#ccff00]' : 'bg-slate-700 border border-slate-600'} `}
+            className={`w-12 h-7 rounded-full transition-colors relative shrink-0 ${checked ? 'bg-[#ccff00]' : 'bg-slate-700 border border-slate-600'}`}
         >
-            <div className={`absolute top - 1 w - 5 h - 5 bg - white rounded - full transition - transform shadow - md ${checked ? 'left-6' : 'left-1'} `}></div>
+            <div className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-transform shadow-md ${checked ? 'left-6' : 'left-1'}`}></div>
         </button>
     </div>
 );
@@ -688,12 +688,12 @@ const SettingsToggle = ({ icon, title, subtitle, checked, onChange }: any) => (
 const ThemeOption = ({ color, label, active, onClick }: any) => (
     <button onClick={onClick} className="flex flex-col items-center gap-2 group">
         <div
-            className={`w - 12 h - 12 rounded - full border - 2 flex items - center justify - center transition - all ${active ? 'border-white scale-110 shadow-[0_0_15px_rgba(255,255,255,0.3)]' : 'border-slate-700 hover:border-slate-500'} `}
+            className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all ${active ? 'border-white scale-110 shadow-[0_0_15px_rgba(255,255,255,0.3)]' : 'border-slate-700 hover:border-slate-500'}`}
             style={{ backgroundColor: active ? color : 'transparent' }}
         >
             <div className="w-6 h-6 rounded-full" style={{ backgroundColor: color }}></div>
         </div>
-        <span className={`text - [10px] font - bold uppercase tracking - wide ${active ? 'text-white' : 'text-slate-500'} `}>
+        <span className={`text-[10px] font-bold uppercase tracking-wide ${active ? 'text-white' : 'text-slate-500'}`}>
             {label}
         </span>
     </button>
