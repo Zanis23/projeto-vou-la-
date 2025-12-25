@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MOCK_USER, FALLBACK_IMAGE } from '../constants';
 import { User, PrivacySettings, Place } from '../types';
-import { Award, MapPin, Settings, Instagram, Edit3, X, Clock, Camera, Twitter, Video, Calendar, Shield, Share2, Store, LayoutDashboard, Database, Wifi, WifiOff } from 'lucide-react';
+import { Award, MapPin, Settings, Instagram, Edit3, X, Clock, Camera, Twitter, Video, Calendar, Shield, Share2, Store, LayoutDashboard, Database, Wifi, WifiOff, Eye } from 'lucide-react';
 import { SettingsScreen } from '../components/SettingsScreen';
 import { SafetyModal } from '../components/SafetyModal';
 import { BusinessDashboard } from '../components/BusinessDashboard';
@@ -30,6 +30,7 @@ export const Profile: React.FC<ProfileProps> = ({ currentUser = MOCK_USER, onLog
   const [showSettings, setShowSettings] = useState(false);
   const [showSafety, setShowSafety] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
+  const [showCodeModal, setShowCodeModal] = useState(false);
 
   const [editForm, setEditForm] = useState<Partial<User>>({
     name: '', bio: '', instagram: '', tiktok: '', twitter: '', avatar: ''
@@ -60,6 +61,34 @@ export const Profile: React.FC<ProfileProps> = ({ currentUser = MOCK_USER, onLog
     setUser(updatedUser);
     if (onUpdateProfile) onUpdateProfile(editForm);
     setIsEditing(false);
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        alert('Código copiado com sucesso! 📋');
+      } else {
+        // Fallback for non-secure contexts or older browsers
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        textArea.style.top = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+          document.execCommand('copy');
+          alert('Código copiado com sucesso! 📋');
+        } catch (err) {
+          console.error('Fallback copy failed', err);
+        }
+        document.body.removeChild(textArea);
+      }
+    } catch (err) {
+      console.error('Failed to copy', err);
+    }
   };
 
   const handleSettingsUpdate = (settings: PrivacySettings, theme?: 'purple' | 'neon' | 'cyan' | 'pink') => {
@@ -201,13 +230,17 @@ export const Profile: React.FC<ProfileProps> = ({ currentUser = MOCK_USER, onLog
           <h2 className="text-3xl font-black text-white italic tracking-tighter drop-shadow-lg text-center mb-1">{user.name}</h2>
 
           <div className="flex items-center gap-2 mb-2">
-            <span className="bg-[var(--surface)] border border-[var(--surface-highlight)] px-3 py-1.5 rounded-2xl text-[10px] font-mono font-black text-slate-300 uppercase tracking-wider flex items-center gap-2 group active:scale-95 transition-all cursor-pointer" onClick={() => {
-              navigator.clipboard.writeText(user.userCode || '');
-              alert('Código copiado!');
-            }}>
+            <span className="bg-[var(--surface)] border border-[var(--surface-highlight)] px-3 py-1.5 rounded-2xl text-[10px] font-mono font-black text-slate-300 uppercase tracking-wider flex items-center gap-2 group active:scale-95 transition-all cursor-pointer" onClick={() => copyToClipboard(user.userCode || '')}>
               #{user.userCode || '---'}
               <Share2 className="w-3 h-3 text-[var(--primary)] group-hover:scale-110 transition-transform" />
             </span>
+            <button
+              onClick={() => setShowCodeModal(true)}
+              className="p-1.5 bg-slate-800 rounded-xl text-slate-400 hover:text-white transition-colors border border-slate-700 active:scale-95"
+              title="Visualizar Código"
+            >
+              <Eye className="w-4 h-4" />
+            </button>
           </div>
 
           <div className="flex items-center gap-2 mb-4">
@@ -291,6 +324,38 @@ export const Profile: React.FC<ProfileProps> = ({ currentUser = MOCK_USER, onLog
           </div>
         </div>
       </div>
+      {/* User Code ID Modal */}
+      {showCodeModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-[fadeIn_0.2s_ease-out]">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setShowCodeModal(false)}></div>
+          <div className="relative glass-card w-full max-w-sm p-8 rounded-[3rem] border border-white/10 flex flex-col items-center shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+            <div className="w-full flex justify-end mb-4 absolute top-6 right-6">
+              <button onClick={() => setShowCodeModal(false)} className="p-2 text-slate-400 hover:text-white">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="w-24 h-24 rounded-[2rem] bg-indigo-600/20 flex items-center justify-center mb-6">
+              <Store className="w-12 h-12 text-indigo-400" />
+            </div>
+
+            <h3 className="text-xl font-black text-white italic tracking-tight mb-2 uppercase">Meu Código ID</h3>
+            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-8 text-center px-4 leading-relaxed">Mostre este código para seus amigos te encontrarem no Vou Lá!</p>
+
+            <div className="bg-slate-900/50 border-2 border-dashed border-indigo-500/30 rounded-3xl p-8 w-full flex flex-col items-center mb-8">
+              <span className="text-4xl font-mono font-black text-white tracking-[0.2em] mb-2">{user.userCode}</span>
+              <div className="w-full h-1 bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent"></div>
+            </div>
+
+            <Button fullWidth variant="neon" onClick={() => {
+              copyToClipboard(user.userCode || '');
+              setShowCodeModal(false);
+            }}>
+              COPIAR MEU CÓDIGO
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
