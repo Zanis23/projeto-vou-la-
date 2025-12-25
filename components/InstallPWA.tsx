@@ -22,8 +22,8 @@ export const InstallPWA: React.FC = () => {
 
     if (showIOSInstructions) {
         return (
-            <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-in fade-in" onClick={() => setShowIOSInstructions(false)}>
-                <div className="bg-[#1e293b] w-full max-w-md p-6 rounded-t-3xl border-t border-slate-700 pb-10" onClick={e => e.stopPropagation()}>
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in" onClick={() => setShowIOSInstructions(false)}>
+                <div className="bg-[#1e293b] w-full max-w-md p-6 rounded-3xl border border-slate-700 m-4 relative shadow-2xl" onClick={e => e.stopPropagation()}>
                     <div className="flex justify-between items-center mb-6">
                         <h3 className="text-xl font-bold text-white">Instalar no iPhone</h3>
                         <button onClick={() => setShowIOSInstructions(false)}><X className="text-slate-400" /></button>
