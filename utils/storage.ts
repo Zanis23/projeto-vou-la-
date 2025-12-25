@@ -39,26 +39,40 @@ const mapProfileToUser = async (profile: any): Promise<User> => {
     await supabase.from('profiles').update({ user_code: userCode }).eq('id', profile.id);
   }
 
+  // Handle potentially stringified or object settings
+  const rawSettings = typeof profile.settings === 'string' ? JSON.parse(profile.settings) : (profile.settings || {});
+
   return {
-    ...MOCK_USER,
     id: profile.id,
     email: profile.email,
-    name: profile.name,
+    name: profile.name || 'Usuário',
     avatar: profile.avatar || MOCK_USER.avatar,
     points: profile.points || 0,
     level: profile.level || 1,
     ownedPlaceId: profile.owned_place_id,
-    bio: profile.bio,
-    instagram: profile.instagram,
-    tiktok: profile.tiktok,
-    twitter: profile.twitter,
-    memberSince: profile.created_at || MOCK_USER.memberSince,
+    bio: profile.bio || '',
+    instagram: profile.instagram || '',
+    tiktok: profile.tiktok || '',
+    twitter: profile.twitter || '',
+    memberSince: profile.created_at || new Date().toISOString(),
     history: profile.history || [],
     userCode: userCode,
+    theme: profile.theme || 'neon',
+    badges: profile.badges || [],
+    savedPlaces: profile.saved_places || [],
+    status: profile.status || '',
     settings: {
-      ...MOCK_USER.settings!,
-      blockedUsers: profile.blocked_users || []
-    }
+      ghostMode: rawSettings.ghostMode ?? false,
+      publicProfile: rawSettings.publicProfile ?? true,
+      allowTagging: rawSettings.allowTagging ?? true,
+      blockedUsers: rawSettings.blockedUsers || [],
+      notifications: {
+        hypeAlerts: rawSettings.notifications?.hypeAlerts ?? true,
+        chatMessages: rawSettings.notifications?.chatMessages ?? true,
+        friendActivity: rawSettings.notifications?.friendActivity ?? true,
+      }
+    },
+    lastSync: new Date().getTime()
   };
 };
 
@@ -260,6 +274,31 @@ export const db = {
       return { success: false, message: 'Erro ao processar login.' };
     },
 
+    updatePassword: async (newPassword: string): Promise<{ success: boolean, message?: string }> => {
+      try {
+        const { error } = await supabase.auth.updateUser({ password: newPassword });
+        if (error) throw error;
+        return { success: true };
+      } catch (e: any) {
+        return { success: false, message: e.message };
+      }
+    },
+
+    deleteAccount: async (): Promise<{ success: boolean, message?: string }> => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return { success: false, message: 'Usuário não encontrado.' };
+
+        // Profile deletion (Auth side deletion usually needs Admin API, so we focus on DB + Logout)
+        const { error: profileError } = await supabase.from('profiles').delete().eq('id', user.id);
+        if (profileError) throw profileError;
+
+        await db.auth.logout();
+        return { success: true };
+      } catch (e: any) {
+        return { success: false, message: e.message };
+      }
+    },
   },
 
   user: {
@@ -269,6 +308,7 @@ export const db = {
       return getLocal(KEYS.USER, MOCK_USER);
     },
     save: async (user: User): Promise<boolean> => {
+      user.lastSync = new Date().getTime(); // Mark this local state as the newest
       saveLocal(KEYS.USER, user);
       try {
         const { error } = await supabase.from('profiles').upsert({
@@ -283,17 +323,18 @@ export const db = {
           twitter: user.twitter,
           history: user.history,
           owned_place_id: user.ownedPlaceId,
-          blocked_users: user.settings?.blockedUsers || [],
-          user_code: user.userCode
+          user_code: user.userCode,
+          theme: user.theme || 'neon',
+          settings: user.settings
         });
 
         if (error) {
-          console.error("Erro ao sincronizar perfil com Supabase:", error.message, error.details);
+          console.error("❌ Erro ao sincronizar perfil com Supabase:", error.message, error.details);
           return false;
         }
         return true;
-      } catch (e) {
-        console.error("Exceção ao salvar perfil:", e);
+      } catch (e: any) {
+        console.error("❌ Exceção ao salvar perfil:", e.message || e);
         return false;
       }
     },

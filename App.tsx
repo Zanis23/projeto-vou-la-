@@ -16,7 +16,7 @@ import { Map, List, User as UserIcon, MessageCircle, LayoutGrid, X, Loader2 } fr
 import { PlaceCard } from './components/PlaceCard';
 import { MoreOptionsModal } from './components/MoreOptionsModal';
 import { BusinessDashboard } from './components/BusinessDashboard';
-import { MOCK_USER } from './constants';
+import { MOCK_USER, THEMES } from './constants';
 import { db } from './utils/storage';
 import { supabase } from './services/supabase';
 
@@ -33,6 +33,15 @@ export default function App() {
   const [places, setPlaces] = useState<Place[]>([]);
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [showTutorial, setShowTutorial] = useState(false);
+
+  // Apply theme globally
+  useEffect(() => {
+    const themeName = currentUser.theme || 'neon';
+    const themeData = THEMES[themeName as keyof typeof THEMES];
+    if (themeData) {
+      document.documentElement.style.setProperty('--primary', themeData.primary);
+    }
+  }, [currentUser.theme]);
 
   // Check tutorial on mount/login
   useEffect(() => {
@@ -69,19 +78,12 @@ export default function App() {
   }, [selectedPlace, showMoreMenu, activeTab]);
 
   const loadData = useCallback(async (optimisticUser?: User) => {
-    // If optimisticUser is provided, use it effectively as 'currentUser' for the session 
-    // but still fetch concurrent data
     const [fetchedUser, allPlaces, allFeed] = await Promise.all([
-      optimisticUser ? Promise.resolve(optimisticUser) : db.user.get(),
+      db.user.get(),
       db.places.get(),
       db.feed.get()
     ]);
 
-    // If we have an optimistic user, trust it over the DB for the initial render to avoid reversion
-    // But we should eventually sync. For now, this is enough to keep the "Owner" state active.
-    const finalUser = optimisticUser || fetchedUser;
-
-    setCurrentUser(finalUser);
     setPlaces(allPlaces);
     setFeed(allFeed);
 
@@ -91,7 +93,19 @@ export default function App() {
       setPlaces(freshPlaces);
     }
 
-    return finalUser;
+    setCurrentUser(prevUser => {
+      if (optimisticUser) return optimisticUser;
+
+      // If fetchedUser is older than our current local state, keep current
+      if (fetchedUser.lastSync && prevUser.lastSync && fetchedUser.lastSync < prevUser.lastSync) {
+        console.log("⚠️ DB data is stale, keeping local state.");
+        return prevUser;
+      }
+
+      return fetchedUser;
+    });
+
+    return fetchedUser;
   }, []);
 
   useEffect(() => {
@@ -285,7 +299,28 @@ export default function App() {
           {activeTab === Tab.RADAR && <Radar places={places} onPlaceSelect={setSelectedPlace} />}
           {activeTab === Tab.AI_FINDER && <AiConcierge />}
           {activeTab === Tab.SOCIAL && <Social feed={feed} onToggleLike={async (id) => { /* update */ }} onComment={(id) => { /* logic */ }} onPlaceSelect={setSelectedPlace} places={places} />}
-          {activeTab === Tab.PROFILE && <Profile currentUser={currentUser} places={places} onLogout={handleLogout} onUpdateProfile={(upd) => { const u = { ...currentUser, ...upd }; setCurrentUser(u); db.user.save(u); }} />}
+          {activeTab === Tab.PROFILE && (
+            <Profile
+              currentUser={currentUser}
+              places={places}
+              onLogout={handleLogout}
+              onUpdateProfile={(upd) => {
+                setCurrentUser(prev => {
+                  const u = { ...prev, ...upd, lastSync: new Date().getTime() };
+                  db.user.save(u);
+                  return u;
+                });
+              }}
+              onUpdateSettings={(settings, theme) => {
+                setCurrentUser(prev => {
+                  const u = { ...prev, settings: { ...prev.settings, ...settings }, lastSync: new Date().getTime() };
+                  if (theme) u.theme = theme;
+                  db.user.save(u);
+                  return u;
+                });
+              }}
+            />
+          )}
           {activeTab === Tab.RANKING && <Ranking currentUser={currentUser} />}
           {activeTab === Tab.CHALLENGES && <Challenges />}
           {activeTab === Tab.STORE && <Store currentUser={currentUser} onPurchase={(cost) => { const u = { ...currentUser, points: currentUser.points - cost }; setCurrentUser(u); db.user.save(u); }} />}

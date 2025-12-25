@@ -14,11 +14,12 @@ interface ProfileProps {
   currentUser?: User;
   onLogout?: () => void;
   onUpdateProfile?: (user: Partial<User>) => void;
+  onUpdateSettings?: (settings: PrivacySettings, theme?: 'purple' | 'neon' | 'cyan' | 'pink') => void;
   editTrigger?: number;
   places: Place[];
 }
 
-export const Profile: React.FC<ProfileProps> = ({ currentUser = MOCK_USER, onLogout, onUpdateProfile, editTrigger, places }) => {
+export const Profile: React.FC<ProfileProps> = ({ currentUser = MOCK_USER, onLogout, onUpdateProfile, onUpdateSettings, editTrigger, places }) => {
   const [user, setUser] = useState<User>(currentUser);
 
   // Fix: Sync local user state when currentUser prop changes (e.g. after registration)
@@ -92,7 +93,9 @@ export const Profile: React.FC<ProfileProps> = ({ currentUser = MOCK_USER, onLog
   };
 
   const handleSettingsUpdate = (settings: PrivacySettings, theme?: 'purple' | 'neon' | 'cyan' | 'pink') => {
-    if (onUpdateProfile) {
+    if (onUpdateSettings) {
+      onUpdateSettings(settings, theme);
+    } else if (onUpdateProfile) {
       onUpdateProfile({
         settings,
         theme

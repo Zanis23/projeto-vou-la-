@@ -184,6 +184,7 @@ export interface User {
   status?: string;
   wallet?: Ticket[];
   userCode?: string;
+  lastSync?: number;
 }
 
 export interface FeedItem {

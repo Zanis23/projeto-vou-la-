@@ -1,6 +1,13 @@
 
 import { Place, PlaceType, User, FeedItem, Chat, FriendRequest, Mission, SocialPlan, MatchProfile } from './types';
 
+export const THEMES = {
+  neon: { primary: '#ccff00' },
+  purple: { primary: '#c026d3' },
+  cyan: { primary: '#06b6d4' },
+  pink: { primary: '#ec4899' }
+};
+
 export const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1514525253361-bee8a197c0c1?q=80&w=800&auto=format&fit=crop';
 
 export const MOCK_USER: User = {
@@ -11,8 +18,8 @@ export const MOCK_USER: User = {
   points: 2450,
   badges: ['Rei do Tereré', 'Universitário UFGD', 'Inimigo do Fim'],
   bio: 'Vivendo um rolê de cada vez em Dourados ✨ Apaixonado por sertanejo e tereré.',
-  instagram: 'gabriel.voula',
-  tiktok: 'gabriel_voula',
+  instagram: '',
+  tiktok: '',
   twitter: '',
   theme: 'neon',
   history: [],
@@ -210,9 +217,9 @@ export const MOCK_MATCH_PROFILES: MatchProfile[] = [
 
 export const getUserById = (id: string) => {
   if (id === MOCK_USER.id) return MOCK_USER;
-  return { 
+  return {
     id,
-    name: 'Usuário', 
+    name: 'Usuário',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + id,
     points: 0,
     level: 1
