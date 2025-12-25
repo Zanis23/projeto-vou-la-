@@ -58,8 +58,6 @@ export const Profile: React.FC<ProfileProps> = ({ currentUser = MOCK_USER, onLog
   };
 
   const handleSave = () => {
-    const updatedUser = { ...user, ...editForm } as User;
-    setUser(updatedUser);
     if (onUpdateProfile) onUpdateProfile(editForm);
     setIsEditing(false);
   };

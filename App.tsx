@@ -40,6 +40,8 @@ export default function App() {
     const themeData = THEMES[themeName as keyof typeof THEMES];
     if (themeData) {
       document.documentElement.style.setProperty('--primary', themeData.primary);
+      document.documentElement.style.setProperty('--primary-glow', themeData.primaryGlow);
+      document.documentElement.style.setProperty('--on-primary', themeData.onPrimary);
     }
   }, [currentUser.theme]);
 
@@ -304,20 +306,20 @@ export default function App() {
               currentUser={currentUser}
               places={places}
               onLogout={handleLogout}
-              onUpdateProfile={(upd) => {
-                setCurrentUser(prev => {
-                  const u = { ...prev, ...upd, lastSync: new Date().getTime() };
-                  db.user.save(u);
-                  return u;
-                });
+              onUpdateProfile={async (upd) => {
+                const u = { ...currentUser, ...upd, lastSync: new Date().getTime() };
+                setCurrentUser(u);
+                await db.user.save(u);
               }}
-              onUpdateSettings={(settings, theme) => {
-                setCurrentUser(prev => {
-                  const u = { ...prev, settings: { ...prev.settings, ...settings }, lastSync: new Date().getTime() };
-                  if (theme) u.theme = theme;
-                  db.user.save(u);
-                  return u;
-                });
+              onUpdateSettings={async (settings, theme) => {
+                const u = {
+                  ...currentUser,
+                  settings: { ...currentUser.settings, ...settings },
+                  lastSync: new Date().getTime()
+                };
+                if (theme) u.theme = theme;
+                setCurrentUser(u);
+                await db.user.save(u);
               }}
             />
           )}

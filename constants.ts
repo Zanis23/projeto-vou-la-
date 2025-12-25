@@ -2,10 +2,10 @@
 import { Place, PlaceType, User, FeedItem, Chat, FriendRequest, Mission, SocialPlan, MatchProfile } from './types';
 
 export const THEMES = {
-  neon: { primary: '#ccff00' },
-  purple: { primary: '#c026d3' },
-  cyan: { primary: '#06b6d4' },
-  pink: { primary: '#ec4899' }
+  neon: { primary: '#ccff00', primaryGlow: 'rgba(204, 255, 0, 0.4)', onPrimary: '#000000' },
+  purple: { primary: '#c026d3', primaryGlow: 'rgba(192, 38, 211, 0.4)', onPrimary: '#ffffff' },
+  cyan: { primary: '#06b6d4', primaryGlow: 'rgba(6, 182, 212, 0.4)', onPrimary: '#ffffff' },
+  pink: { primary: '#ec4899', primaryGlow: 'rgba(236, 72, 153, 0.4)', onPrimary: '#ffffff' }
 };
 
 export const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1514525253361-bee8a197c0c1?q=80&w=800&auto=format&fit=crop';
