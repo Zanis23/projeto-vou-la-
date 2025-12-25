@@ -293,7 +293,7 @@ export const db = {
         // Search by name OR user_code
         const { data } = await supabase.from('profiles')
           .select('*')
-          .or(`name.ilike.%${q}%,user_code.ilike.%${q}%`)
+          .or(`name.ilike.*${q}*,user_code.ilike.*${q}*`)
           .limit(10);
 
         return (data || []).map(p => ({
