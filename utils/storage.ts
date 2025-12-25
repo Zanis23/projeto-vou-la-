@@ -28,7 +28,7 @@ const getLocal = (key: string, fallback: any) => {
   }
 };
 
-const generateUserCode = () => `VOU-${Math.floor(1000 + Math.random() * 9000)}`;
+export const generateUserCode = () => `VOU-${Math.floor(1000 + Math.random() * 9000)}`;
 
 const mapProfileToUser = async (profile: any): Promise<User> => {
   let userCode = profile.user_code;
@@ -123,6 +123,13 @@ export const db = {
         }
       }
       return null;
+    },
+
+    logout: async () => {
+      try { await supabase.auth.signOut(); } catch (e) { }
+      localStorage.removeItem(KEYS.USER);
+      localStorage.removeItem('voula_logged_in');
+      localStorage.removeItem('voula_tutorial_seen_v1');
     },
 
     register: async (user: User, password?: string): Promise<{ success: boolean, data?: any, message?: string }> => {
@@ -248,11 +255,6 @@ export const db = {
       return { success: false, message: 'Erro ao processar login.' };
     },
 
-    logout: async () => {
-      try { await supabase.auth.signOut(); } catch (e) { }
-      localStorage.removeItem(KEYS.USER);
-      localStorage.removeItem('voula_logged_in');
-    }
   },
 
   user: {
@@ -290,10 +292,10 @@ export const db = {
     search: async (query: string): Promise<User[]> => {
       try {
         const q = query.trim();
-        // Search by name OR user_code
+        // SEARCH FIX: PostgREST .or() with SDK template
         const { data } = await supabase.from('profiles')
           .select('*')
-          .or(`name.ilike.*${q}*,user_code.ilike.*${q}*`)
+          .or(`name.ilike.%${q}%,user_code.ilike.%${q}%`)
           .limit(10);
 
         return (data || []).map(p => ({

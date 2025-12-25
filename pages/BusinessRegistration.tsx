@@ -7,7 +7,7 @@ import {
 import { Button } from '../components/Button';
 import { PlaceType, Place, User } from '../types';
 import { useHaptic } from '../hooks/useHaptic';
-import { db } from '../utils/storage';
+import { db, generateUserCode } from '../utils/storage';
 import { generateAIImage } from '../services/geminiService'; // Optional if we want AI avatar
 
 interface BusinessRegistrationProps {
@@ -92,6 +92,7 @@ export const BusinessRegistration: React.FC<BusinessRegistrationProps> = ({ onBa
                 history: [],
                 savedPlaces: [],
                 ownedPlaceId: placeId, // Pass the ID immediately
+                userCode: generateUserCode(),
                 settings: {
                     ghostMode: false,
                     publicProfile: true,

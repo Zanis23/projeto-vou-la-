@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Button } from '../components/Button';
 import { Logo } from '../components/Logo';
 import { Building2, ChevronRight, AlertCircle, Loader2, UserCircle, MapPin, Star } from 'lucide-react';
-import { db } from '../utils/storage';
+import { db, generateUserCode } from '../utils/storage';
 import { useHaptic } from '../hooks/useHaptic';
 import { User } from '../types';
 
@@ -71,6 +71,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBusinessClick }) => {
           history: [],
           savedPlaces: [],
           email: formData.email,
+          userCode: generateUserCode()
         };
 
         const res = await db.auth.register(newUser, formData.password);
