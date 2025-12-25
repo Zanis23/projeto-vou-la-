@@ -30,6 +30,34 @@ const getLocal = (key: string, fallback: any) => {
 
 const generateUserCode = () => `VOU-${Math.floor(1000 + Math.random() * 9000)}`;
 
+const mapProfileToUser = async (profile: any): Promise<User> => {
+  let userCode = profile.user_code;
+
+  // Lazy generation for existing users
+  if (!userCode) {
+    userCode = generateUserCode();
+    await supabase.from('profiles').update({ user_code: userCode }).eq('id', profile.id);
+  }
+
+  return {
+    ...MOCK_USER,
+    id: profile.id,
+    email: profile.email,
+    name: profile.name,
+    avatar: profile.avatar || MOCK_USER.avatar,
+    points: profile.points || 0,
+    level: profile.level || 1,
+    ownedPlaceId: profile.owned_place_id,
+    bio: profile.bio,
+    history: profile.history || [],
+    userCode: userCode,
+    settings: {
+      ...MOCK_USER.settings!,
+      blockedUsers: profile.blocked_users || []
+    }
+  };
+};
+
 export const db = {
   // Popula o banco se estiver vazio (Primeiro acesso)
   seed: async () => {
@@ -89,18 +117,7 @@ export const db = {
       if (session?.user) {
         const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
         if (profile) {
-          const user = {
-            ...MOCK_USER,
-            id: profile.id,
-            email: profile.email,
-            name: profile.name,
-            avatar: profile.avatar,
-            points: profile.points || 0,
-            level: profile.level || 1,
-            ownedPlaceId: profile.owned_place_id,
-            bio: profile.bio,
-            history: profile.history || []
-          };
+          const user = await mapProfileToUser(profile);
           saveLocal(KEYS.USER, user);
           return user;
         }
@@ -180,20 +197,11 @@ export const db = {
         }
 
         if (profile) {
+          const user = await mapProfileToUser(profile);
+          // Metadata override for new registrations where DB might be stale
           const metadata = data.user.user_metadata || {};
-          const user: User = {
-            ...MOCK_USER,
-            id: profile.id,
-            email: profile.email,
-            name: profile.name,
-            avatar: profile.avatar || MOCK_USER.avatar,
-            points: profile.points || 0,
-            level: profile.level || 1,
-            // MERGE FIX: If DB hasn't updated yet, use metadata from registration
-            ownedPlaceId: profile.owned_place_id || metadata.owned_place_id,
-            bio: profile.bio,
-            history: profile.history || []
-          };
+          if (metadata.owned_place_id) user.ownedPlaceId = metadata.owned_place_id;
+
           saveLocal(KEYS.USER, user);
           localStorage.setItem('voula_logged_in', 'true');
           return { success: true, user };
