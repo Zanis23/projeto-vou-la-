@@ -390,9 +390,20 @@ export default function App() {
         <NavButton active={activeTab === Tab.HOME} onClick={() => { setHomeFilter('ALL'); setActiveTab(Tab.HOME); }} icon={<List className="w-5 h-5" />} label="Lista" />
         <NavButton active={activeTab === Tab.RADAR} onClick={() => setActiveTab(Tab.RADAR)} icon={<Map className="w-5 h-5" />} label="Radar" />
 
-        <div className="relative -top-6 xs:-top-7">
-          <button onClick={() => setShowMoreMenu(true)} className={`w - 14 h - 14 rounded - full flex items - center justify - center transition - all active: scale - 90 border - 4 border - [var(--background)] ${showMoreMenu ? 'bg-white text-black' : 'bg-[var(--primary)] text-[var(--on-primary)] shadow-[0_0_20px_var(--primary-glow)]'} `}>
-            <LayoutGrid className="w-6 h-6 fill-current" />
+        <div className="relative -top-6 xs:-top-7 group">
+          <div className={`absolute inset-0 rounded-full transition-all duration-500 blur-md ${showMoreMenu ? 'bg-white/50 scale-110' : 'bg-[var(--primary)]/50 scale-90 group-hover:scale-110 group-hover:bg-[var(--primary)]/70'}`} />
+          <button
+            onClick={() => setShowMoreMenu(true)}
+            className={`
+              relative w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 border-4 border-[#0E1121]
+              active:scale-95 shadow-black/50 shadow-lg
+              ${showMoreMenu
+                ? 'bg-white text-black rotate-180'
+                : 'bg-[var(--primary)] text-[var(--on-primary)] hover:brightness-110'
+              } 
+            `}
+          >
+            <LayoutGrid className="w-7 h-7 fill-current" />
           </button>
         </div>
 
@@ -424,8 +435,34 @@ export default function App() {
 }
 
 const NavButton = ({ active, onClick, icon, label }: any) => (
-  <button onClick={onClick} className={`flex flex - col items - center gap - 1 p - 2 transition - all active: scale - 95 ${active ? 'text-[var(--primary)]' : 'text-slate-500'} `}>
-    {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: `${(icon as any).props.className} ${active ? 'fill-current' : ''} ` })}
-    <span className="text-[9px] font-black uppercase tracking-wider">{label}</span>
+  <button
+    onClick={onClick}
+    className={`
+      flex flex-col items-center justify-center gap-1.5 p-2 transition-all duration-300 w-16
+      ${active ? 'text-[var(--primary)] -translate-y-1' : 'text-slate-400 hover:text-slate-200'} 
+    `}
+  >
+    <div className={`
+      relative p-1 rounded-xl transition-all duration-300
+      ${active ? 'bg-[var(--primary)]/10' : 'bg-transparent'}
+    `}>
+      {React.cloneElement(icon as React.ReactElement<{ className?: string }>, {
+        className: `
+          ${(icon as any).props.className} 
+          ${active ? 'stroke-[2.5px] drop-shadow-[0_0_8px_rgba(204,255,0,0.5)]' : 'stroke-[1.5px]'}
+          transition-all duration-300
+          w-7 h-7
+        `
+      })}
+    </div>
+    <span className={`
+      text-[10px] font-bold tracking-wide transition-all duration-300
+      ${active ? 'opacity-100 scale-100' : 'opacity-70 scale-90'}
+    `}>
+      {label}
+    </span>
+    {active && (
+      <div className="absolute bottom-1 w-1 h-1 bg-[var(--primary)] rounded-full shadow-[0_0_5px_var(--primary)]" />
+    )}
   </button>
 );
