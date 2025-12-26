@@ -1,0 +1,43 @@
+/* WhatsApp Inspired Chat Styles */
+.chat-bg {
+  background-color: #0b141a;
+  background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+  background-blend-mode: overlay;
+  background-size: 400px;
+}
+
+.bubble-me {
+  background: #005c4b;
+  color: #e9edef;
+  position: relative;
+  border-radius: 8px 0px 8px 8px;
+}
+
+.bubble-me::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: -8px;
+  width: 0;
+  height: 0;
+  border-left: 10px solid #005c4b;
+  border-bottom: 10px solid transparent;
+}
+
+.bubble-them {
+  background: #202c33;
+  color: #e9edef;
+  position: relative;
+  border-radius: 0px 8px 8px 8px;
+}
+
+.bubble-them::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -8px;
+  width: 0;
+  height: 0;
+  border-right: 10px solid #202c33;
+  border-bottom: 10px solid transparent;
+}
