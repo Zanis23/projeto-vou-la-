@@ -268,18 +268,18 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ user, onClose, o
     if (isEditingProfile) {
         return (
             <div className="fixed inset-0 z-[101] bg-[var(--background)] flex flex-col animate-[slideUp_0.3s_ease-out]">
-                <div className="pt-safe px-4 pb-4 bg-[var(--background)] border-b border-slate-800 flex items-center gap-3 sticky top-0 z-10">
-                    <button onClick={() => setIsEditingProfile(false)} className="p-2 bg-slate-800 rounded-full text-slate-400 hover:text-white">
+                <div className="pt-safe px-4 pb-4 bg-[var(--background)] border-b border-[var(--surface-highlight)] flex items-center gap-3 sticky top-0 z-10">
+                    <button onClick={() => setIsEditingProfile(false)} className="p-2 bg-[var(--surface-highlight)] rounded-full text-[var(--text-muted)] hover:text-[var(--text-main)]">
                         <ArrowLeft className="w-5 h-5" />
                     </button>
-                    <h2 className="text-xl font-black text-white italic tracking-tight">EDITAR PERFIL</h2>
+                    <h2 className="text-xl font-black text-[var(--text-main)] italic tracking-tight">EDITAR PERFIL</h2>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-6 space-y-6 pb-32">
                     {/* Avatar */}
                     <div className="flex flex-col items-center gap-4">
                         <div className="relative group">
-                            <img src={profileForm.avatar} className="w-32 h-32 rounded-[2rem] object-cover border-4 border-slate-800 shadow-xl" alt="Preview" />
+                            <img src={profileForm.avatar} className="w-32 h-32 rounded-[2rem] object-cover border-4 border-[var(--surface-highlight)] shadow-xl" alt="Preview" />
                             <button
                                 onClick={() => fileInputRef.current?.click()}
                                 className="absolute inset-0 bg-black/50 rounded-[2rem] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer backdrop-blur-sm"
@@ -294,29 +294,29 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ user, onClose, o
                     {/* Inputs */}
                     <div className="space-y-4">
                         <div className="space-y-1">
-                            <label className="text-xs font-bold text-slate-400 uppercase ml-1">Nome</label>
-                            <input type="text" value={profileForm.name || ''} onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })} className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-white focus:border-[var(--primary)] focus:outline-none" />
+                            <label className="text-xs font-bold text-[var(--text-muted)] uppercase ml-1">Nome</label>
+                            <input type="text" value={profileForm.name || ''} onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })} className="w-full bg-[var(--surface)] border border-[var(--surface-highlight)] rounded-xl px-4 py-3 text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none" />
                         </div>
                         <div className="space-y-1">
-                            <label className="text-xs font-bold text-slate-400 uppercase ml-1">Bio</label>
-                            <textarea value={profileForm.bio || ''} onChange={(e) => setProfileForm({ ...profileForm, bio: e.target.value })} rows={3} className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-white focus:border-[var(--primary)] focus:outline-none resize-none" />
+                            <label className="text-xs font-bold text-[var(--text-muted)] uppercase ml-1">Bio</label>
+                            <textarea value={profileForm.bio || ''} onChange={(e) => setProfileForm({ ...profileForm, bio: e.target.value })} rows={3} className="w-full bg-[var(--surface)] border border-[var(--surface-highlight)] rounded-xl px-4 py-3 text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none resize-none" />
                         </div>
                     </div>
 
                     <div className="space-y-4">
-                        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-800 pb-2">Redes Sociais</h3>
+                        <h3 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest border-b border-[var(--surface-highlight)] pb-2">Redes Sociais</h3>
 
                         <div className="relative">
-                            <div className="absolute left-4 top-3.5 text-slate-500"><Instagram className="w-5 h-5" /></div>
-                            <input type="text" placeholder="@seuuser" value={profileForm.instagram || ''} onChange={(e) => setProfileForm({ ...profileForm, instagram: e.target.value })} className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-12 pr-4 py-3 text-white focus:border-[var(--primary)] focus:outline-none" />
+                            <div className="absolute left-4 top-3.5 text-[var(--text-muted)]"><Instagram className="w-5 h-5" /></div>
+                            <input type="text" placeholder="@seuuser" value={profileForm.instagram || ''} onChange={(e) => setProfileForm({ ...profileForm, instagram: e.target.value })} className="w-full bg-[var(--surface)] border border-[var(--surface-highlight)] rounded-xl pl-12 pr-4 py-3 text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none" />
                         </div>
                         <div className="relative">
-                            <div className="absolute left-4 top-3.5 text-slate-500"><Video className="w-5 h-5" /></div>
-                            <input type="text" placeholder="@seuuser" value={profileForm.tiktok || ''} onChange={(e) => setProfileForm({ ...profileForm, tiktok: e.target.value })} className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-12 pr-4 py-3 text-white focus:border-[var(--primary)] focus:outline-none" />
+                            <div className="absolute left-4 top-3.5 text-[var(--text-muted)]"><Video className="w-5 h-5" /></div>
+                            <input type="text" placeholder="@seuuser" value={profileForm.tiktok || ''} onChange={(e) => setProfileForm({ ...profileForm, tiktok: e.target.value })} className="w-full bg-[var(--surface)] border border-[var(--surface-highlight)] rounded-xl pl-12 pr-4 py-3 text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none" />
                         </div>
                         <div className="relative">
-                            <div className="absolute left-4 top-3.5 text-slate-500"><Twitter className="w-5 h-5" /></div>
-                            <input type="text" placeholder="@seuuser" value={profileForm.twitter || ''} onChange={(e) => setProfileForm({ ...profileForm, twitter: e.target.value })} className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-12 pr-4 py-3 text-white focus:border-[var(--primary)] focus:outline-none" />
+                            <div className="absolute left-4 top-3.5 text-[var(--text-muted)]"><Twitter className="w-5 h-5" /></div>
+                            <input type="text" placeholder="@seuuser" value={profileForm.twitter || ''} onChange={(e) => setProfileForm({ ...profileForm, twitter: e.target.value })} className="w-full bg-[var(--surface)] border border-[var(--surface-highlight)] rounded-xl pl-12 pr-4 py-3 text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none" />
                         </div>
                     </div>
                 </div>
@@ -334,9 +334,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ user, onClose, o
     return (
         <div className="fixed inset-0 z-[100] bg-[var(--background)] flex flex-col animate-[slideUp_0.3s_ease-out]">
             {/* Header */}
-            <div className="pt-safe px-4 pb-4 bg-[var(--background)] border-b border-slate-800 flex items-center justify-between sticky top-0 z-10 shadow-lg">
-                <h2 className="text-xl font-black text-white italic tracking-tight">AJUSTES</h2>
-                <button onClick={onClose} className="p-2 text-slate-400 hover:text-white bg-slate-800 rounded-full transition-colors active:scale-95">
+            <div className="pt-safe px-4 pb-4 bg-[var(--background)] border-b border-[var(--surface-highlight)] flex items-center justify-between sticky top-0 z-10 shadow-lg">
+                <h2 className="text-xl font-black text-[var(--text-main)] italic tracking-tight">AJUSTES</h2>
+                <button onClick={onClose} className="p-2 text-[var(--text-muted)] hover:text-[var(--text-main)] bg-[var(--surface-highlight)] rounded-full transition-colors active:scale-95">
                     <X className="w-6 h-6" />
                 </button>
             </div>
@@ -346,8 +346,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ user, onClose, o
 
                     {/* Account Section */}
                     <section>
-                        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 ml-2">Sua Conta</h3>
-                        <div className="bg-slate-800/40 rounded-2xl border border-slate-700/50 overflow-hidden backdrop-blur-sm">
+                        <h3 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest mb-3 ml-2">Sua Conta</h3>
+                        <div className="bg-[var(--surface)] rounded-2xl border border-[var(--surface-highlight)] overflow-hidden backdrop-blur-sm">
                             <SettingsItem
                                 icon={<Edit3 className="w-5 h-5 text-blue-400" />}
                                 title="Editar Perfil"
@@ -376,8 +376,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ user, onClose, o
 
                     {/* Appearance Section */}
                     <section>
-                        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 ml-2">Aparência</h3>
-                        <div className="bg-slate-800/40 rounded-2xl border border-slate-700/50 overflow-hidden p-4 backdrop-blur-sm">
+                        <h3 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest mb-3 ml-2">Aparência</h3>
+                        <div className="bg-[var(--surface)] rounded-2xl border border-[var(--surface-highlight)] overflow-hidden p-4 backdrop-blur-sm">
                             <div className="flex items-center gap-3 mb-4">
                                 <Palette className="w-5 h-5 text-fuchsia-400" />
                                 <span className="text-white font-bold text-sm">Modo do App</span>
@@ -385,14 +385,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ user, onClose, o
                             <div className="flex gap-4 px-2 mb-8">
                                 <button
                                     onClick={() => handleModeChange('light')}
-                                    className={`flex-1 py-4 rounded-2xl flex flex-col items-center gap-2 transition-all border-2 ${appMode === 'light' ? 'bg-white text-slate-900 border-[var(--primary)]' : 'bg-slate-900 text-slate-500 border-slate-800'}`}
+                                    className={`flex-1 py-4 rounded-2xl flex flex-col items-center gap-2 transition-all border-2 ${appMode === 'light' ? 'bg-[var(--surface)] text-[var(--text-main)] border-[var(--primary)]' : 'bg-[var(--surface)] text-[var(--text-muted)] border-[var(--surface-highlight)]'}`}
                                 >
                                     <div className="w-6 h-6 rounded-full bg-white border border-slate-200" />
                                     <span className="text-[10px] font-black uppercase tracking-widest">Light</span>
                                 </button>
                                 <button
                                     onClick={() => handleModeChange('dark')}
-                                    className={`flex-1 py-4 rounded-2xl flex flex-col items-center gap-2 transition-all border-2 ${appMode === 'dark' ? 'bg-slate-900 text-white border-[var(--primary)]' : 'bg-slate-900 text-slate-500 border-slate-800'}`}
+                                    className={`flex-1 py-4 rounded-2xl flex flex-col items-center gap-2 transition-all border-2 ${appMode === 'dark' ? 'bg-[var(--surface)] text-[var(--text-main)] border-[var(--primary)]' : 'bg-[var(--surface)] text-[var(--text-muted)] border-[var(--surface-highlight)]'}`}
                                 >
                                     <div className="w-6 h-6 rounded-full bg-[#020617] border border-slate-700" />
                                     <span className="text-[10px] font-black uppercase tracking-widest">Dark</span>
@@ -401,7 +401,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ user, onClose, o
 
                             <div className="flex items-center gap-3 mb-4">
                                 <Palette className="w-5 h-5 text-[var(--primary)]" />
-                                <span className="text-white font-bold text-sm">Cor do Tema</span>
+                                <span className="text-[var(--text-main)] font-bold text-sm">Cor do Tema</span>
                             </div>
                             <div className="flex flex-wrap justify-between gap-y-4 px-2">
                                 <ThemeOption color="#ccff00" label="Neon" active={themeColor === 'neon'} onClick={() => handleAccentChange('neon')} />
@@ -414,8 +414,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ user, onClose, o
 
                     {/* Privacy Section */}
                     <section>
-                        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 ml-2">Privacidade</h3>
-                        <div className="bg-slate-800/40 rounded-2xl border border-slate-700/50 overflow-hidden backdrop-blur-sm">
+                        <h3 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest mb-3 ml-2">Privacidade</h3>
+                        <div className="bg-[var(--surface)] rounded-2xl border border-[var(--surface-highlight)] overflow-hidden backdrop-blur-sm">
                             <SettingsToggle
                                 icon={<Moon className="w-5 h-5 text-slate-300" />}
                                 title="Modo Fantasma"
@@ -436,8 +436,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ user, onClose, o
 
                     {/* Notifications Section */}
                     <section>
-                        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 ml-2">Notificações</h3>
-                        <div className="bg-slate-800/40 rounded-2xl border border-slate-700/50 overflow-hidden backdrop-blur-sm">
+                        <h3 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest mb-3 ml-2">Notificações</h3>
+                        <div className="bg-[var(--surface)] rounded-2xl border border-[var(--surface-highlight)] overflow-hidden backdrop-blur-sm">
                             <SettingsToggle
                                 icon={<Shield className="w-5 h-5 text-red-400" />}
                                 title="Alertas de Hype"
@@ -458,8 +458,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ user, onClose, o
 
                     {/* General/Support Section */}
                     <section>
-                        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 ml-2">Geral</h3>
-                        <div className="bg-slate-800/40 rounded-2xl border border-slate-700/50 overflow-hidden backdrop-blur-sm">
+                        <h3 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest mb-3 ml-2">Geral</h3>
+                        <div className="bg-[var(--surface)] rounded-2xl border border-[var(--surface-highlight)] overflow-hidden backdrop-blur-sm">
                             <SettingsItem
                                 icon={<Globe className="w-5 h-5 text-indigo-400" />}
                                 title="Idioma"
@@ -489,8 +489,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ user, onClose, o
                     </section>
 
                     <section>
-                        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 ml-2">Suporte</h3>
-                        <div className="bg-slate-800/40 rounded-2xl border border-slate-700/50 overflow-hidden backdrop-blur-sm">
+                        <h3 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest mb-3 ml-2">Suporte</h3>
+                        <div className="bg-[var(--surface)] rounded-2xl border border-[var(--surface-highlight)] overflow-hidden backdrop-blur-sm">
                             <SettingsItem icon={<HelpCircle className="w-5 h-5 text-slate-300" />} title="Central de Ajuda" hasChevron onClick={openHelp} />
                             <div className="h-[1px] bg-slate-700/50 mx-4"></div>
                             <SettingsItem icon={<FileText className="w-5 h-5 text-slate-300" />} title="Termos de Uso" hasChevron onClick={openTerms} />
@@ -501,8 +501,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ user, onClose, o
 
                     {/* Danger Zone */}
                     <section>
-                        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 ml-2">Zona de Perigo</h3>
-                        <div className="bg-slate-800/40 rounded-2xl border border-slate-700/50 overflow-hidden backdrop-blur-sm">
+                        <h3 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest mb-3 ml-2">Zona de Perigo</h3>
+                        <div className="bg-[var(--surface)] rounded-2xl border border-[var(--surface-highlight)] overflow-hidden backdrop-blur-sm">
                             <button
                                 onClick={() => { trigger('medium'); onLogout(); }}
                                 className="w-full p-4 flex items-center justify-between hover:bg-red-500/10 transition-colors group"
@@ -687,19 +687,19 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ user, onClose, o
 // --- Sub Components for cleaner code ---
 
 const SettingsItem = ({ icon, title, subtitle, value, hasChevron, onClick }: any) => (
-    <button onClick={onClick} className="w-full p-4 flex items-center justify-between hover:bg-slate-800/50 transition-colors text-left disabled:cursor-default disabled:hover:bg-transparent">
+    <button onClick={onClick} className="w-full p-4 flex items-center justify-between hover:bg-[var(--surface-highlight)]/50 transition-colors text-left disabled:cursor-default disabled:hover:bg-transparent">
         <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center shrink-0 border border-slate-700">
+            <div className="w-10 h-10 rounded-full bg-[var(--surface-highlight)] flex items-center justify-center shrink-0 border border-[var(--border)]">
                 {icon}
             </div>
             <div>
-                <p className="text-white font-bold text-sm">{title}</p>
-                {subtitle && <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>}
+                <p className="text-[var(--text-main)] font-bold text-sm">{title}</p>
+                {subtitle && <p className="text-xs text-[var(--text-muted)] mt-0.5">{subtitle}</p>}
             </div>
         </div>
         <div className="flex items-center gap-2">
-            {value && <span className="text-xs font-bold text-slate-500">{value}</span>}
-            {hasChevron && <ChevronRight className="w-5 h-5 text-slate-600" />}
+            {value && <span className="text-xs font-bold text-[var(--text-muted)]">{value}</span>}
+            {hasChevron && <ChevronRight className="w-5 h-5 text-[var(--text-muted)]" />}
         </div>
     </button>
 );
@@ -707,17 +707,17 @@ const SettingsItem = ({ icon, title, subtitle, value, hasChevron, onClick }: any
 const SettingsToggle = ({ icon, title, subtitle, checked, onChange }: any) => (
     <div className="w-full p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center shrink-0 border border-slate-700">
+            <div className="w-10 h-10 rounded-full bg-[var(--surface-highlight)] flex items-center justify-center shrink-0 border border-[var(--border)]">
                 {icon}
             </div>
             <div>
-                <p className="text-white font-bold text-sm">{title}</p>
-                <p className="text-xs text-slate-400 mt-0.5 max-w-[180px] leading-tight">{subtitle}</p>
+                <p className="text-[var(--text-main)] font-bold text-sm">{title}</p>
+                <p className="text-xs text-[var(--text-muted)] mt-0.5 max-w-[180px] leading-tight">{subtitle}</p>
             </div>
         </div>
         <button
             onClick={onChange}
-            className={`w-12 h-7 rounded-full transition-colors relative shrink-0 ${checked ? 'bg-[#ccff00]' : 'bg-slate-700 border border-slate-600'}`}
+            className={`w-12 h-7 rounded-full transition-colors relative shrink-0 ${checked ? 'bg-[#ccff00]' : 'bg-[var(--surface-highlight)] border border-[var(--border)]'}`}
         >
             <div className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-transform shadow-md ${checked ? 'left-6' : 'left-1'}`}></div>
         </button>
@@ -727,12 +727,12 @@ const SettingsToggle = ({ icon, title, subtitle, checked, onChange }: any) => (
 const ThemeOption = ({ color, label, active, onClick }: any) => (
     <button onClick={onClick} className="flex flex-col items-center gap-2 group">
         <div
-            className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all ${active ? 'border-white scale-110 shadow-[0_0_15px_rgba(255,255,255,0.3)]' : 'border-slate-700 hover:border-slate-500'}`}
+            className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all ${active ? 'border-white scale-110 shadow-[0_0_15px_rgba(255,255,255,0.3)]' : 'border-[var(--surface-highlight)] hover:border-[var(--text-muted)]'}`}
             style={{ backgroundColor: active ? color : 'transparent' }}
         >
             <div className="w-6 h-6 rounded-full" style={{ backgroundColor: color }}></div>
         </div>
-        <span className={`text-[10px] font-bold uppercase tracking-wide ${active ? 'text-white' : 'text-slate-500'}`}>
+        <span className={`text-[10px] font-bold uppercase tracking-wide ${active ? 'text-[var(--text-main)]' : 'text-[var(--text-muted)]'}`}>
             {label}
         </span>
     </button>
