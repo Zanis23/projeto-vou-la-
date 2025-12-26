@@ -265,7 +265,7 @@ export default function App() {
   );
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-[var(--background)] text-white overflow-hidden relative transition-colors duration-500">
+    <div className={`flex flex-col h-[100dvh] bg-[var(--background)] text-[var(--text-main)] overflow-hidden relative transition-colors duration-500 ${currentUser.appMode === 'light' ? 'light-mode' : ''}`}>
 
       <main className="flex-1 overflow-hidden relative">
         <div key={activeTab} className="h-full scroll-container">
