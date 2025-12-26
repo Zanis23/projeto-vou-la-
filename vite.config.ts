@@ -40,10 +40,8 @@ export default defineConfig(({ mode }) => {
         }
       })
     ],
-    define: {
-      'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
-    },
+    // Removed GEMINI_API_KEY from client bundle for security
+    // All Gemini API calls now go through /api/gemini-proxy
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

@@ -1,0 +1,35 @@
+[extend]
+useDefault = true
+
+# Custom rules for Vou Lá project
+[[rules]]
+id = "supabase-anon-key"
+description = "Supabase Anon Key (JWT format)"
+regex = '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[\w-]+\.[\w-]+'''
+tags = ["key", "supabase"]
+
+[[rules]]
+id = "supabase-service-key"
+description = "Supabase Service Role Key"
+regex = '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ilx3KyIsInJvbGUiOiJzZXJ2aWNlX3JvbGUi[\w-]+'''
+tags = ["key", "supabase", "critical"]
+
+[[rules]]
+id = "google-api-key"
+description = "Google API Key (Gemini, Maps, etc.)"
+regex = '''AIza[0-9A-Za-z\-_]{35}'''
+tags = ["key", "google", "gemini"]
+
+[[rules]]
+id = "vercel-token"
+description = "Vercel Access Token"
+regex = '''vercel_[a-zA-Z0-9]{24}'''
+tags = ["key", "vercel"]
+
+# Allowlist for example files
+[allowlist]
+paths = [
+  ".env.example",
+  "SECURITY.md",
+  "docs/"
+]

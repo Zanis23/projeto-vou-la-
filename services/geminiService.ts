@@ -1,94 +1,91 @@
 
-import { GoogleGenAI } from "@google/genai";
+import { supabase } from './supabase';
 
 export interface AIRecommendation {
   text: string;
   groundingMetadata?: any;
 }
 
-export const getGeminiRecommendation = async (userQuery: string): Promise<AIRecommendation | null> => {
-  // Always initialize GoogleGenAI with a named parameter for the API Key as per guidelines
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Helper function to get auth token
+async function getAuthToken(): Promise<string | null> {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token || null;
+}
 
+// Helper function to call Gemini proxy
+async function callGeminiProxy(action: string, params: any): Promise<any> {
+  const token = await getAuthToken();
+
+  if (!token) {
+    throw new Error('User not authenticated');
+  }
+
+  const response = await fetch('/api/gemini-proxy', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({ action, params })
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to call Gemini API');
+  }
+
+  return response.json();
+}
+
+export const getGeminiRecommendation = async (userQuery: string): Promise<AIRecommendation | null> => {
   try {
-    // Maps grounding is only supported in Gemini 2.5 series models.
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: userQuery,
-      config: {
-        tools: [{ googleSearch: {} }, { googleMaps: {} }],
-        systemInstruction: "Você é um Concierge de balada jovem e descolado no Brasil. Use gírias atuais."
-      }
-    });
+    const result = await callGeminiProxy('getRecommendation', { userQuery });
     return {
-      text: response.text || "Não achei nada agora, bora pro próximo!",
-      groundingMetadata: response.candidates?.[0]?.groundingMetadata
+      text: result.text,
+      groundingMetadata: result.groundingMetadata
     };
   } catch (error) {
+    console.error('Error getting recommendation:', error);
     return null;
   }
 };
 
 export const getBusinessInsights = async (placeName: string, stats: any): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: `Gere um insight estratégico curto (30 palavras) para o dono do ${placeName}. Dados: ${JSON.stringify(stats)}. Foco em aumentar lucro e vibe.`,
-    });
-    return response.text || "Continue o bom trabalho!";
-  } catch (e) {
+    const result = await callGeminiProxy('getBusinessInsights', { placeName, stats });
+    return result.text;
+  } catch (error) {
+    console.error('Error getting business insights:', error);
     return "Analise seu público para otimizar as vendas.";
   }
 };
 
 export const generateIcebreaker = async (targetName: string, placeName: string, targetTags: string[]): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: `Gere um quebra-gelo curto (max 15 palavras) para eu mandar para ${targetName} no ${placeName}. Gosta de: ${targetTags.join(', ')}. Seja engraçado, ousado mas respeitoso. Use gírias de balada brasileira.`,
-    });
-    return response.text?.replace(/"/g, '') || "Bora dividir um drink?";
-  } catch (e) {
+    const result = await callGeminiProxy('generateIcebreaker', { targetName, placeName, targetTags });
+    return result.text;
+  } catch (error) {
+    console.error('Error generating icebreaker:', error);
     return "Oie! Qual a boa de hoje?";
   }
 };
 
 export const generateAIImage = async (prompt: string, size: '1K' | '2K' | '4K' = '1K'): Promise<string | null> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-image-preview',
-      contents: { parts: [{ text: prompt }] },
-      config: { imageConfig: { imageSize: size, aspectRatio: "1:1" } },
-    });
-    for (const part of response.candidates?.[0]?.content?.parts || []) {
-      // Find the image part and return base64
-      if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
-    }
+    const result = await callGeminiProxy('generateAIImage', { prompt, size });
+    return result.image;
+  } catch (error) {
+    console.error('Error generating AI image:', error);
     return null;
-  } catch (error) { return null; }
+  }
 };
 
 export const editAIImage = async (base64Image: string, prompt: string): Promise<string | null> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   try {
-    const cleanBase64 = base64Image.replace(/^data:image\/(png|jpeg|jpg);base64,/, "");
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-image',
-      contents: {
-        parts: [
-          { inlineData: { mimeType: 'image/png', data: cleanBase64 } },
-          { text: prompt },
-        ],
-      },
-    });
-    for (const part of response.candidates?.[0]?.content?.parts || []) {
-      if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
-    }
+    const result = await callGeminiProxy('editAIImage', { base64Image, prompt });
+    return result.image;
+  } catch (error) {
+    console.error('Error editing AI image:', error);
     return null;
-  } catch (error) { return null; }
+  }
 };
