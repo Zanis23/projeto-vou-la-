@@ -326,7 +326,7 @@ export const db = {
           phone_number: place.phoneNumber,
           opening_hours: place.openingHours,
           current_music: place.currentMusic,
-          owner_id: place.ownerId, // Add owner binding to DB insert
+
           lat: place.lat,
           lng: place.lng,
           address: place.address,

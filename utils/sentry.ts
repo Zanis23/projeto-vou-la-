@@ -31,17 +31,17 @@ export function initSentry() {
         // Integrations
         integrations: [
             // Browser tracing for performance monitoring
-            new Sentry.BrowserTracing({
+            Sentry.browserTracingIntegration({
                 // Set sampling rate for performance monitoring
-                tracePropagationTargets: [
-                    "localhost",
-                    /^https:\/\/.*\.vercel\.app/,
-                    /^https:\/\/.*\.supabase\.co/
-                ],
+                // tracePropagationTargets: [
+                //    "localhost",
+                //    /^https:\/\/.*\.vercel\.app/,
+                //    /^https:\/\/.*\.supabase\.co/
+                // ],
             }),
 
             // Session replay for debugging
-            new Sentry.Replay({
+            Sentry.replayIntegration({
                 maskAllText: true,
                 blockAllMedia: true,
             }),
@@ -142,10 +142,12 @@ export function addBreadcrumb(message: string, data?: Record<string, any>) {
  * Start a performance transaction
  */
 export function startTransaction(name: string, op: string) {
-    return Sentry.startTransaction({
+    // Sentry v8 removed startTransaction. Stubbing for now.
+    return { finish: () => { } };
+    /* return Sentry.startTransaction({
         name,
         op,
-    });
+    }); */
 }
 
 /**

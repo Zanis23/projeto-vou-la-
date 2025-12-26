@@ -1,4 +1,5 @@
 import path from 'path';
+import { sentryVitePlugin } from '@sentry/vite-plugin';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -12,6 +13,17 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       react(),
+      /* sentryVitePlugin({
+        org: 'vou-la',
+        project: 'react-native',
+        authToken: process.env.SENTRY_AUTH_TOKEN,
+        // Adjust the URL prefix if your source maps are uploaded to a different location
+
+        // Enable source map upload for production builds
+        // sourcemaps: { include: ['dist/ ** /*.js'] },
+        // Optional: set debug to true for verbose logging during CI
+        debug: false,
+      }), */
       VitePWA({
         registerType: 'prompt', // Notify user about updates
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
@@ -115,6 +127,18 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
+      }
+    },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vendor: ['react', 'react-dom'],
+            ui: ['lucide-react', 'framer-motion'],
+            supabase: ['@supabase/supabase-js'],
+            capacitor: ['@capacitor/core', '@capacitor/haptics', '@capacitor/app']
+          }
+        }
       }
     }
   };

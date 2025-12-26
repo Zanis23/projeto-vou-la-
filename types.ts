@@ -153,6 +153,8 @@ export interface CheckIn {
   snapshotImageUrl: string;
 }
 
+export type FeedCheckIn = CheckIn;
+
 export interface Ticket {
   id: string;
   title: string;
@@ -183,6 +185,7 @@ export interface User {
   twitter?: string;
   status?: string;
   wallet?: Ticket[];
+  appMode?: 'light' | 'dark';
 }
 
 export interface FeedItem {

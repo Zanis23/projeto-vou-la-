@@ -25,5 +25,12 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
-  }
+  },
+  "include": [
+    "src",
+    "pages",
+    "*.tsx",
+    "*.ts",
+    "vite.config.ts"
+  ]
 }

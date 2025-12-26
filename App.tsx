@@ -12,8 +12,7 @@ import { Ranking } from './pages/Ranking';
 import { Store } from './pages/Store';
 import { Challenges } from './pages/Challenges';
 import { BusinessRegistration } from './pages/BusinessRegistration';
-import { OnboardingTutorial } from './components/OnboardingTutorial';
-import { Tab, Place, User, FeedItem, CheckIn, PlaceType, Chat } from './types';
+import { Tab, Place, User, FeedItem, FeedCheckIn, PlaceType } from './types';
 import { Map, List, User as UserIcon, MessageCircle, LayoutGrid, X, Loader2 } from 'lucide-react';
 import { PlaceCard } from './components/PlaceCard';
 import { MoreOptionsModal } from './components/MoreOptionsModal';
@@ -23,6 +22,10 @@ import { MOCK_USER } from './constants';
 import { db } from './utils/storage';
 import { supabase } from './services/supabase';
 
+// UI Components
+import { BottomNav, BottomNavItem } from './src/components/ui/BottomNav';
+import { ContextualOnboarding } from './src/components/ContextualOnboarding';
+
 // Loading component for lazy-loaded pages
 const PageLoader = () => (
   <div style={{
@@ -30,8 +33,8 @@ const PageLoader = () => (
     alignItems: 'center',
     justifyContent: 'center',
     height: '100vh',
-    background: '#0E1121',
-    color: '#ccff00'
+    background: 'var(--bg-default)',
+    color: 'var(--primary-main)'
   }}>
     <div style={{ textAlign: 'center' }}>
       <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⚡</div>
@@ -52,7 +55,6 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<User>(MOCK_USER);
   const [places, setPlaces] = useState<Place[]>([]);
   const [feed, setFeed] = useState<FeedItem[]>([]);
-  const [showTutorial, setShowTutorial] = useState(false);
 
   // Apply theme to document element
   useEffect(() => {
@@ -62,13 +64,6 @@ export default function App() {
       document.documentElement.classList.remove('light-mode');
     }
   }, [currentUser.appMode]);
-
-  // Check tutorial on mount/login
-  useEffect(() => {
-    if (appState === 'MAIN' && !localStorage.getItem('voula_tutorial_seen_v1')) {
-      setShowTutorial(true);
-    }
-  }, [appState]);
 
   // Lógica para lidar com botão Voltar no Android (Nativo)
   useEffect(() => {
@@ -106,16 +101,12 @@ export default function App() {
   }, [showMoreMenu]);
 
   const loadData = useCallback(async (optimisticUser?: User) => {
-    // If optimisticUser is provided, use it effectively as 'currentUser' for the session 
-    // but still fetch concurrent data
     const [fetchedUser, allPlaces, allFeed] = await Promise.all([
       optimisticUser ? Promise.resolve(optimisticUser) : db.user.get(),
       db.places.get(),
       db.feed.get()
     ]);
 
-    // If we have an optimistic user, trust it over the DB for the initial render to avoid reversion
-    // But we should eventually sync. For now, this is enough to keep the "Owner" state active.
     const finalUser = optimisticUser || fetchedUser;
 
     setCurrentUser(finalUser);
@@ -170,7 +161,6 @@ export default function App() {
         setFeed(prev => [payload.new as FeedItem, ...prev]);
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'chats' }, (payload) => {
-        // Only react if the chat involves the current user
         const chat = payload.new as any;
         if (chat && currentUser && (chat.user_id === currentUser.id || chat.target_id === currentUser.id)) {
           window.dispatchEvent(new CustomEvent('voula_chat_update'));
@@ -181,26 +171,7 @@ export default function App() {
         if (d && d.id) {
           setPlaces(prev => prev.map(p => {
             if (p.id !== d.id) return p;
-            return {
-              ...p,
-              ...d,
-              peopleCount: d.people_count ?? p.peopleCount,
-              capacityPercentage: d.capacity_percentage ?? p.capacityPercentage,
-              imageUrl: d.image_url ?? p.imageUrl,
-              isTrending: d.is_trending ?? p.isTrending,
-              coordinates: d.coordinates || p.coordinates || { x: 0, y: 0 },
-              phoneNumber: d.phone_number ?? p.phoneNumber,
-              openingHours: d.opening_hours ?? p.openingHours,
-              currentMusic: d.current_music ?? p.currentMusic,
-              activeCalls: d.active_calls ?? p.activeCalls,
-              friendsPresent: d.friends_present ?? p.friendsPresent,
-              liveRequests: d.live_requests ?? p.liveRequests,
-              upcomingEvents: d.upcoming_events ?? p.upcomingEvents,
-              activePromos: d.active_promos ?? p.activePromos,
-              sentimentScore: d.sentiment_score ?? p.sentimentScore,
-              crowdInsights: d.crowd_insights ?? p.crowdInsights,
-              ownerId: d.owner_id ?? p.ownerId
-            };
+            return { ...p, ...d };
           }));
         }
       })
@@ -231,7 +202,7 @@ export default function App() {
     if (!target) return;
 
     const xp = 50;
-    const checkin: CheckIn = {
+    const checkin: FeedCheckIn = {
       id: Date.now().toString(),
       placeId,
       placeName: target.name,
@@ -272,9 +243,9 @@ export default function App() {
 
   if (appState === 'LOADING') {
     return (
-      <div className="h-screen bg-[#0E1121] flex flex-col items-center justify-center">
-        <Loader2 className="w-12 h-12 text-[var(--primary)] animate-spin mb-4" />
-        <p className="text-slate-500 font-black uppercase tracking-[0.3em] text-xs">VOU LÁ</p>
+      <div className="h-screen bg-[var(--bg-default)] flex flex-col items-center justify-center">
+        <Loader2 className="w-12 h-12 text-[var(--primary-main)] animate-spin mb-4" />
+        <p className="text-[var(--text-muted)] font-black uppercase tracking-[0.3em] text-xs">VOU LÁ</p>
       </div>
     );
   }
@@ -286,7 +257,7 @@ export default function App() {
       onBack={() => setAppState('LOGIN')}
       onRegisterSuccess={async (u) => {
         setCurrentUser(u);
-        await loadData(u); // Ensure data is loaded
+        await loadData(u);
         setActiveTab(Tab.DASHBOARD);
         setAppState('MAIN');
       }}
@@ -297,7 +268,7 @@ export default function App() {
     <>
       <PWAUpdateNotification />
       <Suspense fallback={<PageLoader />}>
-        <div className="flex flex-col h-[100dvh] bg-[var(--background)] text-[var(--text-main)] overflow-hidden relative transition-colors duration-500">
+        <div className="flex flex-col h-[100dvh] bg-[var(--bg-default)] text-[var(--text-primary)] overflow-hidden relative transition-colors duration-500">
 
           <main className="flex-1 overflow-hidden relative">
             <div key={activeTab} className="h-full scroll-container">
@@ -332,18 +303,13 @@ export default function App() {
                 />
               )}
 
-              {/* Tutorial Overlay */}
-              {showTutorial && (
-                <OnboardingTutorial onComplete={() => {
-                  localStorage.setItem('voula_tutorial_seen_v1', 'true');
-                  setShowTutorial(false);
-                }} />
-              )}
+              {/* Contextual Onboarding Overlay */}
+              <ContextualOnboarding />
             </div>
           </main>
 
           {selectedPlace && (
-            <div className="fixed inset-0 z-[100] bg-[var(--background)] animate-[slideUp_0.4s_cubic-bezier(0.16,1,0.3,1)] flex flex-col">
+            <div className="fixed inset-0 z-[100] bg-[var(--bg-default)] animate-[slideUp_0.4s_cubic-bezier(0.16,1,0.3,1)] flex flex-col">
               <div className="absolute top-safe left-4 z-50 pt-1">
                 <button onClick={() => { window.history.back(); }} className="p-2.5 rounded-full bg-black/40 text-white backdrop-blur-lg border border-white/10 active:scale-90 shadow-xl">
                   <X className="w-6 h-6" />
@@ -375,28 +341,41 @@ export default function App() {
             />
           )}
 
-          <nav className="bg-[var(--background)]/95 backdrop-blur-xl border-t border-white/5 flex justify-around items-center px-2 z-[90] pb-safe pt-2 min-h-[75px] xs:min-h-[85px] shrink-0">
-            <NavButton active={activeTab === Tab.HOME} onClick={() => { setHomeFilter('ALL'); setActiveTab(Tab.HOME); }} icon={<List className="w-5 h-5" />} label="Lista" />
-            <NavButton active={activeTab === Tab.RADAR} onClick={() => setActiveTab(Tab.RADAR)} icon={<Map className="w-5 h-5" />} label="Radar" />
+          <BottomNav>
+            <BottomNavItem
+              active={activeTab === Tab.HOME}
+              onClick={() => { setHomeFilter('ALL'); setActiveTab(Tab.HOME); }}
+              icon={<List className="w-5 h-5" />}
+              label="Lista"
+            />
+            <BottomNavItem
+              active={activeTab === Tab.RADAR}
+              onClick={() => setActiveTab(Tab.RADAR)}
+              icon={<Map className="w-5 h-5" />}
+              label="Radar"
+            />
 
             <div className="relative -top-6 xs:-top-7">
-              <button onClick={() => setShowMoreMenu(true)} className={`w-14 h-14 rounded-full flex items-center justify-center transition-all active:scale-90 border-4 border-[var(--background)] ${showMoreMenu ? 'bg-white text-black' : 'bg-[var(--primary)] text-[var(--on-primary)] shadow-[0_0_20px_var(--primary-glow)]'}`}>
+              <button onClick={() => setShowMoreMenu(true)} className={`w-14 h-14 rounded-full flex items-center justify-center transition-all active:scale-90 border-4 border-[var(--bg-default)] ${showMoreMenu ? 'bg-white text-black' : 'bg-[var(--primary-main)] text-[var(--primary-on)] shadow-[0_0_20px_var(--primary-glow)]'}`}>
                 <LayoutGrid className="w-6 h-6 fill-current" />
               </button>
             </div>
 
-            <NavButton active={activeTab === Tab.SOCIAL} onClick={() => setActiveTab(Tab.SOCIAL)} icon={<MessageCircle className="w-5 h-5" />} label="Bonde" />
-            <NavButton active={activeTab === Tab.PROFILE} onClick={() => setActiveTab(Tab.PROFILE)} icon={<UserIcon className="w-5 h-5" />} label="Perfil" />
-          </nav>
+            <BottomNavItem
+              active={activeTab === Tab.SOCIAL}
+              onClick={() => setActiveTab(Tab.SOCIAL)}
+              icon={<MessageCircle className="w-5 h-5" />}
+              label="Bonde"
+            />
+            <BottomNavItem
+              active={activeTab === Tab.PROFILE}
+              onClick={() => setActiveTab(Tab.PROFILE)}
+              icon={<UserIcon className="w-5 h-5" />}
+              label="Perfil"
+            />
+          </BottomNav>
         </div>
       </Suspense>
     </>
   );
 }
-
-const NavButton = ({ active, onClick, icon, label }: any) => (
-  <button onClick={onClick} className={`flex flex-col items-center gap-1 p-2 transition-all active:scale-95 ${active ? 'text-[var(--primary)]' : 'text-slate-500'}`}>
-    {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: `${(icon as any).props.className} ${active ? 'fill-current' : ''}` })}
-    <span className="text-[9px] font-black uppercase tracking-wider">{label}</span>
-  </button>
-);

@@ -1,17 +1,8 @@
-:root {
-    --background: #0E1121;
-    --surface: #1e293b;
-    --surface-highlight: #334155;
-    --text-main: #ffffff;
-    --text-muted: #94a3b8;
-    --border: rgba(255, 255, 255, 0.05);
-    --primary: #ccff00;
-    --primary-glow: rgba(204, 255, 0, 0.4);
-    --on-primary: #000000;
-    
-    --sat: env(safe-area-inset-top, 0px);
-    --sab: env(safe-area-inset-bottom, 0px);
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import "./src/styles/theme.css";
 
 * {
     box-sizing: border-box;
@@ -25,72 +16,19 @@ html {
     height: 100%;
     width: 100%;
     overflow: hidden;
-    background-color: var(--background);
+    background-color: var(--bg-default);
+    color: var(--text-primary);
     position: fixed;
-    /* Evita bounce scroll no iOS nativo */
 }
 
 body {
-    font-family: 'Poppins', sans-serif;
-    color: white;
+    font-family: var(--font-sans);
     overscroll-behavior: none;
 }
 
+/* Utilities */
 .hide-scrollbar::-webkit-scrollbar {
     display: none;
-}
-
-/* Ajuste para Notch/Ilha Dinâmica */
-.pt-safe {
-    padding-top: var(--sat);
-}
-
-.pb-safe {
-    padding-bottom: var(--sab);
-}
-
-/* WhatsApp Inspired Chat Styles */
-.chat-bg {
-    background-color: #0b141a !important;
-    background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
-    background-blend-mode: overlay;
-    background-size: 400px;
-}
-
-.bubble-me {
-    background: #005c4b !important;
-    color: #e9edef !important;
-    position: relative;
-    border-radius: 8px 0px 8px 8px !important;
-}
-
-.bubble-me::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    right: -8px;
-    width: 0;
-    height: 0;
-    border-left: 10px solid #005c4b;
-    border-bottom: 10px solid transparent;
-}
-
-.bubble-them {
-    background: #202c33 !important;
-    color: #e9edef !important;
-    position: relative;
-    border-radius: 0px 8px 8px 8px !important;
-}
-
-.bubble-them::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: -8px;
-    width: 0;
-    height: 0;
-    border-right: 10px solid #202c33;
-    border-bottom: 10px solid transparent;
 }
 
 .scroll-container {
@@ -104,28 +42,25 @@ body {
     display: none;
 }
 
-[data-mode="light"] {
-    --background: #f8fafc;
-    --surface: #ffffff;
-    --surface-highlight: #e2e8f0;
-    --text-main: #0f172a;
-    --text-muted: #64748b;
-    --border: rgba(0, 0, 0, 0.05);
+/* Safe Areas */
+.pt-safe {
+    padding-top: var(--sat);
 }
 
+.pb-safe {
+    padding-bottom: var(--sab);
+}
+
+/* Glass Effect */
 .glass-card {
-    background: var(--surface);
-    /* Performance optimization: reduced blur */
+    background: var(--bg-card);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-default);
     will-change: transform;
 }
 
-.premium-shadow {
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-}
-
+/* Animations */
 @keyframes float {
 
     0%,
@@ -142,18 +77,9 @@ body {
     animation: float 3s ease-in-out infinite;
 }
 
-@keyframes scan {
-    0% {
-        top: 10%;
-        opacity: 0;
-    }
-
-    50% {
-        opacity: 1;
-    }
-
-    100% {
-        top: 90%;
-        opacity: 0;
-    }
+/* Legacy / Specific Styles (To be refactored into components later) */
+.chat-bg {
+    background-color: var(--bg-subtle) !important;
+    background-blend-mode: overlay;
+    background-size: 400px;
 }
