@@ -209,6 +209,10 @@ export const Profile: React.FC<ProfileProps> = ({ currentUser = MOCK_USER, onLog
           </h2>
 
           <div className="flex gap-2">
+            <button onClick={() => setShowSafety(true)} className="flex items-center gap-2 px-3 py-2 bg-red-500/10 backdrop-blur-md rounded-2xl text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all active:scale-95 shadow-lg">
+              <Shield className="w-5 h-5" />
+              <span className="text-[10px] font-black uppercase block">Segurança</span>
+            </button>
             <button onClick={() => setShowCodeModal(true)} className="p-3 bg-[var(--surface)] rounded-full text-[var(--text-muted)] border border-[var(--surface-highlight)] hover:text-[var(--text-main)] transition-all active:scale-95 shadow-lg">
               <Eye className="w-5 h-5" />
             </button>

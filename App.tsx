@@ -68,28 +68,30 @@ export default function App() {
     }
   }, [appState, currentUser?.id]);
 
-  // Lógica para lidar com botão Voltar no Android (Nativo)
+  // MAJOR FIX: Back button logic integrated with Browser History
   useEffect(() => {
-    const handleBackButton = () => {
+    const handlePopState = (e: PopStateEvent) => {
       if (selectedPlace) {
         setSelectedPlace(null);
-        return;
-      }
-      if (showMoreMenu) {
+        // We don't want to go back in browser history if we just closed a modal
+        // but popstate already happened, so we just clear the state.
+      } else if (showMoreMenu) {
         setShowMoreMenu(false);
-        return;
-      }
-      if (activeTab !== Tab.HOME) {
+      } else if (activeTab !== Tab.HOME) {
         setActiveTab(Tab.HOME);
-        return;
       }
     };
 
-    // No Capacitor real, usaríamos App.addListener('backButton', ...)
-    // Aqui simulamos a prevenção de navegação
-    window.addEventListener('popstate', handleBackButton);
-    return () => window.removeEventListener('popstate', handleBackButton);
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, [selectedPlace, showMoreMenu, activeTab]);
+
+  // Push state when opening high-level modals
+  useEffect(() => {
+    if (selectedPlace) {
+      window.history.pushState({ modal: 'place' }, '');
+    }
+  }, [selectedPlace]);
 
   const loadData = useCallback(async (optimisticUser?: User) => {
     const [fetchedUser, allPlaces, allFeed, allMoments] = await Promise.all([
@@ -465,7 +467,7 @@ export default function App() {
       {selectedPlace && (
         <div className="fixed inset-0 z-[100] bg-[var(--background)] animate-[slideUp_0.4s_cubic-bezier(0.16,1,0.3,1)] flex flex-col">
           <div className="absolute top-safe left-4 z-50 pt-1">
-            <button onClick={() => setSelectedPlace(null)} className="p-2.5 rounded-full bg-black/40 text-white backdrop-blur-lg border border-white/10 active:scale-90 shadow-xl">
+            <button onClick={() => window.history.back()} className="p-2.5 rounded-full bg-black/40 text-white backdrop-blur-lg border border-white/10 active:scale-90 shadow-xl">
               <X className="w-6 h-6" />
             </button>
           </div>

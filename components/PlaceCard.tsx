@@ -300,12 +300,12 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                         }}
                         disabled={isCheckedIn || checkInState === 'checking'}
                         className={`w-full py-4 rounded-2xl font-black italic tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-lg hover:brightness-110 active:scale-95
-                        ${isCheckedIn ? 'bg-[var(--surface)] text-[var(--text-muted)] border border-[var(--surface-highlight)]' :
+                        ${isCheckedIn ? 'bg-emerald-500 text-white shadow-[0_0_25px_rgba(16,185,129,0.4)]' :
                                 checkInState === 'checking' ? 'bg-indigo-600 animate-pulse text-white' :
                                     'bg-[var(--primary)] text-[var(--on-primary)] shadow-[0_0_20px_var(--primary-glow)]'}`}
                     >
                         {checkInState === 'checking' ? <Loader2 className="w-6 h-6 animate-spin" /> :
-                            isCheckedIn ? <><CheckCircle2 className="w-6 h-6" /> VOCÊ ESTÁ AQUI</> : 'FAZER CHECK-IN'}
+                            isCheckedIn ? <><CheckCircle2 className="w-6 h-6" /> ESTOU AQUI!</> : 'VOU LÁ!'}
                     </button>
                 </div>
 
@@ -429,7 +429,7 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                     <button
                         onClick={handleActionClick}
                         className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all shadow-lg z-20 relative
-                        ${isCheckedIn ? 'bg-[var(--primary)] text-black shadow-[0_0_15px_var(--primary-glow)] ring-2 ring-[var(--primary)]/50' :
+                        ${isCheckedIn ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)] ring-2 ring-emerald-500/50' :
                                 checkInState === 'checking' ? 'bg-indigo-600 animate-pulse text-white' : 'bg-white/5 border border-white/10 text-white hover:bg-white/10'}`}
                     >
                         {checkInState === 'checking' ? <Loader2 className="w-5 h-5 animate-spin" /> :

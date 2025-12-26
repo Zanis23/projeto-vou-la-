@@ -153,6 +153,17 @@
       border-right: 10px solid #202c33;
       border-bottom: 10px solid transparent;
     }
+
+    .scroll-container {
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .scroll-container::-webkit-scrollbar {
+      display: none;
+    }
   </style>
   <script type="importmap">
 {
@@ -167,7 +178,7 @@
   }
 }
 </script>
-  <link rel="stylesheet" href="/index.css">
+
 </head>
 
 <body class="bg-[#0E1121] text-slate-200 select-none overflow-hidden overscroll-none">
