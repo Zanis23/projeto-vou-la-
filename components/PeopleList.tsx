@@ -1,6 +1,6 @@
 import React from 'react';
 import { User, PrivacySettings } from '../types';
-import { X, MessageCircle, UserPlus, Ghost } from 'lucide-react';
+import { X, MessageCircle, UserPlus, Ghost, Users } from 'lucide-react';
 import { useHaptic } from '../hooks/useHaptic';
 
 interface PeopleListProps {
@@ -20,51 +20,72 @@ export const PeopleList: React.FC<PeopleListProps> = ({ placeName, people, curre
 
     if (isInline) {
         return (
-            <div className="flex flex-col">
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-black text-white italic tracking-tighter uppercase leading-none">Quem tá aqui</h3>
-                    <div className="bg-[var(--primary)]/20 px-2 py-0.5 rounded-full border border-[var(--primary)]/30">
-                        <span className="text-[10px] font-black text-[var(--primary)]"> {visiblePeople.length} PESSOAS</span>
+            <div className="flex flex-col bg-gradient-to-r from-slate-900 to-slate-800 rounded-3xl p-1 border border-white/5 relative overflow-hidden group/card">
+                {/* Background Glow Effect */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--primary)]/5 blur-3xl rounded-full -mr-10 -mt-10 pointer-events-none"></div>
+
+                {/* Card Header (Reference Design) */}
+                <div className="flex items-center justify-between p-4 pb-2 relative z-10">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center border border-white/10 shrink-0">
+                            <Users className="w-5 h-5 text-white/80" />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-black text-white italic tracking-tighter uppercase leading-none drop-shadow-md">
+                                QUEM TÁ AQUI?
+                            </h3>
+                            <p className="text-[9px] font-bold text-[var(--primary)] uppercase tracking-widest mt-0.5">
+                                ENCONTRE SUA GALERA
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="bg-white/5 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></div>
+                        <span className="text-[10px] font-black text-white uppercase tracking-wider">{visiblePeople.length} ON</span>
                     </div>
                 </div>
 
-                {currentUser.settings?.ghostMode && (
-                    <div className="mb-4 bg-purple-500/10 border border-purple-500/30 p-3 rounded-xl flex items-center gap-3">
-                        <div className="p-2 bg-purple-500/20 rounded-full">
-                            <Ghost className="w-4 h-4 text-purple-400" />
-                        </div>
-                        <div>
-                            <p className="text-white font-bold text-xs uppercase">Modo Fantasma</p>
-                            <p className="text-purple-300 text-[10px]">Você está invisível.</p>
-                        </div>
-                    </div>
-                )}
-
-                {visiblePeople.length === 0 ? (
-                    <div className="bg-black/20 rounded-2xl p-6 text-center">
-                        <p className="text-slate-500 text-xs font-bold uppercase">Ninguém visível ainda.</p>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-2 gap-3">
-                        {visiblePeople.map((user) => (
-                            <div key={user.id} className="bg-[var(--background)] border border-white/5 rounded-2xl p-3 flex flex-col items-center gap-2 relative group">
-                                <div className="w-14 h-14 rounded-full p-0.5 border border-[var(--primary)]">
-                                    <img src={user.avatar} alt={user.name} className="w-full h-full rounded-full object-cover" />
-                                </div>
-                                <div className="text-center">
-                                    <h4 className="text-white font-bold text-sm leading-none">{user.name.split(' ')[0]}</h4>
-                                    <p className="text-[8px] text-slate-400 uppercase mt-0.5">{user.bio || "Vibing"}</p>
-                                </div>
-                                <button
-                                    onClick={() => onConnect(user.id)}
-                                    className="w-full py-1.5 bg-[var(--primary)] text-black rounded-lg font-black uppercase text-[9px] tracking-wide mt-1 hover:brightness-110"
-                                >
-                                    Conectar
-                                </button>
+                {/* Inline Content (Grid) */}
+                <div className="p-2 relative z-10">
+                    {currentUser.settings?.ghostMode && (
+                        <div className="mb-3 mx-2 bg-purple-500/10 border border-purple-500/30 p-2.5 rounded-xl flex items-center gap-3">
+                            <div className="p-1.5 bg-purple-500/20 rounded-full">
+                                <Ghost className="w-3.5 h-3.5 text-purple-400" />
                             </div>
-                        ))}
-                    </div>
-                )}
+                            <div>
+                                <p className="text-white font-bold text-[10px] uppercase">Modo Fantasma</p>
+                                <p className="text-purple-300 text-[9px] leading-tight">Você está invisível.</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {visiblePeople.length === 0 ? (
+                        <div className="bg-black/20 rounded-2xl p-6 text-center mx-2 mb-2">
+                            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Ninguém visível ainda.</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-2 gap-2">
+                            {visiblePeople.map((user) => (
+                                <div key={user.id} className="bg-[var(--background)]/80 backdrop-blur-sm border border-white/5 rounded-2xl p-3 flex flex-col items-center gap-2 relative group hover:bg-[var(--surface)] hover:border-[var(--primary)]/30 transition-all">
+                                    <div className="w-12 h-12 rounded-full p-0.5 border border-[var(--primary)] shadow-[0_0_10px_rgba(var(--primary-rgb),0.2)]">
+                                        <img src={user.avatar} alt={user.name} className="w-full h-full rounded-full object-cover" />
+                                    </div>
+                                    <div className="text-center min-w-0 w-full">
+                                        <h4 className="text-white font-bold text-xs leading-none truncate px-1">{user.name.split(' ')[0]}</h4>
+                                        <p className="text-[8px] text-slate-400 uppercase mt-0.5 truncate px-1">{user.bio || "Vibing"}</p>
+                                    </div>
+                                    <button
+                                        onClick={() => onConnect(user.id)}
+                                        className="w-full py-1.5 bg-[var(--primary)] text-black rounded-lg font-black uppercase text-[9px] tracking-wide mt-0.5 hover:brightness-110 active:scale-95 transition-transform"
+                                    >
+                                        Conectar
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
         );
     }

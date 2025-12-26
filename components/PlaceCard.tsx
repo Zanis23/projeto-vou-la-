@@ -244,12 +244,12 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
 
                     {/* INLINE SOCIAL / MATCH TAB (Visible only when checked in) */}
                     {isCheckedIn ? (
-                        <div className="bg-[var(--surface)] p-6 rounded-[2.5rem] border border-[var(--surface-highlight)] shadow-sm animate-[fadeIn_0.5s_ease-out]">
+                        <div className="animate-[fadeIn_0.5s_ease-out]">
                             <PeopleList
                                 placeName={place.name}
                                 people={peoplePresent || []}
                                 currentUser={currentUser || MOCK_USER}
-                                onClose={() => { }} // No close button needed for inline
+                                onClose={() => { }}
                                 onConnect={(uid) => console.log("Connect", uid)}
                                 isInline={true}
                             />

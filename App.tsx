@@ -22,6 +22,7 @@ import { BusinessDashboard } from './components/BusinessDashboard';
 import { MOCK_USER, ACCENTS, MODES } from './constants';
 import { db } from './utils/storage';
 import { supabase } from './services/supabase';
+import { api } from './services/api';
 
 type AppState = 'LOADING' | 'LOGIN' | 'MAIN' | 'BUSINESS_REG';
 
@@ -41,37 +42,37 @@ export default function App() {
   const [showTutorial, setShowTutorial] = useState(false);
   const [placeUsers, setPlaceUsers] = useState<User[]>([]);
 
-  // Generate mock users for the selected place
+  // Fetch Real Users for the selected place
   useEffect(() => {
-    if (selectedPlace) {
-      // Create some fake users based on people count (capped at 20 for performance)
-      const count = Math.min(selectedPlace.peopleCount || 10, 20);
-      const mock: User[] = Array.from({ length: count }).map((_, i) => ({
-        ...MOCK_USER,
-        id: `guest_${selectedPlace.id}_${i}`,
-        name: ["Sofia", "Lucas", "Mateus", "Isabela", "Gabriel", "Julia", "Pedro", "Larissa", "Thiago", "Beatriz", "Rafael", "Mariana", "Gustavo", "Camila", "Bruno", "Fernanda", "Andre", "Leticia", "Felipe", "Amanda"][i % 20],
-        avatar: `https://i.pravatar.cc/150?u=guest_${selectedPlace.id}_${i}`,
-        bio: ["Vibing...", "Só de boa", "Procurando after", "100% energia", "Modo avião", "Explorando", "Vou Lá fan"][i % 7],
-        level: Math.floor(Math.random() * 10) + 1,
-        // Randomly set some to ghost mode to test privacy
-        settings: {
-          ghostMode: Math.random() > 0.85,
-          publicProfile: true,
-          allowTagging: true,
-          showLocation: true,
-          blockedUsers: [],
-          notifications: { hypeAlerts: true, chatMessages: true, friendActivity: true }
-        },
-        history: [],
-        savedPlaces: [],
-        memberSince: new Date().toISOString(),
-        points: 0,
-        badges: []
-      }));
-      setPlaceUsers(mock);
-    } else {
-      setPlaceUsers([]);
-    }
+    let mounted = true;
+
+    const fetchPeople = async () => {
+      if (selectedPlace) {
+        setPlaceUsers([]); // Clear previous
+        try {
+          const users = await api.getActiveUsers(selectedPlace.id);
+          if (mounted) {
+            setPlaceUsers(users);
+            // If list is empty and we want to keep the vibe alive for demo, strictly strictly for demo:
+            if (users.length === 0 && selectedPlace.peopleCount > 0) {
+              // keep empty to show "Start the party" or something, don't fake it anymore.
+            }
+          }
+        } catch (err) {
+          console.error("Failed to fetch people:", err);
+        }
+      } else {
+        setPlaceUsers([]);
+      }
+    };
+
+    fetchPeople();
+
+    // Set up Realtime subscription for people joining/leaving THIS place would be ideal here
+    // But our global subscription updates 'places' count. For the list, we'd need a specific sub.
+    // For now, simple fetch on selection is good.
+
+    return () => { mounted = false; };
   }, [selectedPlace]);
 
   // Apply theme globally
@@ -179,6 +180,47 @@ export default function App() {
     };
     init();
   }, [loadData]);
+
+  // Sync Active Check-in from DB (Server Authority)
+  useEffect(() => {
+    if (appState === 'MAIN' && currentUser?.id) {
+      const syncCheckIn = async () => {
+        const active = await api.getActiveCheckIn(currentUser.id);
+        if (active) {
+          console.log("Found active server check-in:", active);
+          // Update local state if needed (ensure it's the first item in history)
+          setCurrentUser(prev => {
+            // Check if we already have this checkin locally
+            const top = prev.history[0];
+            if (top && top.placeId === active.place_id && calculateHoursDiff(top.timestamp) < 12) {
+              return prev; // Local state matches server reality roughly
+            }
+
+            // Otherwise, inject server state
+            const restoredCheckIn: CheckIn = {
+              id: active.id,
+              placeId: active.place_id,
+              placeName: active.places?.name || 'Local Desconhecido',
+              timestamp: active.checked_in_at,
+              xpEarned: active.xp_earned || 0,
+              snapshotImageUrl: active.snapshot_url || active.places?.image_url || 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1974&auto=format&fit=crop',
+              vibe: active.vibe
+            };
+
+            return {
+              ...prev,
+              history: [restoredCheckIn, ...prev.history]
+            };
+          });
+        }
+      };
+      syncCheckIn();
+    }
+  }, [appState, currentUser?.id]);
+
+  const calculateHoursDiff = (isoDate: string) => {
+    return (new Date().getTime() - new Date(isoDate).getTime()) / (1000 * 60 * 60);
+  };
 
   // Realtime Subscriptions
   useEffect(() => {
@@ -347,77 +389,68 @@ export default function App() {
     const target = places.find(p => p.id === placeId);
     if (!target) return;
 
-    // 2. Check if user is already checked in somewhere else active (within 12h)
-    const activeCheckIn = currentUser.history.find(h => {
-      const checkTime = new Date(h.timestamp).getTime();
-      const now = new Date().getTime();
-      return (now - checkTime) < 12 * 60 * 60 * 1000;
-    });
+    // 2. Server-side Check-in (Handles auto-checkout and validation)
+    try {
+      const result = await api.checkIn(placeId, vibe);
 
-    if (activeCheckIn && activeCheckIn.placeId === placeId) {
-      // Already checked in here, do nothing or show toast
-      console.log("Already checked in here!");
-      return;
-    }
-
-    // 3. If checked in elsewhere, "checkout" logically (decrement their count)
-    if (activeCheckIn) {
-      const oldPlace = places.find(p => p.id === activeCheckIn.placeId);
-      if (oldPlace) {
-        await db.places.update({
-          id: oldPlace.id,
-          peopleCount: Math.max(0, oldPlace.peopleCount - 1),
-          capacityPercentage: Math.max(0, oldPlace.capacityPercentage - 2)
-        });
+      if (!result.success) {
+        console.error("Check-in failed on server");
+        return;
       }
+
+      // 3. Construct Local Check-in Object for Immediate UI Update
+      const xp = 50;
+      const checkin: CheckIn = {
+        id: result.checkin_id || Date.now().toString(),
+        placeId,
+        placeName: target.name,
+        timestamp: new Date().toISOString(),
+        xpEarned: xp,
+        snapshotImageUrl: target.imageUrl,
+        vibe
+      };
+
+      // 4. Update User State (Optimistic)
+      const updatedUser = {
+        ...currentUser,
+        points: currentUser.points + xp,
+        history: [checkin, ...currentUser.history]
+      };
+
+      setCurrentUser(updatedUser);
+      await db.user.save(updatedUser); // Keep local storage sync for off-line support basics
+
+      // 5. Add Feed Item (Server might do this via triggers later, but keep for now)
+      const newItem: FeedItem = {
+        id: `f_${Date.now()} `,
+        userId: currentUser.id,
+        userName: currentUser.name,
+        userAvatar: currentUser.avatar,
+        action: 'chegou no',
+        placeName: target.name,
+        timeAgo: 'Agora',
+        liked: false,
+        likesCount: 0,
+        commentsCount: 0
+      };
+
+      await db.feed.add(newItem);
+
+      // 6. Update Target Place Stats Locally (Realtime will catch up)
+      setPlaces(prev => prev.map(p => {
+        if (p.id === placeId) {
+          return { ...p, peopleCount: (p.peopleCount || 0) + 1 };
+        }
+        // Decrement others? The server does it, and Realtime will push the update.
+        // We can optimistically search for previous active place if we tracked it well, 
+        // but it's safer to let Realtime handle the decrement to avoid sync bugs.
+        return p;
+      }));
+
+    } catch (error) {
+      console.error("Check-in error:", error);
+      alert("Erro ao fazer check-in. Tente novamente.");
     }
-
-    // 4. Create New Check-in
-    const xp = 50;
-    const checkin: CheckIn = {
-      id: Date.now().toString(),
-      placeId,
-      placeName: target.name,
-      timestamp: new Date().toISOString(),
-      xpEarned: xp,
-      snapshotImageUrl: target.imageUrl,
-      vibe
-    };
-
-    // 5. Update User State (New checkin top of list)
-    // NOTE: In a real app we might mark the old history item as 'checkout_at' but for now history is log-based.
-    // The "active" check-in is implicitly the most recent one if < 12h.
-    const updatedUser = {
-      ...currentUser,
-      points: currentUser.points + xp,
-      history: [checkin, ...currentUser.history]
-    };
-
-    setCurrentUser(updatedUser);
-    await db.user.save(updatedUser);
-
-    // 6. Add Feed Item
-    const newItem: FeedItem = {
-      id: `f_${Date.now()} `,
-      userId: currentUser.id,
-      userName: currentUser.name,
-      userAvatar: currentUser.avatar,
-      action: 'chegou no',
-      placeName: target.name,
-      timeAgo: 'Agora',
-      liked: false,
-      likesCount: 0,
-      commentsCount: 0
-    };
-
-    await db.feed.add(newItem);
-
-    // 7. Update Target Place Stats
-    await db.places.update({
-      id: placeId,
-      peopleCount: target.peopleCount + 1,
-      capacityPercentage: Math.min(100, target.capacityPercentage + 2)
-    });
   };
 
   if (appState === 'LOADING') {
