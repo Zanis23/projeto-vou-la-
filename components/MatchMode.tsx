@@ -177,10 +177,11 @@ export const MatchMode: React.FC<MatchModeProps> = ({ placeName, onClose }) => {
                         }}
                     >
                         <div className="absolute inset-0 bg-[var(--surface)] rounded-[3rem] overflow-hidden shadow-2xl border border-white/5 premium-shadow glass-card">
-                            {/* Profile Image with subtle zoom on hover */}
+                            {/* Profile Image with dual gradient */}
                             <div className="absolute inset-0 overflow-hidden">
-                                <img src={currentProfile.avatar} className="w-full h-full object-cover transition-transform duration-[10s] ease-linear hover:scale-110" alt={currentProfile.name} />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent"></div>
+                                <img src={currentProfile.avatar} className="w-full h-full object-cover transition-transform duration-[15s] ease-linear hover:scale-110" alt={currentProfile.name} />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
+                                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
                             </div>
 
                             {/* IA SUGGESTION BUBBLE - Premium Redesign */}
@@ -196,30 +197,37 @@ export const MatchMode: React.FC<MatchModeProps> = ({ placeName, onClose }) => {
                                 </div>
                             )}
 
-                            <div className="absolute bottom-0 left-0 right-0 p-8 pt-20 text-white z-10">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <div className="bg-[var(--primary)] text-black text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-lg flex items-center gap-1.5 animate-bounce">
-                                        <Flame className="w-3 h-3 fill-current" /> {currentProfile.status}
+                            <div className="absolute bottom-0 left-0 right-0 p-8 pt-24 text-white z-10">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="bg-[var(--primary)] text-black text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-wider shadow-[0_0_15px_rgba(204,255,0,0.3)] flex items-center gap-2">
+                                        <div className="w-1.5 h-1.5 bg-black rounded-full animate-pulse"></div>
+                                        {currentProfile.status}
                                     </div>
-                                    <div className="bg-white/10 backdrop-blur-md text-white text-[9px] font-black px-3 py-1 rounded-full border border-white/10 uppercase tracking-wider flex items-center gap-1.5">
-                                        <MapPin className="w-3 h-3" /> {placeName}
+                                    <div className="bg-white/10 backdrop-blur-xl text-white text-[10px] font-black px-4 py-1.5 rounded-full border border-white/20 uppercase tracking-widest flex items-center gap-2">
+                                        <MapPin className="w-3.5 h-3.5 text-[var(--primary)]" /> {placeName}
                                     </div>
                                 </div>
 
-                                <h2 className="text-5xl font-black italic tracking-tighter leading-none mb-3 drop-shadow-2xl">
-                                    {currentProfile.name}, <span className="text-3xl font-normal not-italic opacity-80">{currentProfile.age}</span>
-                                </h2>
+                                <div className="space-y-1 mb-6">
+                                    <h2 className="text-5xl font-black italic tracking-tighter leading-none drop-shadow-2xl">
+                                        {currentProfile.name}, <span className="text-3xl font-normal not-italic opacity-80">{currentProfile.age}</span>
+                                    </h2>
+                                    <p className="text-sm font-medium text-slate-300 line-clamp-2 leading-relaxed opacity-90 italic">
+                                        "{currentProfile.bio}"
+                                    </p>
+                                </div>
 
-                                <p className="text-sm font-medium text-slate-300 mb-6 line-clamp-3 leading-relaxed">
-                                    {currentProfile.bio}
-                                </p>
-
-                                <div className="flex flex-wrap gap-2">
-                                    {currentProfile.tags.map((tag, i) => (
-                                        <span key={tag} className="text-[9px] font-black bg-white/5 backdrop-blur-xl px-4 py-2 rounded-xl border border-white/5 uppercase tracking-widest text-slate-400 group-hover:text-white transition-colors" style={{ animationDelay: `${i * 0.1}s` }}>
+                                <div className="flex flex-wrap gap-2.5">
+                                    {currentProfile.tags.slice(0, 3).map((tag, i) => (
+                                        <span key={tag} className="text-[9px] font-black bg-white/10 backdrop-blur-md px-4 py-2 rounded-xl border border-white/10 uppercase tracking-[0.2em] text-[var(--primary)] shadow-sm">
                                             #{tag}
                                         </span>
                                     ))}
+                                    {currentProfile.tags.length > 3 && (
+                                        <span className="text-[9px] font-black bg-white/5 backdrop-blur-md px-3 py-2 rounded-xl border border-white/5 uppercase tracking-widest text-slate-400">
+                                            +{currentProfile.tags.length - 3}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         </div>

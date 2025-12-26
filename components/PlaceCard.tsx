@@ -229,21 +229,29 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                 <div className="flex-1 overflow-y-auto space-y-6 p-6 pb-28">
                     {/* Stats Grid */}
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-[var(--surface)] p-5 rounded-[2rem] border border-[var(--surface-highlight)] shadow-sm">
-                            <div className="flex items-center gap-2 mb-3">
-                                <Users className="w-4 h-4 text-cyan-400" />
-                                <span className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest">Público</span>
+                        <div className="bg-[var(--surface)] p-5 rounded-[2.5rem] border border-[var(--surface-highlight)] shadow-xl relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/5 blur-2xl rounded-full -mr-12 -mt-12 group-hover:bg-cyan-500/10 transition-colors"></div>
+                            <div className="flex items-center gap-3 mb-4 relative z-10">
+                                <div className="w-8 h-8 rounded-xl bg-cyan-500/10 flex items-center justify-center">
+                                    <Users className="w-4 h-4 text-cyan-400" />
+                                </div>
+                                <span className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Público</span>
                             </div>
-                            <p className="text-3xl font-black text-[var(--text-main)]">{place.capacityPercentage}%</p>
-                            <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase mt-1">Lotado agora</p>
+                            <p className="text-4xl font-black text-[var(--text-main)] italic tracking-tighter relative z-10">{place.capacityPercentage}%</p>
+                            <p className="text-[10px] text-[var(--text-muted)] font-black uppercase mt-1 tracking-wider opacity-60 relative z-10">Lotado agora</p>
                         </div>
-                        <div className="bg-[var(--surface)] p-5 rounded-[2rem] border border-[var(--surface-highlight)] shadow-sm">
-                            <div className="flex items-center gap-2 mb-3">
-                                <Music className="w-4 h-4 text-fuchsia-400" />
-                                <span className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest">Som</span>
+                        <div className="bg-[var(--surface)] p-5 rounded-[2.5rem] border border-[var(--surface-highlight)] shadow-xl relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-fuchsia-500/5 blur-2xl rounded-full -mr-12 -mt-12 group-hover:bg-fuchsia-500/10 transition-colors"></div>
+                            <div className="flex items-center gap-3 mb-4 relative z-10">
+                                <div className="w-8 h-8 rounded-xl bg-fuchsia-500/10 flex items-center justify-center">
+                                    <Music className="w-4 h-4 text-fuchsia-400" />
+                                </div>
+                                <span className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Som</span>
                             </div>
-                            <p className="text-lg font-black text-[var(--text-main)] italic truncate">{place.currentMusic || 'Variada'}</p>
-                            <button onClick={() => setShowMusicPoll(true)} className="text-[10px] text-[var(--primary)] font-bold uppercase mt-2 hover:underline">Votar no próximo</button>
+                            <p className="text-xl font-black text-[var(--text-main)] italic truncate relative z-10">{place.currentMusic || 'Variada'}</p>
+                            <button onClick={() => setShowMusicPoll(true)} className="text-[10px] text-[var(--primary)] font-black uppercase mt-2 tracking-widest hover:underline relative z-10 flex items-center gap-1">
+                                <Disc className="w-3 h-3 animate-spin-slow" /> VOTAR PRÓXIMO
+                            </button>
                         </div>
                     </div>
 
@@ -391,12 +399,24 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                         <span className="flex items-center gap-1 truncate"><Music className="w-3 h-3 shrink-0" /> {place.currentMusic || 'Variada'}</span>
                     </div>
 
-                    <div className="flex -space-x-2 mt-2.5 items-center">
-                        {place.friendsPresent?.slice(0, 3).map((f, i) => (
-                            <img key={i} src={f} className="w-6 h-6 rounded-full border-2 border-[var(--surface)] object-cover shadow-sm" alt="" />
-                        ))}
+                    <div className="flex items-center gap-2 mt-2.5">
+                        <div className="flex -space-x-3 items-center">
+                            {place.friendsPresent?.slice(0, 3).map((f, i) => (
+                                <div key={i} className="relative group/avatar">
+                                    <img
+                                        src={f}
+                                        className="w-8 h-8 rounded-full border-2 border-[var(--surface)] object-cover shadow-lg transition-transform group-hover/avatar:scale-110 relative z-[5]"
+                                        alt=""
+                                    />
+                                    <div className="absolute inset-0 rounded-full bg-[var(--primary)]/20 animate-pulse z-0"></div>
+                                </div>
+                            ))}
+                        </div>
                         {place.friendsPresent && place.friendsPresent.length > 0 && (
-                            <span className="ml-3 text-[8px] font-black text-[var(--primary)] uppercase tracking-tighter">Galera On</span>
+                            <div className="flex items-center gap-1.5 bg-[var(--primary)]/10 px-2 py-0.5 rounded-full border border-[var(--primary)]/20">
+                                <span className="text-[8px] font-black text-[var(--primary)] uppercase tracking-tighter italic whitespace-nowrap">Galera On</span>
+                                <div className="w-1 h-1 rounded-full bg-[var(--primary)] animate-pulse"></div>
+                            </div>
                         )}
                     </div>
                 </div>

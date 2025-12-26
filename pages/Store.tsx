@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Lock, Ticket, Zap, Crown, CheckCircle2, Calendar, MapPin, Sparkles } from 'lucide-react';
+import { ShoppingBag, Lock, Ticket, Zap, Crown, CheckCircle2, Calendar, MapPin, Sparkles, X } from 'lucide-react';
 import { User, Ticket as TicketType } from '../types';
 import { useHaptic } from '../hooks/useHaptic';
 import { Button } from '../components/Button';
@@ -18,6 +18,7 @@ export const Store: React.FC<StoreProps> = ({ currentUser, onPurchase }) => {
   const [showWallet, setShowWallet] = useState(false);
   const [tickets, setTickets] = useState<TicketType[]>([]);
   const [activeTab, setActiveTab] = useState<'ITEMS' | 'TICKETS'>('ITEMS');
+  const [selectedTicket, setSelectedTicket] = useState<typeof EVENT_TICKETS[0] | null>(null);
 
   useEffect(() => {
     const fetchTickets = async () => {
@@ -34,8 +35,26 @@ export const Store: React.FC<StoreProps> = ({ currentUser, onPurchase }) => {
   ];
 
   const EVENT_TICKETS = [
-    { id: 'evt_1', title: 'Sunset Party - VIP', place: 'Tex Music Bar', price: 45.00, date: '28 Dez, 18:00', image: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=400' },
-    { id: 'evt_2', title: 'Pagode do Ano', place: 'Jangoo Chopperia', price: 30.00, date: '30 Dez, 20:00', image: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400' },
+    {
+      id: 'evt_1',
+      title: 'Sunset Party - VIP',
+      place: 'Tex Music Bar',
+      price: 45.00,
+      date: '28 Dez, 18:00',
+      image: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=400',
+      description: 'A festa mais exclusiva do verão está de volta! Open bar premium, DJs internacionais e a melhor vista do pôr do sol na Tex Music Bar. Traje sugerido: All White.',
+      address: 'Av. das Esmeraldas, 451 - Marília/SP'
+    },
+    {
+      id: 'evt_2',
+      title: 'Pagode do Ano',
+      place: 'Jangoo Chopperia',
+      price: 30.00,
+      date: '30 Dez, 20:00',
+      image: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400',
+      description: 'O melhor do pagode 90 e atualidade com os grupos locais mais bombados. Chopp em dobro até as 22h e muita gente bonita na Jangoo.',
+      address: 'Rua das Flores, 12 - Marília/SP'
+    },
   ];
 
   const handleBuyItem = (item: typeof ITEMS[0]) => {
@@ -161,11 +180,15 @@ export const Store: React.FC<StoreProps> = ({ currentUser, onPurchase }) => {
             </div>
 
             {EVENT_TICKETS.map(ticket => (
-              <div key={ticket.id} className="relative aspect-[16/10] rounded-[2rem] overflow-hidden group cursor-pointer border border-white/10 shadow-2xl">
+              <div
+                key={ticket.id}
+                className="relative aspect-[16/10] rounded-[2rem] overflow-hidden group cursor-pointer border border-white/10 shadow-2xl transition-transform active:scale-[0.98]"
+                onClick={() => { trigger('light'); setSelectedTicket(ticket); }}
+              >
                 <img src={ticket.image} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={ticket.title} />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
 
-                <div className="absolute top-4 right-4 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
+                <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
                   <span className="text-white font-black text-lg italic tracking-tighter">R$ {ticket.price.toFixed(2)}</span>
                 </div>
 
@@ -184,7 +207,7 @@ export const Store: React.FC<StoreProps> = ({ currentUser, onPurchase }) => {
                     <button
                       onClick={(e) => { e.stopPropagation(); handleBuyTicket(ticket); }}
                       disabled={purchasing === ticket.id}
-                      className="ml-auto bg-white text-black px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest active:scale-90 transition-transform shadow-[0_5px_15px_rgba(255,255,255,0.2)]"
+                      className="ml-auto bg-white text-black px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all shadow-[0_5px_15px_rgba(255,255,255,0.2)] hover:bg-[var(--primary)] hover:shadow-[0_0_20px_var(--primary-glow)]"
                     >
                       {purchasing === ticket.id ? '...' : 'COMPRAR'}
                     </button>
@@ -195,6 +218,76 @@ export const Store: React.FC<StoreProps> = ({ currentUser, onPurchase }) => {
           </div>
         )}
       </div>
+
+      {/* Ticket Details Modal */}
+      {selectedTicket && (
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-xl flex items-end animate-[fadeIn_0.3s_ease-out]">
+          <div
+            className="w-full bg-[var(--background)] rounded-t-[3rem] p-8 pb-safe shadow-2xl border-t border-white/10 flex flex-col animate-[slideUp_0.4s_cubic-bezier(0.16,1,0.3,1)]"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="w-12 h-1.5 bg-slate-800 rounded-full self-center mb-8 opacity-50"></div>
+
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <div className="flex items-center gap-2 text-[var(--primary)] mb-1">
+                  <MapPin className="w-4 h-4" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em]">{selectedTicket.place}</span>
+                </div>
+                <h2 className="text-3xl font-black text-white italic tracking-tighter leading-none uppercase">{selectedTicket.title}</h2>
+              </div>
+              <button
+                onClick={() => setSelectedTicket(null)}
+                className="p-3 bg-slate-800 rounded-full text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-6 mb-10 overflow-y-auto max-h-[40vh] pr-2 custom-scrollbar">
+              <div className="flex gap-4">
+                <div className="bg-slate-900/50 p-4 rounded-3xl border border-white/5 flex-1">
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">Data e Hora</span>
+                  <span className="text-sm font-black text-white italic">{selectedTicket.date}</span>
+                </div>
+                <div className="bg-slate-900/50 p-4 rounded-3xl border border-white/5 flex-1">
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">Preço</span>
+                  <span className="text-sm font-black text-[var(--primary)] italic">R$ {selectedTicket.price.toFixed(2)}</span>
+                </div>
+              </div>
+
+              <div className="bg-slate-900/50 p-5 rounded-3xl border border-white/5">
+                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-3">Sobre o Evento</span>
+                <p className="text-sm font-medium text-slate-300 leading-relaxed italic opacity-90">
+                  "{selectedTicket.description}"
+                </p>
+              </div>
+
+              <div className="bg-slate-900/50 p-5 rounded-3xl border border-white/5">
+                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-3">Local</span>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-black/20 flex items-center justify-center border border-white/5">
+                    <MapPin className="w-5 h-5 text-indigo-400" />
+                  </div>
+                  <span className="text-xs font-bold text-slate-400">{selectedTicket.address}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-4 mt-auto">
+              <Button
+                fullWidth
+                variant="primary"
+                className="!rounded-2xl !py-4 shadow-[0_10px_30px_rgba(204,255,0,0.3)]"
+                onClick={() => { handleBuyTicket(selectedTicket); setSelectedTicket(null); }}
+              >
+                GARANTIR MEU LUGAR
+              </Button>
+            </div>
+          </div>
+          <div className="absolute inset-0 bg-transparent -z-10" onClick={() => setSelectedTicket(null)}></div>
+        </div>
+      )}
 
       <div className="p-4 bg-[var(--background)] border-t border-white/5 pb-safe">
         <Button fullWidth variant="secondary" className="!rounded-2xl !py-4 shadow-lg group" onClick={() => { trigger('medium'); setShowWallet(true); }}>
