@@ -1,15 +1,58 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { Analytics } from '@vercel/analytics/react';
+import { initSentry, SentryErrorBoundary } from './utils/sentry';
+import { initAnalytics } from './utils/analytics';
 import App from './App';
+import './styles/index.css';
 
-const rootElement = document.getElementById('root');
-if (!rootElement) {
-  throw new Error("Could not find root element to mount to");
+// Initialize monitoring
+initSentry();
+initAnalytics();
+
+// Error fallback component
+function ErrorFallback() {
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100vh',
+      background: '#0E1121',
+      color: '#fff',
+      padding: '2rem',
+      textAlign: 'center'
+    }}>
+      <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>😔</div>
+      <h1 style={{ color: '#ccff00', marginBottom: '1rem' }}>Algo deu errado</h1>
+      <p style={{ color: '#999', marginBottom: '2rem' }}>
+        Estamos trabalhando para resolver o problema.
+      </p>
+      <button
+        onClick={() => window.location.reload()}
+        style={{
+          background: '#ccff00',
+          color: '#0E1121',
+          border: 'none',
+          padding: '12px 24px',
+          borderRadius: '8px',
+          fontSize: '16px',
+          fontWeight: 'bold',
+          cursor: 'pointer'
+        }}
+      >
+        Recarregar Página
+      </button>
+    </div>
+  );
 }
 
-const root = ReactDOM.createRoot(rootElement);
-root.render(
+ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    <SentryErrorBoundary fallback={<ErrorFallback />}>
+      <App />
+      <Analytics />
+    </SentryErrorBoundary>
   </React.StrictMode>
 );
