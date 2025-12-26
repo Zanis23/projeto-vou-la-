@@ -250,7 +250,15 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                                 people={peoplePresent || []}
                                 currentUser={currentUser || MOCK_USER}
                                 onClose={() => { }}
-                                onConnect={(uid) => console.log("Connect", uid)}
+                                onConnect={async (uid) => {
+                                    try {
+                                        const { api } = await import('../services/api'); // Dynamic import or move top level
+                                        await api.sendInteraction(uid, 'CONNECT');
+                                        console.log("Friend request sent to", uid);
+                                    } catch (err) {
+                                        console.error("Connect failed", err);
+                                    }
+                                }}
                                 isInline={true}
                             />
                         </div>
@@ -313,7 +321,7 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                             e.stopPropagation();
                             if (!isCheckedIn && checkInState !== 'checking') {
                                 // handleGeoCheckIn(); // OLD
-                                setShowCheckInFlow(true); // NEW
+                                handleCheckInToggle(e);
                             }
                         }}
                         disabled={isCheckedIn}

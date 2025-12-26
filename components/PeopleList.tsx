@@ -14,9 +14,15 @@ interface PeopleListProps {
 
 export const PeopleList: React.FC<PeopleListProps> = ({ placeName, people, currentUser, onClose, onConnect, isInline = false }) => {
     const { trigger } = useHaptic();
-
-    // Filter out users who have ghostMode enabled
     const visiblePeople = people.filter(p => !p.settings?.ghostMode);
+    const [sentRequests, setSentRequests] = React.useState<Set<string>>(new Set());
+
+    const handleConnectClick = (userId: string) => {
+        if (sentRequests.has(userId)) return;
+        trigger('success');
+        setSentRequests(prev => new Set(prev).add(userId));
+        onConnect(userId);
+    };
 
     if (isInline) {
         return (
@@ -66,23 +72,30 @@ export const PeopleList: React.FC<PeopleListProps> = ({ placeName, people, curre
                         </div>
                     ) : (
                         <div className="grid grid-cols-2 gap-2">
-                            {visiblePeople.map((user) => (
-                                <div key={user.id} className="bg-[var(--background)]/80 backdrop-blur-sm border border-white/5 rounded-2xl p-3 flex flex-col items-center gap-2 relative group hover:bg-[var(--surface)] hover:border-[var(--primary)]/30 transition-all">
-                                    <div className="w-12 h-12 rounded-full p-0.5 border border-[var(--primary)] shadow-[0_0_10px_rgba(var(--primary-rgb),0.2)]">
-                                        <img src={user.avatar} alt={user.name} className="w-full h-full rounded-full object-cover" />
+                            {visiblePeople.map((user) => {
+                                const isSent = sentRequests.has(user.id);
+                                return (
+                                    <div key={user.id} className="bg-[var(--background)]/80 backdrop-blur-sm border border-white/5 rounded-2xl p-3 flex flex-col items-center gap-2 relative group hover:bg-[var(--surface)] hover:border-[var(--primary)]/30 transition-all">
+                                        <div className="w-12 h-12 rounded-full p-0.5 border border-[var(--primary)] shadow-[0_0_10px_rgba(var(--primary-rgb),0.2)]">
+                                            <img src={user.avatar} alt={user.name} className="w-full h-full rounded-full object-cover" />
+                                        </div>
+                                        <div className="text-center min-w-0 w-full">
+                                            <h4 className="text-white font-bold text-xs leading-none truncate px-1">{user.name.split(' ')[0]}</h4>
+                                            <p className="text-[8px] text-slate-400 uppercase mt-0.5 truncate px-1">{user.bio || "Vibing"}</p>
+                                        </div>
+                                        <button
+                                            onClick={() => handleConnectClick(user.id)}
+                                            disabled={isSent}
+                                            className={`w-full py-1.5 rounded-lg font-black uppercase text-[9px] tracking-wide mt-0.5 transition-all
+                                        ${isSent
+                                                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50'
+                                                    : 'bg-[var(--primary)] text-black hover:brightness-110 active:scale-95'}`}
+                                        >
+                                            {isSent ? 'Solicitado' : 'Conectar'}
+                                        </button>
                                     </div>
-                                    <div className="text-center min-w-0 w-full">
-                                        <h4 className="text-white font-bold text-xs leading-none truncate px-1">{user.name.split(' ')[0]}</h4>
-                                        <p className="text-[8px] text-slate-400 uppercase mt-0.5 truncate px-1">{user.bio || "Vibing"}</p>
-                                    </div>
-                                    <button
-                                        onClick={() => onConnect(user.id)}
-                                        className="w-full py-1.5 bg-[var(--primary)] text-black rounded-lg font-black uppercase text-[9px] tracking-wide mt-0.5 hover:brightness-110 active:scale-95 transition-transform"
-                                    >
-                                        Conectar
-                                    </button>
-                                </div>
-                            ))}
+                                )
+                            })}
                         </div>
                     )}
                 </div>
@@ -147,10 +160,18 @@ export const PeopleList: React.FC<PeopleListProps> = ({ placeName, people, curre
                                 </div>
 
                                 <button
-                                    onClick={() => onConnect(user.id)}
-                                    className="w-full py-2 bg-[var(--primary)] text-[var(--on-primary)] rounded-xl font-black uppercase text-xs tracking-wider mt-1 hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                    onClick={() => handleConnectClick(user.id)}
+                                    disabled={sentRequests.has(user.id)}
+                                    className={`w-full py-2 rounded-xl font-black uppercase text-xs tracking-wider mt-1 hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2
+                                    ${sentRequests.has(user.id)
+                                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50'
+                                            : 'bg-[var(--primary)] text-[var(--on-primary)]'}`}
                                 >
-                                    <MessageCircle className="w-4 h-4" /> Conectar
+                                    {sentRequests.has(user.id) ? (
+                                        <>Solicitado</>
+                                    ) : (
+                                        <><MessageCircle className="w-4 h-4" /> Conectar</>
+                                    )}
                                 </button>
                             </div>
                         ))}

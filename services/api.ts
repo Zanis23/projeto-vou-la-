@@ -73,5 +73,76 @@ export const api = {
         }
 
         return data;
+    },
+
+    /**
+     * Send Social Interaction (Like/Connect)
+     */
+    sendInteraction: async (targetId: string, type: 'LIKE' | 'CONNECT' = 'CONNECT') => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Not authenticated");
+
+        const { data, error } = await supabase
+            .from('interactions')
+            .insert({
+                actor_id: user.id,
+                target_id: targetId,
+                type,
+                status: 'PENDING'
+            })
+            .select()
+            .single();
+
+        if (error) {
+            // If duplicate (violates unique index), just return existing logic or error
+            if (error.code === '23505') { // Unique violation
+                console.warn("Interaction already exists");
+                return { status: 'ALREADY_EXISTS' };
+            }
+            console.error("Interaction error:", error);
+            throw error;
+        }
+
+        return data;
+    },
+
+    /**
+     * Get Pending Interactions (Inbox)
+     */
+    getPendingInteractions: async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return [];
+
+        const { data, error } = await supabase
+            .from('interactions')
+            .select(`
+                *,
+                actor:profiles!actor_id (id, name, avatar, bio)
+            `)
+            .eq('target_id', user.id)
+            .eq('status', 'PENDING')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error("Error fetching inbox:", error);
+            return [];
+        }
+        return data;
+    },
+
+    /**
+     * Respond to Interaction (Accept/Reject)
+     */
+    respondToInteraction: async (interactionId: string, status: 'ACCEPTED' | 'REJECTED') => {
+        const { data, error } = await supabase
+            .from('interactions')
+            .update({ status, updated_at: new Date().toISOString() })
+            .eq('id', interactionId)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
     }
 };
+

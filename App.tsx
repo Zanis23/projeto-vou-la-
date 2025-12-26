@@ -19,6 +19,7 @@ import { PlaceCard } from './components/PlaceCard';
 import { MoreOptionsModal } from './components/MoreOptionsModal';
 import { SocialHub } from './components/SocialHub';
 import { BusinessDashboard } from './components/BusinessDashboard';
+import { NotificationsScreen } from './components/NotificationsScreen';
 import { MOCK_USER, ACCENTS, MODES } from './constants';
 import { db } from './utils/storage';
 import { supabase } from './services/supabase';
@@ -41,6 +42,8 @@ export default function App() {
   const [selectedMoment, setSelectedMoment] = useState<Moment | null>(null);
   const [showTutorial, setShowTutorial] = useState(false);
   const [placeUsers, setPlaceUsers] = useState<User[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(0);
 
   // Fetch Real Users for the selected place
   useEffect(() => {
@@ -487,8 +490,8 @@ export default function App() {
               currentUser={currentUser}
               places={places}
               onPlaceSelect={setSelectedPlace}
-              notificationCount={0}
-              onOpenNotifications={() => { }}
+              notificationCount={notificationCount}
+              onOpenNotifications={() => setShowNotifications(true)}
               savedPlaces={currentUser.savedPlaces || []}
               initialFilter={homeFilter}
               onToggleSave={(id) => {
@@ -581,6 +584,13 @@ export default function App() {
           place={selectedPlace}
           currentUser={currentUser}
           onClose={() => setShowSocialHub(false)}
+        />
+      )}
+
+      {showNotifications && (
+        <NotificationsScreen
+          onClose={() => setShowNotifications(false)}
+          onUpdateBadge={setNotificationCount}
         />
       )}
 
