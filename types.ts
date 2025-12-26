@@ -200,6 +200,12 @@ export interface Achievement {
   total?: number;
 }
 
+export interface PrivacySettings {
+  ghostMode: boolean;
+  showLocation: boolean;
+  publicProfile: boolean;
+}
+
 export interface User {
   id: string;
   name: string;

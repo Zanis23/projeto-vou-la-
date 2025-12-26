@@ -1,15 +1,15 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { Place, MenuItem, OrderItem, StaffCall } from '../types';
-import { MapPin, Crown, Check, ChevronRight, User, Music, Star, Clock, Map as MapIcon, Car, ArrowUpRight, Bookmark, Flame, Utensils, BellRing, ThumbsUp, ThumbsDown, Zap, Users, X, Beer, Pizza, Loader2, CheckCircle2, Play, Disc, Plus, Minus, Receipt, HelpCircle, History, BarChart3, Sparkles, ClipboardList, CreditCard, QrCode, ShoppingBag } from 'lucide-react';
-import { Skeleton } from './Skeleton';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { MapPin, Music, Users, Star, ChevronRight, Heart, Share2, Navigation, Info, Clock, Phone, Globe, Instagram, CheckCircle2, X, Loader2, Bookmark, Map as MapIcon, Car, Zap, Plus, Minus, ThumbsUp, ThumbsDown, Beer, Pizza, Disc } from 'lucide-react';
+import { Place, PlaceType, VibeLevel, User, MenuItem, OrderItem } from '../types';
 import { useHaptic } from '../hooks/useHaptic';
-import { FALLBACK_IMAGE, getUserById } from '../constants';
-import { MatchMode } from './MatchMode';
 import { db } from '../utils/storage';
-import { CheckInFlow } from './CheckInFlow';
+import { PeopleList } from './PeopleList';
+import { Skeleton } from './Skeleton';
+
+const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1974&auto=format&fit=crop";
 
 interface PlaceCardProps {
-    place?: Place;
+    place: Place;
     rank?: number;
     onCheckIn?: (id: string, vibe?: string) => void;
     expanded?: boolean;
@@ -19,6 +19,8 @@ interface PlaceCardProps {
     loading?: boolean;
     onClick?: () => void;
     onShowSocialHub?: () => void;
+    currentUser?: User;
+    peoplePresent?: User[]; // Added Prop
 }
 
 const MenuCategoryTab: React.FC<{ label: string; active: boolean; onClick: () => void; icon: React.ReactNode; badge?: number }> = ({ label, active, onClick, icon, badge }) => (
@@ -89,16 +91,26 @@ const MenuItemRow: React.FC<{ item: MenuItem; qty: number; onAdd: () => void; on
 };
 
 export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
-    place, rank, onCheckIn, expanded = false, isCheckedIn = false, isSaved = false, onToggleSave, loading = false, onClick, onShowSocialHub
+    place, rank, onCheckIn, expanded = false, isCheckedIn = false, isSaved = false, onToggleSave, loading = false, onClick, onShowSocialHub, currentUser, peoplePresent
 }) => {
     const { trigger } = useHaptic();
     const [imgLoaded, setImgLoaded] = useState(false);
     const [imgError, setImgError] = useState(false);
+    const [showPeopleList, setShowPeopleList] = useState(false);
     const [votedVibe, setVotedVibe] = useState<'up' | 'down' | null>(null);
-    const [showMatchMode, setShowMatchMode] = useState(false);
 
-    // NEW CHECK-IN FLOW STATE
-    const [showCheckInFlow, setShowCheckInFlow] = useState(false);
+    // Simplified Check-in Logic
+    const handleCheckInToggle = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (isCheckedIn) {
+            // Already checked in -> Open People List
+            setShowPeopleList(true);
+        } else {
+            // Not checked in -> Check In
+            trigger('success');
+            if (onCheckIn) onCheckIn(place.id);
+        }
+    };
 
     const [showMenu, setShowMenu] = useState(false);
     const [menuCategory, setMenuCategory] = useState<'all' | 'drink' | 'food' | 'other' | 'orders'>('all');
@@ -141,48 +153,6 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
         setActiveImageIndex(Math.round(scrollLeft / width));
     };
 
-    // DEPRECATED: Old direct check-in logic, kept as fallback or internal
-    const handleGeoCheckIn = () => {
-        if (!place || !onCheckIn || isCheckedIn) return;
-
-        setCheckInState('checking');
-        trigger('light');
-
-        // Simulate GPS verification for better UX feel
-        setTimeout(() => {
-            // BETA BYPASS: Distance check disabled for testing
-            trigger('success');
-            setCheckInState('success');
-
-            setTimeout(() => {
-                onCheckIn(place.id);
-                setCheckInState('idle');
-            }, 1000);
-        }, 1500);
-    };
-
-    // UPDATED: Now triggers flow instead of direct action
-    const handleActionClick = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (isCheckedIn) {
-            if (onShowSocialHub) onShowSocialHub();
-        } else {
-            trigger('medium');
-            setShowCheckInFlow(true);
-        }
-    };
-
-    // NEW: Handle completion from the flow
-    const handleCheckInComplete = (data: { vibe: string }) => {
-        if (onCheckIn && place) {
-            onCheckIn(place.id, data.vibe);
-        }
-        // Give time for the success animation in the modal before closing
-        setTimeout(() => {
-            setShowCheckInFlow(false);
-        }, 500);
-    };
-
     if (loading) {
         return (
             <div className="bg-slate-800/40 p-4 rounded-3xl border border-slate-700/30 mb-3">
@@ -203,15 +173,6 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
     if (expanded) {
         return (
             <div className="fixed inset-0 z-50 bg-[var(--background)] flex flex-col animate-[slideUp_0.4s_ease-out]">
-                {/* NEW: CheckInFlow Modal */}
-                {showCheckInFlow && (
-                    <CheckInFlow
-                        place={place}
-                        onClose={() => setShowCheckInFlow(false)}
-                        onComplete={handleCheckInComplete}
-                    />
-                )}
-
                 {/* Hero Header */}
                 <div className="relative h-64 shrink-0 group">
                     <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide h-full" onScroll={handleImageScroll}>
@@ -332,15 +293,14 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                                 setShowCheckInFlow(true); // NEW
                             }
                         }}
-                        disabled={isCheckedIn || checkInState === 'checking'}
+                        disabled={isCheckedIn}
                         className={`w-full py-4 rounded-2xl font-black italic tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-lg hover:brightness-110 active:scale-95
                         ${isCheckedIn ? 'bg-emerald-500 text-white shadow-[0_0_25px_rgba(16,185,129,0.4)]' :
-                                checkInState === 'checking' ? 'bg-indigo-600 animate-pulse text-white' :
-                                    'bg-[var(--primary)] text-[var(--on-primary)] shadow-[0_0_20px_var(--primary-glow)]'}`}
+                                'bg-[var(--primary)] text-[var(--on-primary)] shadow-[0_0_20px_var(--primary-glow)]'}`}
                     >
-                        {checkInState === 'checking' ? <Loader2 className="w-6 h-6 animate-spin" /> :
-                            isCheckedIn ? <><CheckCircle2 className="w-6 h-6" /> ESTOU AQUI!</> : 'VOU LÁ!'}
+                        {isCheckedIn ? <><CheckCircle2 className="w-6 h-6" /> ESTOU AQUI!</> : 'VOU LÁ!'}
                     </button>
+
                 </div>
 
                 {/* MODALS */}
@@ -379,123 +339,152 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
     }
 
     return (
-        <div
-            onClick={onClick}
-            className="group relative bg-[var(--surface)] glass-card rounded-[2.5rem] p-2 mb-4 active:scale-[0.98] transition-all cursor-pointer overflow-hidden premium-shadow min-h-[140px] flex items-stretch flow-root"
-        >
-            {/* NEW: CheckInFlow Modal (also in collapsed view as needed, but mostly triggered from list logic) */}
-            {showCheckInFlow && place && (
-                <CheckInFlow
-                    place={place}
-                    onClose={() => setShowCheckInFlow(false)}
-                    onComplete={handleCheckInComplete}
+        <>
+            {showPeopleList && place && (
+                <PeopleList
+                    placeName={place.name}
+                    people={peoplePresent || []}
+                    currentUser={currentUser || { id: 'me', name: 'Me', avatar: '', level: 1, points: 0, badges: [], history: [], savedPlaces: [], memberSince: '' }}
+                    onClose={() => setShowPeopleList(false)}
+                    onConnect={(uid) => {
+                        console.log("Connect with", uid);
+                        // Trigger chat or friend request
+                    }}
                 />
             )}
 
-            {/* Animated Glow Backdrop */}
-            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+            <div
+                onClick={onClick}
+                className="group relative bg-[var(--surface)] glass-card rounded-[2.5rem] p-2 mb-4 active:scale-[0.98] transition-all cursor-pointer overflow-hidden premium-shadow min-h-[140px] flex items-stretch flow-root"
+            >
+                {/* Animated Glow Backdrop */}
+                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
 
-            {/* Content Container - Flex row with gap */}
-            <div className="flex gap-3 items-center relative z-10 w-full">
-                {/* Image Container - Closer to edge */}
-                <div className="relative w-32 shrink-0 h-full min-h-[120px] rounded-[2rem] overflow-hidden bg-slate-900 shadow-xl border border-white/5 ml-1">
-                    <img
-                        src={imgError ? FALLBACK_IMAGE : place.imageUrl}
-                        className={`w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-110 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
-                        onLoad={() => setImgLoaded(true)}
-                        onError={() => setImgError(true)}
-                        alt={place.name}
-                    />
+                {/* Content Container - Flex row with gap */}
+                <div className="flex gap-3 items-center relative z-10 w-full">
+                    {/* Image Container - Closer to edge */}
+                    <div className="relative w-32 shrink-0 h-full min-h-[120px] rounded-[2rem] overflow-hidden bg-slate-900 shadow-xl border border-white/5 ml-1">
+                        <img
+                            src={imgError ? FALLBACK_IMAGE : place.imageUrl}
+                            className={`w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-110 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
+                            onLoad={() => setImgLoaded(true)}
+                            onError={() => setImgError(true)}
+                            alt={place.name}
+                        />
 
-                    {/* Occupancy Pill overlay */}
-                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10 flex items-center gap-1.5 whitespace-nowrap">
-                        <div className={`w-1.5 h-1.5 rounded-full ${place.capacityPercentage > 85 ? 'bg-red-500 animate-pulse' : 'bg-emerald-400'}`}></div>
-                        <span className="text-[8px] font-black text-white italic">{place.capacityPercentage}% <span className="opacity-50 not-italic">ON</span></span>
-                    </div>
-                </div>
-
-                {/* Content - Middle */}
-                <div className="flex-1 min-w-0 py-2 flex flex-col justify-center">
-                    <div className="flex items-center gap-2 mb-1">
-                        {rank && (
-                            <div className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase italic ${rank === 1 ? 'bg-amber-500 text-black' : 'bg-slate-700 text-white'}`}>
-                                #{rank} TOP
-                            </div>
-                        )}
-                        <span className="text-[9px] font-bold text-[var(--primary)] uppercase tracking-widest truncate">{place.type.toUpperCase()}</span>
-                    </div>
-
-                    <h3 className="text-lg xs:text-xl font-black text-[var(--text-main)] italic tracking-tighter truncate uppercase leading-tight mb-1">
-                        {place.name}
-                    </h3>
-
-                    <div className="flex flex-col gap-1 text-[var(--text-muted)] font-bold text-[9px] xs:text-[10px] uppercase">
-                        <span className="flex items-center gap-1 truncate"><MapPin className="w-3 h-3 shrink-0" /> {place.address?.split(',')[0]}</span>
-                        <span className="flex items-center gap-1 truncate"><Music className="w-3 h-3 shrink-0" /> {place.currentMusic || 'Variada'}</span>
-                    </div>
-
-                    <div className="flex items-center gap-2 mt-2.5">
-                        <div className="flex -space-x-3 items-center">
-                            {place.friendsPresent?.slice(0, 3).map((f, i) => (
-                                <div key={i} className="relative group/avatar">
-                                    <img
-                                        src={f}
-                                        className="w-8 h-8 rounded-full border-2 border-[var(--surface)] object-cover shadow-lg transition-transform group-hover/avatar:scale-110 relative z-[5]"
-                                        alt=""
-                                    />
-                                    <div className="absolute inset-0 rounded-full bg-[var(--primary)]/20 animate-pulse z-0"></div>
-                                </div>
-                            ))}
+                        {/* Occupancy Pill overlay */}
+                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10 flex items-center gap-1.5 whitespace-nowrap">
+                            <div className={`w-1.5 h-1.5 rounded-full ${place.capacityPercentage > 85 ? 'bg-red-500 animate-pulse' : 'bg-emerald-400'}`}></div>
+                            <span className="text-[8px] font-black text-white italic">{place.capacityPercentage}% <span className="opacity-50 not-italic">ON</span></span>
                         </div>
-                        {place.friendsPresent && place.friendsPresent.length > 0 && (
-                            <div className="flex items-center gap-1.5 bg-[var(--primary)]/10 px-2 py-0.5 rounded-full border border-[var(--primary)]/20">
-                                <span className="text-[8px] font-black text-[var(--primary)] uppercase tracking-tighter italic whitespace-nowrap">Galera On</span>
-                                <div className="w-1 h-1 rounded-full bg-[var(--primary)] animate-pulse"></div>
+                    </div>
+
+                    {/* Content - Middle */}
+                    <div className="flex-1 min-w-0 py-2 flex flex-col justify-center">
+                        <div className="flex items-center gap-2 mb-1">
+                            {rank && (
+                                <div className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase italic ${rank === 1 ? 'bg-amber-500 text-black' : 'bg-slate-700 text-white'}`}>
+                                    #{rank} TOP
+                                </div>
+                            )}
+                            <span className="text-[9px] font-bold text-[var(--primary)] uppercase tracking-widest truncate">{place.type.toUpperCase()}</span>
+                        </div>
+
+                        <h3 className="text-lg xs:text-xl font-black text-[var(--text-main)] italic tracking-tighter truncate uppercase leading-tight mb-1">
+                            {place.name}
+                        </h3>
+
+                        <div className="flex flex-col gap-1 text-[var(--text-muted)] font-bold text-[9px] xs:text-[10px] uppercase">
+                            <span className="flex items-center gap-1 truncate"><MapPin className="w-3 h-3 shrink-0" /> {place.address?.split(',')[0]}</span>
+                            <span className="flex items-center gap-1 truncate"><Music className="w-3 h-3 shrink-0" /> {place.currentMusic || 'Variada'}</span>
+                        </div>
+
+                        {/* UPDATED: People/Friends Section with Lock/Unlock Logic */}
+                        <div
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (isCheckedIn) setShowPeopleList(true);
+                                else handleCheckInToggle(e); // Or shake to indicate locked
+                            }}
+                            className={`flex items-center gap-2 mt-2.5 transition-all relative
+                            ${isCheckedIn ? 'opacity-100 cursor-pointer' : 'opacity-70 blur-[2px] hover:blur-none transition-all duration-500'}`}
+                        >
+                            {/* Optional Lock Icon Overlay if not checked in */}
+                            {!isCheckedIn && (
+                                <div className="absolute z-20 left-8 px-2 py-0.5 bg-black/60 rounded-full border border-white/20 backdrop-blur-md flex items-center gap-1">
+                                    <span className="text-[8px] font-black text-white uppercase tracking-wider">Check-in p/ ver</span>
+                                </div>
+                            )}
+
+                            <div className="flex -space-x-3 items-center">
+                                {place.friendsPresent?.slice(0, 3).map((f, i) => (
+                                    <div key={i} className="relative group/avatar">
+                                        <img src={f} className="w-8 h-8 rounded-full border-2 border-[var(--surface)] object-cover shadow-lg" alt="" />
+                                    </div>
+                                ))}
+                                {/* Fake extra heads to look busy if empty */}
+                                {!place.friendsPresent?.length && [1, 2, 3].map(i => (
+                                    <div key={i} className="w-8 h-8 rounded-full bg-slate-700 border-2 border-[var(--surface)]" />
+                                ))}
                             </div>
-                        )}
+
+                            <div className="flex items-center gap-1.5 bg-[var(--primary)]/10 px-2 py-0.5 rounded-full border border-[var(--primary)]/20">
+                                <span className="text-[8px] font-black text-[var(--primary)] uppercase tracking-tighter italic whitespace-nowrap">
+                                    {isCheckedIn ? 'Ver Galera' : 'Galera Oculta'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Action Column - Right Aligned with bg/border separator if needed, essentially taking the right space */}
+                    <div className="flex flex-col items-center justify-between py-1 gap-2 pr-1 w-12 shrink-0">
+                        <button
+                            onClick={onToggleSave ? (e) => { e.stopPropagation(); onToggleSave(place.id); } : undefined}
+                            className={`p-2 rounded-xl transition-all active:scale-95 ${isSaved ? 'text-[var(--primary)]' : 'text-slate-600 hover:text-slate-400'}`}
+                        >
+                            <Bookmark className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />
+                        </button>
+
+                        <div className="flex flex-col gap-3">
+                            <button
+                                onClick={(e) => { e.stopPropagation(); window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name + " " + (place.address || ""))}`, '_blank'); }}
+                                className="p-1 rounded-xl text-slate-500 hover:text-white transition-all active:scale-95"
+                            >
+                                <MapIcon className="w-4 h-4" />
+                            </button>
+
+                            <button
+                                onClick={(e) => { e.stopPropagation(); window.open(`https://m.uber.com/ul/?action=setPickup&client_id=YOUR_CLIENT_ID&pickup=my_location&dropoff[formatted_address]=${encodeURIComponent(place.address || "")}&dropoff[nickname]=${encodeURIComponent(place.name)}`, '_blank'); }}
+                                className="p-1 rounded-xl text-slate-500 hover:text-white transition-all active:scale-95"
+                            >
+                                <Car className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        {/* THE CHECK-IN / UNLOCK BUTTON */}
+                        <button
+                            onClick={handleCheckInToggle}
+                            className={`w-10 h-12 flex flex-col items-center justify-center rounded-xl transition-all duration-500 shadow-lg z-20 relative
+                            ${isCheckedIn
+                                    ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.6)] ring-2 ring-emerald-500/50 scale-110'
+                                    : 'bg-[var(--primary)] text-black shadow-[0_0_15px_var(--primary-glow)] hover:brightness-110'}`}
+                        >
+                            {isCheckedIn ? (
+                                <CheckCircle2 className="w-5 h-5 animate-[pop_0.3s_ease-out]" />
+                            ) : (
+                                <div className="flex flex-col items-center gap-0.5">
+                                    <MapPin className="w-4 h-4" />
+                                    <span className="text-[7px] font-black leading-none">VOU</span>
+                                </div>
+                            )}
+                        </button>
                     </div>
                 </div>
 
-                {/* Action Column - Right Aligned with bg/border separator if needed, essentially taking the right space */}
-                <div className="flex flex-col items-center justify-between py-1 gap-2 pr-1 w-12 shrink-0">
-                    <button
-                        onClick={onToggleSave ? (e) => { e.stopPropagation(); onToggleSave(place.id); } : undefined}
-                        className={`p-2 rounded-xl transition-all active:scale-95 ${isSaved ? 'text-[var(--primary)]' : 'text-slate-600 hover:text-slate-400'}`}
-                    >
-                        <Bookmark className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />
-                    </button>
-
-                    <div className="flex flex-col gap-3">
-                        <button
-                            onClick={(e) => { e.stopPropagation(); window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name + " " + (place.address || ""))}`, '_blank'); }}
-                            className="p-1 rounded-xl text-slate-500 hover:text-white transition-all active:scale-95"
-                        >
-                            <MapIcon className="w-4 h-4" />
-                        </button>
-
-                        <button
-                            onClick={(e) => { e.stopPropagation(); window.open(`https://m.uber.com/ul/?action=setPickup&client_id=YOUR_CLIENT_ID&pickup=my_location&dropoff[formatted_address]=${encodeURIComponent(place.address || "")}&dropoff[nickname]=${encodeURIComponent(place.name)}`, '_blank'); }}
-                            className="p-1 rounded-xl text-slate-500 hover:text-white transition-all active:scale-95"
-                        >
-                            <Car className="w-4 h-4" />
-                        </button>
-                    </div>
-
-                    <button
-                        onClick={handleActionClick}
-                        className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all shadow-lg z-20 relative
-                        ${isCheckedIn ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)] ring-2 ring-emerald-500/50' :
-                                checkInState === 'checking' ? 'bg-indigo-600 animate-pulse text-white' : 'bg-white/5 border border-white/10 text-white hover:bg-white/10'}`}
-                    >
-                        {checkInState === 'checking' ? <Loader2 className="w-5 h-5 animate-spin" /> :
-                            isCheckedIn ? <CheckCircle2 className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
-                    </button>
-                </div>
+                {/* Premium Glow effect in corner */}
+                <div className={`absolute -bottom-8 -right-8 w-24 h-24 blur-[40px] opacity-20 rounded-full pointer-events-none
+                    ${rank === 1 ? 'bg-amber-500' : 'bg-[var(--primary)]'}`}></div>
             </div>
-
-            {/* Premium Glow effect in corner */}
-            <div className={`absolute -bottom-8 -right-8 w-24 h-24 blur-[40px] opacity-20 rounded-full pointer-events-none
-                ${rank === 1 ? 'bg-amber-500' : 'bg-[var(--primary)]'}`}></div>
-        </div>
+        </>
     );
 });

@@ -1,0 +1,88 @@
+import React from 'react';
+import { User, PrivacySettings } from '../types';
+import { X, MessageCircle, UserPlus, Ghost } from 'lucide-react';
+import { useHaptic } from '../hooks/useHaptic';
+
+interface PeopleListProps {
+    placeName: string;
+    people: User[]; // This should be the list of people checked in
+    currentUser: User;
+    onClose: () => void;
+    onConnect: (userId: string) => void;
+}
+
+export const PeopleList: React.FC<PeopleListProps> = ({ placeName, people, currentUser, onClose, onConnect }) => {
+    const { trigger } = useHaptic();
+
+    // Filter out users who have ghostMode enabled
+    const visiblePeople = people.filter(p => !p.settings?.ghostMode);
+
+    return (
+        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex flex-col animate-[fadeIn_0.2s_ease-out]">
+            {/* Header */}
+            <div className="px-6 pt-safe pb-4 flex justify-between items-center bg-[var(--surface)] border-b border-[var(--surface-highlight)]">
+                <div>
+                    <h2 className="text-2xl font-black text-white italic tracking-tighter uppercase leading-none">
+                        QUEM TÁ NO
+                    </h2>
+                    <p className="text-[var(--primary)] font-black uppercase tracking-widest text-sm truncate max-w-[200px]">
+                        {placeName}
+                    </p>
+                </div>
+                <button
+                    onClick={() => { trigger('light'); onClose(); }}
+                    className="p-3 bg-[var(--background)] rounded-full text-white border border-white/10 active:scale-90 transition-transform"
+                >
+                    <X className="w-6 h-6" />
+                </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+                {currentUser.settings?.ghostMode && (
+                    <div className="mb-6 bg-purple-500/10 border border-purple-500/30 p-4 rounded-xl flex items-center gap-4">
+                        <div className="p-3 bg-purple-500/20 rounded-full">
+                            <Ghost className="w-6 h-6 text-purple-400" />
+                        </div>
+                        <div>
+                            <p className="text-white font-bold text-sm">Modo Fantasma Ativado</p>
+                            <p className="text-purple-300 text-xs">Você está invisível nesta lista.</p>
+                        </div>
+                    </div>
+                )}
+
+                {visiblePeople.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-center opacity-60">
+                        <Ghost className="w-16 h-16 mb-4 text-slate-600" />
+                        <p className="text-xl font-black italic text-slate-500 uppercase">Ninguém visível por aqui...</p>
+                        <p className="text-sm text-slate-600">Seja o primeiro a agitar!</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-2 gap-4">
+                        {visiblePeople.map((user) => (
+                            <div key={user.id} className="bg-[var(--surface)] border border-[var(--surface-highlight)] rounded-3xl p-4 flex flex-col items-center gap-3 relative group overflow-hidden">
+                                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/50 pointer-events-none" />
+
+                                <div className="relative w-20 h-20 rounded-full p-1 border-2 border-[var(--primary)] shadow-[0_0_15px_var(--primary-glow)]">
+                                    <img src={user.avatar} alt={user.name} className="w-full h-full rounded-full object-cover" />
+                                </div>
+
+                                <div className="text-center z-10">
+                                    <h3 className="text-white font-black italic tracking-tight text-lg leading-none mb-1">{user.name.split(' ')[0]}</h3>
+                                    <p className="text-[10px] text-[var(--text-muted)] uppercase font-bold tracking-widest">{user.bio || "Vibing..."}</p>
+                                </div>
+
+                                <button
+                                    onClick={() => onConnect(user.id)}
+                                    className="w-full py-2 bg-[var(--primary)] text-[var(--on-primary)] rounded-xl font-black uppercase text-xs tracking-wider mt-1 hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                >
+                                    <MessageCircle className="w-4 h-4" /> Conectar
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};

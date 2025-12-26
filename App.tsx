@@ -39,6 +39,40 @@ export default function App() {
   const [moments, setMoments] = useState<Moment[]>([]);
   const [selectedMoment, setSelectedMoment] = useState<Moment | null>(null);
   const [showTutorial, setShowTutorial] = useState(false);
+  const [placeUsers, setPlaceUsers] = useState<User[]>([]);
+
+  // Generate mock users for the selected place
+  useEffect(() => {
+    if (selectedPlace) {
+      // Create some fake users based on people count (capped at 20 for performance)
+      const count = Math.min(selectedPlace.peopleCount || 10, 20);
+      const mock: User[] = Array.from({ length: count }).map((_, i) => ({
+        ...MOCK_USER,
+        id: `guest_${selectedPlace.id}_${i}`,
+        name: ["Sofia", "Lucas", "Mateus", "Isabela", "Gabriel", "Julia", "Pedro", "Larissa", "Thiago", "Beatriz", "Rafael", "Mariana", "Gustavo", "Camila", "Bruno", "Fernanda", "Andre", "Leticia", "Felipe", "Amanda"][i % 20],
+        avatar: `https://i.pravatar.cc/150?u=guest_${selectedPlace.id}_${i}`,
+        bio: ["Vibing...", "Só de boa", "Procurando after", "100% energia", "Modo avião", "Explorando", "Vou Lá fan"][i % 7],
+        level: Math.floor(Math.random() * 10) + 1,
+        // Randomly set some to ghost mode to test privacy
+        settings: {
+          ghostMode: Math.random() > 0.85,
+          publicProfile: true,
+          allowTagging: true,
+          showLocation: true,
+          blockedUsers: [],
+          notifications: { hypeAlerts: true, chatMessages: true, friendActivity: true }
+        },
+        history: [],
+        savedPlaces: [],
+        memberSince: new Date().toISOString(),
+        points: 0,
+        badges: []
+      }));
+      setPlaceUsers(mock);
+    } else {
+      setPlaceUsers([]);
+    }
+  }, [selectedPlace]);
 
   // Apply theme globally
   useEffect(() => {
@@ -472,7 +506,7 @@ export default function App() {
               <X className="w-6 h-6" />
             </button>
           </div>
-          <PlaceCard place={selectedPlace} onCheckIn={handleCheckIn} expanded={true} isCheckedIn={currentUser.history.some(h => h.placeId === selectedPlace.id)} isSaved={currentUser.savedPlaces?.includes(selectedPlace.id)} />
+          <PlaceCard place={selectedPlace} onCheckIn={handleCheckIn} expanded={true} isCheckedIn={currentUser.history.some(h => h.placeId === selectedPlace.id)} isSaved={currentUser.savedPlaces?.includes(selectedPlace.id)} currentUser={currentUser} peoplePresent={placeUsers} />
         </div>
       )}
 
