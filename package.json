@@ -6,11 +6,28 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "cap:init": "npx cap init",
+    "cap:sync": "npm run build && npx cap sync",
+    "cap:android": "npm run build && npx cap copy android && npx cap open android",
+    "cap:ios": "npm run build && npx cap copy ios && npx cap open ios",
+    "cap:add:android": "npx cap add android",
+    "cap:add:ios": "npx cap add ios"
   },
   "dependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/app": "^6.0.0",
+    "@capacitor/camera": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/geolocation": "^6.0.0",
+    "@capacitor/ios": "^6.0.0",
+    "@capacitor/push-notifications": "^6.0.0",
+    "@capacitor/splash-screen": "^6.0.0",
+    "@capacitor/status-bar": "^6.0.0",
+    "@capacitor-community/sqlite": "^6.0.0",
     "@google/genai": "^1.31.0",
     "@supabase/supabase-js": "^2.48.1",
+    "capacitor-secure-storage-plugin": "^0.9.0",
     "html5-qrcode": "^2.3.8",
     "idb": "^8.0.0",
     "lucide-react": "^0.556.0",
@@ -18,6 +35,7 @@
     "react-dom": "^19.2.1"
   },
   "devDependencies": {
+    "@capacitor/cli": "^6.0.0",
     "@types/node": "^22.14.0",
     "@vercel/node": "^3.0.0",
     "@vitejs/plugin-react": "^5.0.0",
