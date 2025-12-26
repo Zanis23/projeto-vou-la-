@@ -191,9 +191,9 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
 
     if (expanded) {
         return (
-            <div className="fixed inset-0 z-50 bg-[#0E1121] flex flex-col p-6 animate-[slideUp_0.4s_ease-out]">
+            <div className="fixed inset-0 z-50 bg-[var(--background)] flex flex-col animate-[slideUp_0.4s_ease-out]">
                 {/* Hero Header */}
-                <div className="relative h-64 shrink-0 -mx-6 -mt-6 mb-6 group">
+                <div className="relative h-64 shrink-0 group">
                     <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide h-full" onScroll={handleImageScroll}>
                         {gallery.map((img, i) => (
                             <div key={i} className="w-full h-full shrink-0 snap-center relative">
@@ -201,56 +201,62 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                             </div>
                         ))}
                     </div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0E1121] via-transparent to-black/30 pointer-events-none"></div>
-                    <button onClick={onClick} className="absolute top-6 left-6 p-2 bg-black/40 backdrop-blur-md rounded-full text-white">
-                        <ChevronRight className="w-6 h-6 rotate-180" />
-                    </button>
-                    <div className="absolute bottom-6 left-6">
-                        <h2 className="text-4xl font-black text-white italic tracking-tighter uppercase leading-none">{place.name}</h2>
-                        <div className="flex items-center gap-2 text-slate-400 mt-2">
+                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--background)] via-transparent to-black/30 pointer-events-none"></div>
+                    <div className="absolute top-0 left-0 w-full p-4 pt-safe flex justify-between items-start z-30">
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onClick && onClick(); }}
+                            className="p-3 bg-black/40 backdrop-blur-md rounded-full text-white hover:bg-black/60 transition-colors shadow-lg active:scale-95"
+                        >
+                            <ChevronRight className="w-6 h-6 rotate-180" />
+                        </button>
+                    </div>
+
+                    <div className="absolute bottom-6 left-6 right-6 z-10 pointer-events-none">
+                        <h2 className="text-4xl font-black text-[var(--text-main)] italic tracking-tighter uppercase leading-none drop-shadow-lg">{place.name}</h2>
+                        <div className="flex items-center gap-2 text-white/80 mt-2">
                             <MapPin className="w-4 h-4" />
                             <span className="text-[10px] font-bold uppercase tracking-widest">{place.address}</span>
                         </div>
                     </div>
                     {/* Dots */}
-                    <div className="absolute top-6 right-6 flex gap-1.5 p-2 rounded-full bg-black/20 backdrop-blur-sm">
+                    <div className="absolute top-6 right-6 flex gap-1.5 p-2 rounded-full bg-black/20 backdrop-blur-sm z-20">
                         {gallery.map((_, i) => (
                             <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${activeImageIndex === i ? 'w-4 bg-white' : 'w-1.5 bg-white/40'}`} />
                         ))}
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto space-y-6 pb-20">
+                <div className="flex-1 overflow-y-auto space-y-6 p-6 pb-28">
                     {/* Stats Grid */}
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-slate-800/20 p-5 rounded-[2rem] border border-slate-700/30">
+                        <div className="bg-[var(--surface)] p-5 rounded-[2rem] border border-[var(--surface-highlight)] shadow-sm">
                             <div className="flex items-center gap-2 mb-3">
                                 <Users className="w-4 h-4 text-cyan-400" />
-                                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Público</span>
+                                <span className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest">Público</span>
                             </div>
                             <p className="text-3xl font-black text-[var(--text-main)]">{place.capacityPercentage}%</p>
                             <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase mt-1">Lotado agora</p>
                         </div>
-                        <div className="bg-slate-800/20 p-5 rounded-[2rem] border border-slate-700/30">
+                        <div className="bg-[var(--surface)] p-5 rounded-[2rem] border border-[var(--surface-highlight)] shadow-sm">
                             <div className="flex items-center gap-2 mb-3">
                                 <Music className="w-4 h-4 text-fuchsia-400" />
-                                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Som</span>
+                                <span className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest">Som</span>
                             </div>
                             <p className="text-lg font-black text-[var(--text-main)] italic truncate">{place.currentMusic || 'Variada'}</p>
-                            <button onClick={() => setShowMusicPoll(true)} className="text-[10px] text-indigo-400 font-bold uppercase mt-2 hover:underline">Votar no próximo</button>
+                            <button onClick={() => setShowMusicPoll(true)} className="text-[10px] text-[var(--primary)] font-bold uppercase mt-2 hover:underline">Votar no próximo</button>
                         </div>
                     </div>
 
                     {/* Vibe Check */}
-                    <div className="bg-slate-800/20 p-6 rounded-[2.5rem] border border-slate-700/30">
-                        <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] mb-4 flex items-center gap-2"><Zap className="w-3.5 h-3.5 text-yellow-500" /> Vibe da Galera</h4>
+                    <div className="bg-[var(--surface)] p-6 rounded-[2.5rem] border border-[var(--surface-highlight)] shadow-sm">
+                        <h4 className="text-[10px] font-black text-[var(--text-main)] uppercase tracking-[0.2em] mb-4 flex items-center gap-2"><Zap className="w-3.5 h-3.5 text-yellow-500" /> Vibe da Galera</h4>
                         {!votedVibe ? (
                             <div className="flex gap-4">
-                                <button onClick={() => setVotedVibe('up')} className="flex-1 bg-green-500/10 border border-green-500/20 p-4 rounded-2xl flex flex-col items-center gap-2">
+                                <button onClick={() => setVotedVibe('up')} className="flex-1 bg-green-500/10 border border-green-500/20 p-4 rounded-2xl flex flex-col items-center gap-2 active:scale-95 transition-transform hover:bg-green-500/20">
                                     <ThumbsUp className="w-6 h-6 text-green-500" />
                                     <span className="text-[9px] font-black text-green-500 uppercase">Bombando</span>
                                 </button>
-                                <button onClick={() => setVotedVibe('down')} className="flex-1 bg-red-500/10 border border-red-500/20 p-4 rounded-2xl flex flex-col items-center gap-2">
+                                <button onClick={() => setVotedVibe('down')} className="flex-1 bg-red-500/10 border border-red-500/20 p-4 rounded-2xl flex flex-col items-center gap-2 active:scale-95 transition-transform hover:bg-red-500/20">
                                     <ThumbsDown className="w-6 h-6 text-red-500" />
                                     <span className="text-[9px] font-black text-red-500 uppercase">Morgado</span>
                                 </button>
@@ -265,38 +271,75 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                     </div>
 
                     {/* Quick Menu Preview */}
-                    <div className="bg-slate-800/20 p-6 rounded-[2.5rem] border border-slate-700/30">
+                    <div className="bg-[var(--surface)] p-6 rounded-[2.5rem] border border-[var(--surface-highlight)] shadow-sm">
                         <div className="flex justify-between items-center mb-4">
-                            <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Cardápio Rápido</h4>
-                            <button onClick={() => setShowMenu(true)} className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Ver tudo</button>
+                            <h4 className="text-[10px] font-black text-[var(--text-main)] uppercase tracking-[0.2em]">Cardápio Rápido</h4>
+                            <button onClick={() => setShowMenu(true)} className="text-[10px] font-black text-[var(--primary)] uppercase tracking-widest">Ver tudo</button>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
-                            <button onClick={() => setShowMenu(true)} className="bg-slate-800 border border-slate-700 p-4 rounded-2xl flex flex-col items-center gap-2">
-                                <Beer className="w-6 h-6" />
-                                <span className="text-[9px] font-black">Drinks</span>
+                            <button onClick={() => setShowMenu(true)} className="bg-[var(--background)] border border-[var(--surface-highlight)] p-4 rounded-2xl flex flex-col items-center gap-2 hover:border-[var(--primary)] transition-colors active:scale-95">
+                                <Beer className="w-6 h-6 text-[var(--text-main)]" />
+                                <span className="text-[9px] font-black text-[var(--text-muted)]">Drinks</span>
                             </button>
-                            <button onClick={() => setShowMenu(true)} className="bg-slate-800 border border-slate-700 p-4 rounded-2xl flex flex-col items-center gap-2">
-                                <Pizza className="w-6 h-6" />
-                                <span className="text-[9px] font-black">Lanches</span>
+                            <button onClick={() => setShowMenu(true)} className="bg-[var(--background)] border border-[var(--surface-highlight)] p-4 rounded-2xl flex flex-col items-center gap-2 hover:border-[var(--primary)] transition-colors active:scale-95">
+                                <Pizza className="w-6 h-6 text-[var(--text-main)]" />
+                                <span className="text-[9px] font-black text-[var(--text-muted)]">Lanches</span>
                             </button>
                         </div>
                     </div>
                 </div>
 
                 {/* Sticky CTA */}
-                <div className="absolute bottom-6 left-6 right-6">
+                <div className="absolute bottom-6 left-6 right-6 z-20">
                     <button
-                        onClick={handleGeoCheckIn}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (!isCheckedIn && checkInState !== 'checking') {
+                                handleGeoCheckIn();
+                            }
+                        }}
                         disabled={isCheckedIn || checkInState === 'checking'}
-                        className={`w-full py-5 rounded-2xl font-black italic tracking-[0.2em] transition-all flex items-center justify-center gap-3
-                        ${isCheckedIn ? 'bg-slate-700 text-slate-500' :
+                        className={`w-full py-4 rounded-2xl font-black italic tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-lg hover:brightness-110 active:scale-95
+                        ${isCheckedIn ? 'bg-[var(--surface)] text-[var(--text-muted)] border border-[var(--surface-highlight)]' :
                                 checkInState === 'checking' ? 'bg-indigo-600 animate-pulse text-white' :
-                                    'bg-[var(--primary)] text-black shadow-[0_0_30px_var(--primary-glow)]'}`}
+                                    'bg-[var(--primary)] text-[var(--on-primary)] shadow-[0_0_20px_var(--primary-glow)]'}`}
                     >
                         {checkInState === 'checking' ? <Loader2 className="w-6 h-6 animate-spin" /> :
-                            isCheckedIn ? <CheckCircle2 className="w-6 h-6" /> : 'CHECK-IN NO GPS'}
+                            isCheckedIn ? <><CheckCircle2 className="w-6 h-6" /> VOCÊ ESTÁ AQUI</> : 'FAZER CHECK-IN'}
                     </button>
                 </div>
+
+                {/* MODALS */}
+                {showMenu && (
+                    <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-xl animate-[fadeIn_0.2s_ease-out] flex flex-col">
+                        <div className="px-5 pt-safe flex justify-between items-center h-20 bg-[var(--surface)] border-b border-[var(--surface-highlight)]">
+                            <div className="flex items-center gap-3">
+                                <button onClick={() => setShowMenu(false)} className="p-3 bg-[var(--background)] rounded-full text-[var(--text-muted)] hover:text-[var(--text-main)]"><ChevronRight className="w-5 h-5 rotate-180" /></button>
+                                <h3 className="font-black text-[var(--text-main)] text-xl italic tracking-tighter">CARDÁPIO</h3>
+                            </div>
+                            <div className="flex bg-[var(--background)] rounded-xl p-1 border border-[var(--surface-highlight)]">
+                                <button onClick={() => setMenuCategory('all')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${menuCategory === 'all' ? 'bg-[var(--primary)] text-black' : 'text-[var(--text-muted)]'}`}>Todos</button>
+                                <button onClick={() => setMenuCategory('drink')} className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${menuCategory === 'drink' ? 'bg-[var(--primary)] text-black' : 'text-[var(--text-muted)]'}`}>Drinks</button>
+                            </div>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-5">
+                            {/* Mock Menu Items */}
+                            {[1, 2, 3, 4].map(i => (
+                                <div key={i} className="flex gap-4 p-4 mb-4 bg-[var(--surface)] rounded-2xl border border-[var(--surface-highlight)]">
+                                    <div className="w-20 h-20 bg-[var(--background)] rounded-xl shrink-0"></div>
+                                    <div className="flex-1">
+                                        <h4 className="font-bold text-[var(--text-main)]">Item Exemplo {i}</h4>
+                                        <p className="text-[var(--text-muted)] text-xs mt-1">Descrição deliciosa do item.</p>
+                                        <div className="flex justify-between items-center mt-2">
+                                            <span className="font-black text-[var(--primary)]">R$ 29,90</span>
+                                            <button onClick={() => alert('Adicionado!')} className="p-2 bg-[var(--primary)] rounded-lg text-black"><Plus className="w-4 h-4" /></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
         );
     }
@@ -304,14 +347,15 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
     return (
         <div
             onClick={onClick}
-            className="group relative bg-[var(--surface)] glass-card rounded-[2.5rem] p-4 mb-5 active:scale-[0.98] transition-all cursor-pointer overflow-hidden premium-shadow"
+            className="group relative bg-[var(--surface)] glass-card rounded-[2.5rem] p-2 mb-4 active:scale-[0.98] transition-all cursor-pointer overflow-hidden premium-shadow min-h-[140px] flex items-stretch"
         >
             {/* Animated Glow Backdrop */}
             <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
 
-            <div className="flex gap-4 items-center relative z-10">
-                {/* Image Container with Squircle Masking */}
-                <div className="relative w-28 h-28 xs:w-32 xs:h-32 shrink-0 squircle overflow-hidden bg-slate-900 shadow-xl border border-white/5">
+            {/* Content Container - Flex row with gap */}
+            <div className="flex gap-3 items-center relative z-10 w-full">
+                {/* Image Container - Closer to edge */}
+                <div className="relative w-32 shrink-0 h-full min-h-[120px] rounded-[2rem] overflow-hidden bg-slate-900 shadow-xl border border-white/5 ml-1">
                     <img
                         src={imgError ? FALLBACK_IMAGE : place.imageUrl}
                         className={`w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-110 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
@@ -321,79 +365,81 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                     />
 
                     {/* Occupancy Pill overlay */}
-                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 flex items-center gap-1.5">
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10 flex items-center gap-1.5 whitespace-nowrap">
                         <div className={`w-1.5 h-1.5 rounded-full ${place.capacityPercentage > 85 ? 'bg-red-500 animate-pulse' : 'bg-emerald-400'}`}></div>
                         <span className="text-[8px] font-black text-white italic">{place.capacityPercentage}% <span className="opacity-50 not-italic">ON</span></span>
                     </div>
                 </div>
 
-                {/* Content */}
-                <div className="flex-1 min-w-0">
+                {/* Content - Middle */}
+                <div className="flex-1 min-w-0 py-2 flex flex-col justify-center">
                     <div className="flex items-center gap-2 mb-1">
                         {rank && (
                             <div className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase italic ${rank === 1 ? 'bg-amber-500 text-black' : 'bg-slate-700 text-white'}`}>
                                 #{rank} TOP
                             </div>
                         )}
-                        <span className="text-[10px] font-bold text-[var(--primary)] uppercase tracking-widest">{place.type.toUpperCase()}</span>
+                        <span className="text-[9px] font-bold text-[var(--primary)] uppercase tracking-widest truncate">{place.type.toUpperCase()}</span>
                     </div>
 
-                    <h3 className="text-xl font-black text-[var(--text-main)] italic tracking-tighter truncate uppercase leading-tight">
+                    <h3 className="text-lg xs:text-xl font-black text-[var(--text-main)] italic tracking-tighter truncate uppercase leading-tight mb-1">
                         {place.name}
                     </h3>
 
-                    <div className="flex items-center gap-3 mt-1.5 text-[var(--text-muted)] font-bold text-[10px] uppercase">
-                        <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {place.distance}</span>
-                        <span className="flex items-center gap-1"><Music className="w-3 h-3" /> {place.currentMusic || 'Variada'}</span>
+                    <div className="flex flex-col gap-1 text-[var(--text-muted)] font-bold text-[9px] xs:text-[10px] uppercase">
+                        <span className="flex items-center gap-1 truncate"><MapPin className="w-3 h-3 shrink-0" /> {place.address?.split(',')[0]}</span>
+                        <span className="flex items-center gap-1 truncate"><Music className="w-3 h-3 shrink-0" /> {place.currentMusic || 'Variada'}</span>
                     </div>
 
-                    <div className="flex -space-x-2 mt-3 items-center">
+                    <div className="flex -space-x-2 mt-2.5 items-center">
                         {place.friendsPresent?.slice(0, 3).map((f, i) => (
-                            <img key={i} src={f} className="w-7 h-7 rounded-full border-2 border-[var(--surface)] object-cover shadow-sm" alt="" />
+                            <img key={i} src={f} className="w-6 h-6 rounded-full border-2 border-[var(--surface)] object-cover shadow-sm" alt="" />
                         ))}
                         {place.friendsPresent && place.friendsPresent.length > 0 && (
-                            <span className="ml-3 text-[9px] font-black text-[var(--primary)] uppercase tracking-tighter">Galera On</span>
+                            <span className="ml-3 text-[8px] font-black text-[var(--primary)] uppercase tracking-tighter">Galera On</span>
                         )}
                     </div>
                 </div>
 
-                {/* Action Column */}
-                <div className="flex flex-col items-center gap-4">
+                {/* Action Column - Right Aligned with bg/border separator if needed, essentially taking the right space */}
+                <div className="flex flex-col items-center justify-between py-1 gap-2 pr-1 w-12 shrink-0">
                     <button
                         onClick={onToggleSave ? (e) => { e.stopPropagation(); onToggleSave(place.id); } : undefined}
-                        className={`p-2 rounded-xl transition-all ${isSaved ? 'text-[var(--primary)]' : 'text-slate-600'}`}
+                        className={`p-2 rounded-xl transition-all active:scale-95 ${isSaved ? 'text-[var(--primary)]' : 'text-slate-600 hover:text-slate-400'}`}
                     >
                         <Bookmark className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />
                     </button>
 
-                    <button
-                        onClick={(e) => { e.stopPropagation(); window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name + " " + (place.address || ""))}`, '_blank'); }}
-                        className="p-2 rounded-xl text-slate-400 hover:text-white transition-all active:scale-95"
-                    >
-                        <MapIcon className="w-5 h-5" />
-                    </button>
+                    <div className="flex flex-col gap-3">
+                        <button
+                            onClick={(e) => { e.stopPropagation(); window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name + " " + (place.address || ""))}`, '_blank'); }}
+                            className="p-1 rounded-xl text-slate-500 hover:text-white transition-all active:scale-95"
+                        >
+                            <MapIcon className="w-4 h-4" />
+                        </button>
 
-                    <button
-                        onClick={(e) => { e.stopPropagation(); window.open(`https://m.uber.com/ul/?action=setPickup&client_id=YOUR_CLIENT_ID&pickup=my_location&dropoff[formatted_address]=${encodeURIComponent(place.address || "")}&dropoff[nickname]=${encodeURIComponent(place.name)}`, '_blank'); }}
-                        className="p-2 rounded-xl text-slate-400 hover:text-white transition-all active:scale-95"
-                    >
-                        <Car className="w-5 h-5" />
-                    </button>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); window.open(`https://m.uber.com/ul/?action=setPickup&client_id=YOUR_CLIENT_ID&pickup=my_location&dropoff[formatted_address]=${encodeURIComponent(place.address || "")}&dropoff[nickname]=${encodeURIComponent(place.name)}`, '_blank'); }}
+                            className="p-1 rounded-xl text-slate-500 hover:text-white transition-all active:scale-95"
+                        >
+                            <Car className="w-4 h-4" />
+                        </button>
+                    </div>
 
                     <button
                         onClick={handleActionClick}
-                        className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all shadow-lg mt-2
-                        ${isCheckedIn ? 'bg-[var(--primary)] text-black shadow-[0_0_20px_var(--primary-glow)]' :
-                                checkInState === 'checking' ? 'bg-indigo-600 animate-pulse text-white' : 'bg-white/5 border border-white/10 text-white'}`}
+                        className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all shadow-lg z-20 relative
+                        ${isCheckedIn ? 'bg-[var(--primary)] text-black shadow-[0_0_15px_var(--primary-glow)] ring-2 ring-[var(--primary)]/50' :
+                                checkInState === 'checking' ? 'bg-indigo-600 animate-pulse text-white' : 'bg-white/5 border border-white/10 text-white hover:bg-white/10'}`}
                     >
-                        {checkInState === 'checking' ? <Loader2 className="w-6 h-6 animate-spin" /> :
-                            isCheckedIn ? <CheckCircle2 className="w-6 h-6" /> : <ChevronRight className="w-6 h-6" />}
+                        {checkInState === 'checking' ? <Loader2 className="w-5 h-5 animate-spin" /> :
+                            isCheckedIn ? <CheckCircle2 className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
                     </button>
                 </div>
             </div>
 
             {/* Premium Glow effect in corner */}
-            <div className={`absolute -bottom-8 -right-8 w-24 h-24 blur-[40px] opacity-20 rounded-full
+            <div className={`absolute -bottom-8 -right-8 w-24 h-24 blur-[40px] opacity-20 rounded-full pointer-events-none
                 ${rank === 1 ? 'bg-amber-500' : 'bg-[var(--primary)]'}`}></div>
         </div>
     );

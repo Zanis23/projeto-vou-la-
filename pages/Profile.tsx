@@ -92,14 +92,14 @@ export const Profile: React.FC<ProfileProps> = ({ currentUser = MOCK_USER, onLog
     }
   };
 
-  const handleSettingsUpdate = (settings: PrivacySettings, theme?: 'purple' | 'neon' | 'cyan' | 'pink') => {
+  const handleSettingsUpdate = (settings: PrivacySettings, mode?: 'light' | 'dark', accent?: 'purple' | 'neon' | 'cyan' | 'pink') => {
     if (onUpdateSettings) {
-      onUpdateSettings(settings, theme);
+      onUpdateSettings(settings, mode, accent);
     } else if (onUpdateProfile) {
-      onUpdateProfile({
-        settings,
-        theme
-      });
+      const upd: any = { settings };
+      if (mode) upd.appMode = mode;
+      if (accent) upd.themeColor = accent;
+      onUpdateProfile(upd);
     }
   };
 
@@ -146,8 +146,8 @@ export const Profile: React.FC<ProfileProps> = ({ currentUser = MOCK_USER, onLog
     return (
       <div className="min-h-screen bg-[var(--background)] pb-24 relative animate-[fadeIn_0.3s_ease-out] z-50">
         <div className="pt-safe px-4 pb-4 flex items-center justify-between border-b border-[var(--surface-highlight)] bg-[var(--background)] sticky top-0 z-20">
-          <button onClick={() => setIsEditing(false)} className="p-2 text-slate-400 hover:text-white bg-[var(--surface)] rounded-full"> <X className="w-5 h-5" /> </button>
-          <h2 className="text-lg font-bold text-white uppercase tracking-wider">Editar Perfil</h2>
+          <button onClick={() => setIsEditing(false)} className="p-2 text-[var(--text-muted)] hover:text-[var(--text-main)] bg-[var(--surface)] rounded-full"> <X className="w-5 h-5" /> </button>
+          <h2 className="text-lg font-bold text-[var(--text-main)] uppercase tracking-wider">Editar Perfil</h2>
           <div className="w-9"></div>
         </div>
 
@@ -165,25 +165,25 @@ export const Profile: React.FC<ProfileProps> = ({ currentUser = MOCK_USER, onLog
 
           <div className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-400 uppercase ml-1">Nome</label>
-              <input type="text" value={editForm.name || ''} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="w-full bg-[var(--surface)] border border-[var(--surface-highlight)] rounded-xl px-4 py-3 text-white focus:border-[var(--primary)] focus:outline-none" />
+              <label className="text-xs font-bold text-[var(--text-muted)] uppercase ml-1">Nome</label>
+              <input type="text" value={editForm.name || ''} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="w-full bg-[var(--surface)] border border-[var(--surface-highlight)] rounded-xl px-4 py-3 text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none" />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-400 uppercase ml-1">Bio</label>
-              <textarea value={editForm.bio || ''} onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })} rows={3} className="w-full bg-[var(--surface)] border border-[var(--surface-highlight)] rounded-xl px-4 py-3 text-white focus:border-[var(--primary)] focus:outline-none resize-none" />
+              <label className="text-xs font-bold text-[var(--text-muted)] uppercase ml-1">Bio</label>
+              <textarea value={editForm.bio || ''} onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })} rows={3} className="w-full bg-[var(--surface)] border border-[var(--surface-highlight)] rounded-xl px-4 py-3 text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none resize-none" />
             </div>
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-[var(--surface-highlight)] pb-2">Redes Sociais</h3>
+            <h3 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest border-b border-[var(--surface-highlight)] pb-2">Redes Sociais</h3>
             {['instagram', 'tiktok', 'twitter'].map((social) => (
               <div key={social} className="space-y-1">
-                <label className="text-xs font-bold text-slate-400 uppercase ml-1 capitalize">{social}</label>
+                <label className="text-xs font-bold text-[var(--text-muted)] uppercase ml-1 capitalize">{social}</label>
                 <div className="relative">
-                  <div className="absolute left-4 top-3.5 text-slate-500">
+                  <div className="absolute left-4 top-3.5 text-[var(--text-muted)]">
                     {social === 'instagram' ? <Instagram className="w-5 h-5" /> : social === 'tiktok' ? <Video className="w-5 h-5" /> : <Twitter className="w-5 h-5" />}
                   </div>
-                  <input type="text" placeholder="@seuuser" value={editForm[social as keyof User] as string || ''} onChange={(e) => setEditForm({ ...editForm, [social]: e.target.value })} className="w-full bg-[var(--surface)] border border-[var(--surface-highlight)] rounded-xl pl-12 pr-4 py-3 text-white focus:border-[var(--primary)] focus:outline-none" />
+                  <input type="text" placeholder="@seuuser" value={editForm[social as keyof User] as string || ''} onChange={(e) => setEditForm({ ...editForm, [social]: e.target.value })} className="w-full bg-[var(--surface)] border border-[var(--surface-highlight)] rounded-xl pl-12 pr-4 py-3 text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none" />
                 </div>
               </div>
             ))}
@@ -198,27 +198,24 @@ export const Profile: React.FC<ProfileProps> = ({ currentUser = MOCK_USER, onLog
   }
 
   return (
-    <div className="min-h-screen bg-[var(--background)] pb-24 relative overflow-hidden transition-colors duration-500">
-      <div className="absolute top-0 left-0 right-0 h-[400px] bg-[var(--primary)] opacity-10 blur-[100px] pointer-events-none"></div>
-      <div className="px-5 pt-safe flex justify-between gap-3 sticky top-0 z-30 mb-6">
-        <div className="flex gap-2">
-          {user.ownedPlaceId && (
-            <button onClick={() => setShowDashboard(true)} className="p-3 bg-[var(--surface)]/50 backdrop-blur-md rounded-2xl text-[var(--primary)] border border-[var(--primary)]/20 hover:bg-[var(--primary)] hover:text-[var(--on-primary)] transition-all active:scale-95 shadow-lg flex items-center gap-2">
-              <LayoutDashboard className="w-5 h-5" />
-              <span className="text-[10px] font-black uppercase tracking-widest hidden xs:block">Painel Dono</span>
+    <div className="min-h-screen bg-[var(--background)] pb-32 relative overflow-x-hidden transition-colors duration-500">
+      <div className="absolute top-0 left-0 right-0 h-64 bg-gradient-to-b from-[#1a1f35] to-transparent pointer-events-none z-0"></div>
+      <div className="absolute -top-20 -right-20 w-64 h-64 bg-[var(--primary)] opacity-10 rounded-full blur-[80px] pointer-events-none z-0"></div>
+
+      <div className="px-5 pb-2 z-20 flex flex-col gap-6 sticky top-0 backdrop-blur-xl bg-[var(--background)]/80 pt-safe transition-colors duration-500 border-b border-white/5 mb-6">
+        <div className="flex justify-between items-center mt-2">
+          <h2 className="text-3xl font-black text-[var(--text-main)] italic tracking-tighter drop-shadow-sm flex items-center gap-2">
+            PERFIL <span className="text-2xl not-italic text-[var(--primary)] animate-pulse">|</span>
+          </h2>
+
+          <div className="flex gap-2">
+            <button onClick={() => setShowCodeModal(true)} className="p-3 bg-[var(--surface)] rounded-full text-[var(--text-muted)] border border-[var(--surface-highlight)] hover:text-[var(--text-main)] transition-all active:scale-95 shadow-lg">
+              <Eye className="w-5 h-5" />
             </button>
-          )}
-        </div>
-        <div className="flex gap-2">
-          <button onClick={() => setShowCodeModal(true)} className="p-3 bg-[var(--surface)]/50 backdrop-blur-md rounded-2xl text-[var(--text-muted)] border border-[var(--surface-highlight)] hover:text-[var(--text-main)] transition-all active:scale-95 shadow-lg">
-            <Eye className="w-5 h-5" />
-          </button>
-          <button onClick={() => setShowSafety(true)} className="p-3 bg-red-500/10 backdrop-blur-md rounded-2xl text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all active:scale-95 shadow-lg">
-            <Shield className="w-5 h-5" />
-          </button>
-          <button onClick={() => setShowSettings(true)} className="p-3 glass-card rounded-2xl text-[var(--text-muted)] hover:text-[var(--primary)] transition-colors active:scale-95 border border-[var(--surface-highlight)]">
-            <Settings className="w-5 h-5" />
-          </button>
+            <button onClick={() => setShowSettings(true)} className="p-3 bg-[var(--surface)] rounded-full text-[var(--text-muted)] hover:text-[var(--primary)] transition-colors active:scale-95 border border-[var(--surface-highlight)] shadow-lg">
+              <Settings className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -266,18 +263,18 @@ export const Profile: React.FC<ProfileProps> = ({ currentUser = MOCK_USER, onLog
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-8">
-          <div className="glass-card p-5 rounded-[2rem] flex flex-col justify-between h-36 border border-[var(--surface-highlight)] shadow-sm group hover:-translate-y-1 transition-transform">
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <div className="glass-card p-4 rounded-[2rem] flex flex-col justify-between h-32 border border-[var(--surface-highlight)] shadow-sm group hover:-translate-y-1 transition-transform">
             <div className="w-10 h-10 rounded-2xl bg-[var(--primary)]/10 flex items-center justify-center">
               <MapPin className="w-5 h-5 text-[var(--primary)]" />
             </div>
             <div>
-              <span className="text-4xl font-black text-[var(--text-main)] block tracking-tighter">{user.history?.length || 0}</span>
+              <span className="text-3xl font-black text-[var(--text-main)] block tracking-tighter">{user.history?.length || 0}</span>
               <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Rolês Totais</span>
             </div>
           </div>
 
-          <div className="glass-card p-5 rounded-[2rem] flex flex-col justify-between h-36 relative overflow-hidden border border-[var(--surface-highlight)] shadow-sm group hover:-translate-y-1 transition-transform">
+          <div className="glass-card p-4 rounded-[2rem] flex flex-col justify-between h-32 relative overflow-hidden border border-[var(--surface-highlight)] shadow-sm group hover:-translate-y-1 transition-transform">
             <div className="w-10 h-10 rounded-2xl bg-purple-500/10 flex items-center justify-center relative z-10">
               <Calendar className="w-5 h-5 text-purple-500" />
             </div>

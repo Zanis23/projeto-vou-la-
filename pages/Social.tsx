@@ -187,6 +187,9 @@ export const Social: React.FC<SocialProps> = ({ feed, onToggleLike, onComment, o
 
   return (
     <div className="h-full bg-[var(--background)] flex flex-col relative overflow-hidden transition-colors duration-500">
+      <div className="absolute top-0 left-0 right-0 h-64 bg-gradient-to-b from-[#1a1f35] to-transparent pointer-events-none z-0"></div>
+      <div className="absolute -top-20 -right-20 w-64 h-64 bg-[var(--primary)] opacity-10 rounded-full blur-[80px] pointer-events-none z-0"></div>
+
       {showAiStudio && <AiStudio onClose={() => setShowAiStudio(false)} />}
 
       {/* Search Modal */}
@@ -237,47 +240,60 @@ export const Social: React.FC<SocialProps> = ({ feed, onToggleLike, onComment, o
         </div>
       )}
 
-      <div className="bg-[var(--background)]/90 backdrop-blur-xl sticky top-0 z-20 pt-safe px-5 shadow-sm border-b border-[var(--border)] shrink-0 transition-colors duration-500">
-        <div className="pt-2 pb-2">
-          <div className="flex justify-between items-center mb-4 mt-2">
-            <h2 className="text-4xl font-black text-[var(--text-main)] italic tracking-tighter drop-shadow-sm">SOCIAL</h2>
-            <div className="flex gap-2">
-              <button onClick={() => { trigger('light'); setShowSearch(true); }} className="bg-[var(--surface)] p-3 rounded-2xl text-[var(--primary)] border border-[var(--surface-highlight)] active:scale-95 shadow-lg group hover:border-[var(--primary)] transition-colors">
-                <UserPlus className="w-6 h-6 group-hover:scale-110 transition-transform" />
-              </button>
-            </div>
+      <div className="px-5 pb-2 z-20 flex flex-col gap-4 sticky top-0 backdrop-blur-xl bg-[var(--background)]/80 pt-safe transition-colors duration-500 border-b border-white/5">
+        <div className="flex justify-between items-center mt-2">
+          <h2 className="text-3xl font-black text-[var(--text-main)] italic tracking-tighter drop-shadow-sm flex items-center gap-2">
+            SOCIAL <span className="text-2xl not-italic text-[var(--primary)] animate-pulse">|</span>
+          </h2>
+          <div className="flex gap-2">
+            <button onClick={() => { trigger('light'); setShowSearch(true); }} className="relative p-3 bg-[var(--surface)] rounded-full text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors border border-[var(--surface-highlight)] hover:border-[var(--primary)] active:scale-95 group shadow-lg">
+              <UserPlus className="w-6 h-6 group-hover:scale-110 transition-transform" />
+            </button>
           </div>
-          {view !== 'chat_detail' && (
-            <div className="flex p-1.5 bg-[var(--surface)] rounded-2xl mb-2 border border-[var(--surface-highlight)] relative">
-              {/* Slider for Tab Indicator could go here for extra polish, simple toggle for now */}
-              <button onClick={() => setView('feed')} className={`flex-1 py-3 text-[10px] font-black uppercase rounded-xl transition-all tracking-widest ${view === 'feed' ? 'bg-[var(--primary)] text-[var(--on-primary)] shadow-md scale-[1.02]' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}>Feed</button>
-              <button onClick={() => setView('chats')} className={`flex-1 py-3 text-[10px] font-black uppercase rounded-xl transition-all tracking-widest ${view === 'chats' ? 'bg-[var(--primary)] text-[var(--on-primary)] shadow-md scale-[1.02]' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}>Conversas</button>
-            </div>
-          )}
-          {view === 'chat_detail' && activeChat && (
-            <div className="flex items-center justify-between pb-2">
+        </div>
+
+        {view !== 'chat_detail' && (
+          <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1 -mx-5 px-5 snap-x">
+            <button
+              onClick={() => setView('feed')}
+              className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border snap-center
+                    ${view === 'feed'
+                  ? 'bg-[var(--primary)] text-[var(--on-primary)] border-[var(--primary)] shadow-[0_0_20px_var(--primary-glow)] scale-105'
+                  : 'bg-[var(--surface)] text-[var(--text-muted)] border-[var(--surface-highlight)] hover:border-[var(--text-muted)] hover:text-[var(--text-main)]'}`}
+            >
+              FEED
+            </button>
+            <button
+              onClick={() => setView('chats')}
+              className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border snap-center
+                    ${view === 'chats'
+                  ? 'bg-[var(--primary)] text-[var(--on-primary)] border-[var(--primary)] shadow-[0_0_20px_var(--primary-glow)] scale-105'
+                  : 'bg-[var(--surface)] text-[var(--text-muted)] border-[var(--surface-highlight)] hover:border-[var(--text-muted)] hover:text-[var(--text-main)]'}`}
+            >
+              CONVERSAS
+            </button>
+          </div>
+        )}
+
+        {view === 'chat_detail' && activeChat && (
+          <div className="flex items-center justify-between pb-1">
+            <div className="flex items-center gap-3">
+              <button onClick={() => setView('chats')} className="p-2 bg-[var(--surface)] rounded-full text-[var(--text-muted)] hover:text-[var(--text-main)] border border-[var(--surface-highlight)] active:scale-90"><ChevronLeft className="w-5 h-5" /></button>
               <div className="flex items-center gap-3">
-                <button onClick={() => setView('chats')} className="p-2.5 bg-[var(--surface)] rounded-xl text-[var(--text-muted)] hover:text-[var(--text-main)] border border-[var(--surface-highlight)] active:scale-90"><ChevronLeft className="w-5 h-5" /></button>
-                <div className="flex items-center gap-3">
-                  <img src={activeChat.userAvatar} className="w-10 h-10 rounded-[0.8rem] squircle border border-[var(--primary)] object-cover shadow-lg shadow-[var(--primary)]/20" alt="" />
-                  <div>
-                    <h3 className="font-bold text-[var(--text-main)] text-sm">{activeChat.userName}</h3>
-                    <p className="text-[10px] text-[#00ff73] font-bold uppercase tracking-wider animate-pulse flex items-center gap-1"><span className="w-1.5 h-1.5 bg-[#00ff73] rounded-full"></span> Online</p>
-                  </div>
+                <div className="w-10 h-10 rounded-[0.8rem] squircle p-[1px] bg-gradient-to-br from-[var(--primary)] to-fuchsia-500">
+                  <img src={activeChat.userAvatar} className="w-full h-full rounded-[0.7rem] squircle object-cover" alt="" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-[var(--text-main)] text-sm leading-none">{activeChat.userName}</h3>
+                  <p className="text-[10px] text-[#00ff73] font-bold uppercase tracking-wider animate-pulse flex items-center gap-1 mt-0.5"><span className="w-1.5 h-1.5 bg-[#00ff73] rounded-full"></span> Online</p>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => { trigger('medium'); alert('Função "Pagar um Drink" em breve!'); }}
-                  className="bg-[var(--primary)] text-[var(--on-primary)] px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-tighter flex items-center gap-1.5 shadow-lg shadow-[var(--primary)]/20 active:scale-90 transition-all hover:brightness-110"
-                >
-                  <ImageIcon className="w-4 h-4" /> <span className="hidden xs:inline">Pagar Drink</span>
-                </button>
-                <button onClick={handleBlockUser} className="p-2.5 bg-red-500/10 rounded-xl text-red-500 hover:bg-red-500 hover:text-white transition-colors"><Ban className="w-5 h-5" /></button>
-              </div>
             </div>
-          )}
-        </div>
+            <div className="flex gap-2">
+              <button onClick={handleBlockUser} className="p-2 bg-red-500/10 rounded-full text-red-500 hover:bg-red-500 hover:text-white transition-colors"><Ban className="w-4 h-4" /></button>
+            </div>
+          </div>
+        )}
       </div>
 
       {view === 'feed' && (
