@@ -1,14 +1,15 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { MOCK_FRIEND_REQUESTS, MOCK_USER, MOCK_SUGGESTIONS, MOCK_PLACES, FALLBACK_IMAGE } from '../constants';
-import { MessageSquare, Heart, MapPin, Search, ChevronLeft, Send, CheckCircle2, UserPlus, X, Camera, Image as ImageIcon, Mic, StopCircle, Calendar, Clock, Share2, Plus, ShieldAlert, Ban, MoreVertical } from 'lucide-react';
-import { Chat, FriendRequest, FeedItem, Message, Place, SocialPlan } from '../types';
+import { MessageSquare, Heart, MapPin, Search, ChevronLeft, Send, CheckCircle2, UserPlus, X, Camera, Image as ImageIcon, Mic, StopCircle, Calendar, Clock, Share2, Plus, ShieldAlert, Ban, MoreVertical, Sparkles } from 'lucide-react';
+import { Chat, FriendRequest, FeedItem, Message, Place, SocialPlan, MatchProfile } from '../types';
 import { useHaptic } from '../hooks/useHaptic';
 import { AiStudio } from '../components/AiStudio';
+import { MatchCard } from '../components/MatchCard';
 import { db } from '../utils/storage';
 import { User } from '../types';
 
-type ViewMode = 'feed' | 'chats' | 'plans' | 'chat_detail';
+type ViewMode = 'feed' | 'chats' | 'plans' | 'chat_detail' | 'connect';
 
 interface SocialProps {
   feed: FeedItem[];
@@ -17,6 +18,34 @@ interface SocialProps {
   onPlaceSelect?: (place: Place) => void;
   places: Place[];
 }
+
+// Mock Data for Matches (Temporary)
+const MOCK_MATCHES: MatchProfile[] = [
+  {
+    id: 'm1',
+    name: 'Júlia',
+    age: 23,
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3',
+    bio: 'Amo sertanejo e barzinho com os amigos! 🍻',
+    status: 'Indo para Seu Justino',
+    tags: ['Sertanejo', 'Cerveja', 'Dança'],
+    distance: '3 km',
+    matchPercentage: 95,
+    commonInterests: ['Sertanejo', 'Barzinho']
+  },
+  {
+    id: 'm2',
+    name: 'Lucas',
+    age: 25,
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3',
+    bio: 'Vibe eletrônica hoje? Bora! 🎧',
+    status: 'Indo para High Club',
+    tags: ['Eletrônica', 'Rave', 'After'],
+    distance: '8 km',
+    matchPercentage: 88,
+    commonInterests: ['Eletrônica', 'Gin']
+  }
+];
 
 export const Social: React.FC<SocialProps> = ({ feed, onToggleLike, onComment, onPlaceSelect, places }) => {
   const { trigger } = useHaptic();
@@ -32,6 +61,10 @@ export const Social: React.FC<SocialProps> = ({ feed, onToggleLike, onComment, o
   const [blockedUsers, setBlockedUsers] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Match System State
+  const [matchProfiles, setMatchProfiles] = useState<MatchProfile[]>(MOCK_MATCHES);
+  const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
 
   const loadChats = useCallback(async () => {
     const chats = await (db.chats as any).get();
@@ -183,7 +216,25 @@ export const Social: React.FC<SocialProps> = ({ feed, onToggleLike, onComment, o
     }
   };
 
+  // Match System Handlers
+  const handleLike = () => {
+    trigger('success');
+    // Here you would implement the real "Like" logic (API call)
+    // For now, simple animation/next
+    nextMatchProfile();
+  };
+
+  const handlePass = () => {
+    trigger('medium');
+    nextMatchProfile();
+  };
+
+  const nextMatchProfile = () => {
+    setCurrentMatchIndex(prev => prev + 1);
+  };
+
   const filteredFeed = feed.filter(item => !reportedIds.includes(item.id) && !blockedUsers.includes(item.userId));
+  const currentMatchProfile = matchProfiles[currentMatchIndex];
 
   return (
     <div className="h-full bg-[var(--background)] flex flex-col relative overflow-hidden transition-colors duration-500">
@@ -262,6 +313,16 @@ export const Social: React.FC<SocialProps> = ({ feed, onToggleLike, onComment, o
                   : 'bg-[var(--surface)] text-[var(--text-muted)] border-[var(--surface-highlight)] hover:border-[var(--text-muted)] hover:text-[var(--text-main)]'}`}
             >
               FEED
+            </button>
+            <button
+              onClick={() => setView('connect')}
+              className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border snap-center
+                     ${view === 'connect'
+                  ? 'bg-[var(--primary)] text-[var(--on-primary)] border-[var(--primary)] shadow-[0_0_20px_var(--primary-glow)] scale-105'
+                  : 'bg-[var(--surface)] text-[var(--text-muted)] border-[var(--surface-highlight)] hover:border-[var(--text-muted)] hover:text-[var(--text-main)]'}`}
+            >
+              <Sparkles className="w-3 h-3" />
+              CONNECT
             </button>
             <button
               onClick={() => setView('chats')}
@@ -355,6 +416,36 @@ export const Social: React.FC<SocialProps> = ({ feed, onToggleLike, onComment, o
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {view === 'connect' && (
+        <div className="flex-1 flex flex-col justify-center items-center p-5 pb-32">
+          {currentMatchProfile ? (
+            <div className="w-full max-w-sm animate-[fadeInScale_0.3s_ease-out]">
+              <MatchCard
+                key={currentMatchProfile.id}
+                profile={currentMatchProfile as any}
+                onLike={handleLike}
+                onPass={handlePass}
+                onSuperLike={() => { trigger('success'); nextMatchProfile(); }}
+              />
+            </div>
+          ) : (
+            <div className="text-center opacity-70">
+              <div className="w-24 h-24 bg-[var(--surface)] rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-dashed border-[var(--text-muted)]">
+                <Sparkles className="w-10 h-10 text-[var(--text-muted)]" />
+              </div>
+              <h3 className="text-xl font-bold text-[var(--text-main)] mb-1">Acabaram os perfis por hoje!</h3>
+              <p className="text-sm text-[var(--text-muted)]">Volte mais tarde para ver mais pessoas.</p>
+              <button
+                onClick={() => setCurrentMatchIndex(0)}
+                className="mt-6 px-6 py-3 bg-[var(--surface)] text-[var(--text-main)] font-bold rounded-xl border border-[var(--text-muted)]"
+              >
+                Revisar Perfis
+              </button>
+            </div>
+          )}
         </div>
       )}
 

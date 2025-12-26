@@ -152,6 +152,7 @@ export interface CheckIn {
   timestamp: string;
   xpEarned: number;
   snapshotImageUrl: string;
+  vibe?: string;
 }
 
 export interface Moment {
@@ -305,6 +306,10 @@ export interface MatchProfile {
   bio: string;
   status: string;
   tags: string[];
+  distance?: string;
+  matchPercentage?: number;
+  commonInterests?: string[];
+  images?: string[];
 }
 
 export interface AppNotification {

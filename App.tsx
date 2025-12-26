@@ -308,7 +308,7 @@ export default function App() {
     }
   }, [appState, currentUser?.history?.length]);
 
-  const handleCheckIn = async (placeId: string) => {
+  const handleCheckIn = async (placeId: string, vibe?: string) => {
     const target = places.find(p => p.id === placeId);
     if (!target) return;
 
@@ -319,7 +319,8 @@ export default function App() {
       placeName: target.name,
       timestamp: new Date().toISOString(),
       xpEarned: xp,
-      snapshotImageUrl: target.imageUrl
+      snapshotImageUrl: target.imageUrl,
+      vibe
     };
 
     const updatedUser = {

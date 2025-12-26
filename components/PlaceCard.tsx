@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Place, MenuItem, OrderItem, StaffCall } from '../types';
 import { MapPin, Crown, Check, ChevronRight, User, Music, Star, Clock, Map as MapIcon, Car, ArrowUpRight, Bookmark, Flame, Utensils, BellRing, ThumbsUp, ThumbsDown, Zap, Users, X, Beer, Pizza, Loader2, CheckCircle2, Play, Disc, Plus, Minus, Receipt, HelpCircle, History, BarChart3, Sparkles, ClipboardList, CreditCard, QrCode, ShoppingBag } from 'lucide-react';
@@ -7,11 +6,12 @@ import { useHaptic } from '../hooks/useHaptic';
 import { FALLBACK_IMAGE, getUserById } from '../constants';
 import { MatchMode } from './MatchMode';
 import { db } from '../utils/storage';
+import { CheckInFlow } from './CheckInFlow';
 
 interface PlaceCardProps {
     place?: Place;
     rank?: number;
-    onCheckIn?: (id: string) => void;
+    onCheckIn?: (id: string, vibe?: string) => void;
     expanded?: boolean;
     isCheckedIn?: boolean;
     isSaved?: boolean;
@@ -97,6 +97,9 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
     const [votedVibe, setVotedVibe] = useState<'up' | 'down' | null>(null);
     const [showMatchMode, setShowMatchMode] = useState(false);
 
+    // NEW CHECK-IN FLOW STATE
+    const [showCheckInFlow, setShowCheckInFlow] = useState(false);
+
     const [showMenu, setShowMenu] = useState(false);
     const [menuCategory, setMenuCategory] = useState<'all' | 'drink' | 'food' | 'other' | 'orders'>('all');
     const [cart, setCart] = useState<Record<string, number>>({});
@@ -138,6 +141,7 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
         setActiveImageIndex(Math.round(scrollLeft / width));
     };
 
+    // DEPRECATED: Old direct check-in logic, kept as fallback or internal
     const handleGeoCheckIn = () => {
         if (!place || !onCheckIn || isCheckedIn) return;
 
@@ -157,19 +161,26 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
         }, 1500);
     };
 
+    // UPDATED: Now triggers flow instead of direct action
     const handleActionClick = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (isCheckedIn) {
             if (onShowSocialHub) onShowSocialHub();
         } else {
             trigger('medium');
-            setCheckInState('checking');
-            setTimeout(() => {
-                setCheckInState('success');
-                if (onCheckIn) onCheckIn(place!.id);
-                trigger('success');
-            }, 1500);
+            setShowCheckInFlow(true);
         }
+    };
+
+    // NEW: Handle completion from the flow
+    const handleCheckInComplete = (data: { vibe: string }) => {
+        if (onCheckIn && place) {
+            onCheckIn(place.id, data.vibe);
+        }
+        // Give time for the success animation in the modal before closing
+        setTimeout(() => {
+            setShowCheckInFlow(false);
+        }, 500);
     };
 
     if (loading) {
@@ -192,6 +203,15 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
     if (expanded) {
         return (
             <div className="fixed inset-0 z-50 bg-[var(--background)] flex flex-col animate-[slideUp_0.4s_ease-out]">
+                {/* NEW: CheckInFlow Modal */}
+                {showCheckInFlow && (
+                    <CheckInFlow
+                        place={place}
+                        onClose={() => setShowCheckInFlow(false)}
+                        onComplete={handleCheckInComplete}
+                    />
+                )}
+
                 {/* Hero Header */}
                 <div className="relative h-64 shrink-0 group">
                     <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide h-full" onScroll={handleImageScroll}>
@@ -308,7 +328,8 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                         onClick={(e) => {
                             e.stopPropagation();
                             if (!isCheckedIn && checkInState !== 'checking') {
-                                handleGeoCheckIn();
+                                // handleGeoCheckIn(); // OLD
+                                setShowCheckInFlow(true); // NEW
                             }
                         }}
                         disabled={isCheckedIn || checkInState === 'checking'}
@@ -360,8 +381,17 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
     return (
         <div
             onClick={onClick}
-            className="group relative bg-[var(--surface)] glass-card rounded-[2.5rem] p-2 mb-4 active:scale-[0.98] transition-all cursor-pointer overflow-hidden premium-shadow min-h-[140px] flex items-stretch"
+            className="group relative bg-[var(--surface)] glass-card rounded-[2.5rem] p-2 mb-4 active:scale-[0.98] transition-all cursor-pointer overflow-hidden premium-shadow min-h-[140px] flex items-stretch flow-root"
         >
+            {/* NEW: CheckInFlow Modal (also in collapsed view as needed, but mostly triggered from list logic) */}
+            {showCheckInFlow && place && (
+                <CheckInFlow
+                    place={place}
+                    onClose={() => setShowCheckInFlow(false)}
+                    onComplete={handleCheckInComplete}
+                />
+            )}
+
             {/* Animated Glow Backdrop */}
             <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
 
