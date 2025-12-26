@@ -27,7 +27,7 @@
     "@capacitor/status-bar": "^6.0.0",
     "@capacitor-community/sqlite": "^6.0.0",
     "@google/genai": "^1.31.0",
-    "@sentry/react": "^7.100.0",
+    "@sentry/react": "^8.0.0",
     "@sentry/vite-plugin": "^2.14.0",
     "@supabase/supabase-js": "^2.48.1",
     "@vercel/analytics": "^1.1.0",
