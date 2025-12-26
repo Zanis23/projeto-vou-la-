@@ -4,7 +4,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { initSentry, SentryErrorBoundary } from './utils/sentry';
 import { initAnalytics } from './utils/analytics';
 import App from './App';
-import './styles/index.css';
+import './styles/global.css';
 
 // Initialize monitoring
 initSentry();
