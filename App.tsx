@@ -294,98 +294,103 @@ export default function App() {
   );
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-[var(--background)] text-[var(--text-main)] overflow-hidden relative transition-colors duration-500">
+    <>
+      <PWAUpdateNotification />
+      <Suspense fallback={<PageLoader />}>
+        <div className="flex flex-col h-[100dvh] bg-[var(--background)] text-[var(--text-main)] overflow-hidden relative transition-colors duration-500">
 
-      <main className="flex-1 overflow-hidden relative">
-        <div key={activeTab} className="h-full scroll-container">
-          {activeTab === Tab.HOME && (
-            <Home
+          <main className="flex-1 overflow-hidden relative">
+            <div key={activeTab} className="h-full scroll-container">
+              {activeTab === Tab.HOME && (
+                <Home
+                  currentUser={currentUser}
+                  places={places}
+                  onPlaceSelect={setSelectedPlace}
+                  notificationCount={0}
+                  onOpenNotifications={() => { }}
+                  savedPlaces={currentUser.savedPlaces || []}
+                  initialFilter={homeFilter}
+                  onToggleSave={(id) => {
+                    const next = currentUser.savedPlaces.includes(id) ? currentUser.savedPlaces.filter(x => x !== id) : [...currentUser.savedPlaces, id];
+                    const u = { ...currentUser, savedPlaces: next };
+                    setCurrentUser(u);
+                    db.user.save(u);
+                  }}
+                />
+              )}
+              {activeTab === Tab.RADAR && <Radar places={places} onPlaceSelect={setSelectedPlace} />}
+              {activeTab === Tab.AI_FINDER && <AiConcierge />}
+              {activeTab === Tab.SOCIAL && <Social feed={feed} onToggleLike={async (id) => { /* update */ }} onComment={(id) => { /* logic */ }} onPlaceSelect={setSelectedPlace} places={places} />}
+              {activeTab === Tab.PROFILE && <Profile currentUser={currentUser} places={places} onLogout={handleLogout} onUpdateProfile={(upd) => { const u = { ...currentUser, ...upd }; setCurrentUser(u); db.user.save(u); }} />}
+              {activeTab === Tab.RANKING && <Ranking currentUser={currentUser} />}
+              {activeTab === Tab.CHALLENGES && <Challenges />}
+              {activeTab === Tab.STORE && <Store currentUser={currentUser} onPurchase={(cost) => { const u = { ...currentUser, points: currentUser.points - cost }; setCurrentUser(u); db.user.save(u); }} />}
+              {activeTab === Tab.DASHBOARD && currentUser.ownedPlaceId && (
+                <BusinessDashboard
+                  placeId={currentUser.ownedPlaceId}
+                  placeData={places.find(p => p.id === currentUser.ownedPlaceId)}
+                />
+              )}
+
+              {/* Tutorial Overlay */}
+              {showTutorial && (
+                <OnboardingTutorial onComplete={() => {
+                  localStorage.setItem('voula_tutorial_seen_v1', 'true');
+                  setShowTutorial(false);
+                }} />
+              )}
+            </div>
+          </main>
+
+          {selectedPlace && (
+            <div className="fixed inset-0 z-[100] bg-[var(--background)] animate-[slideUp_0.4s_cubic-bezier(0.16,1,0.3,1)] flex flex-col">
+              <div className="absolute top-safe left-4 z-50 pt-1">
+                <button onClick={() => { window.history.back(); }} className="p-2.5 rounded-full bg-black/40 text-white backdrop-blur-lg border border-white/10 active:scale-90 shadow-xl">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <PlaceCard place={selectedPlace} onCheckIn={handleCheckIn} expanded={true} isCheckedIn={currentUser.history.some(h => h.placeId === selectedPlace.id)} isSaved={currentUser.savedPlaces?.includes(selectedPlace.id)} />
+            </div>
+          )}
+
+          {showMoreMenu && (
+            <MoreOptionsModal
               currentUser={currentUser}
-              places={places}
-              onPlaceSelect={setSelectedPlace}
-              notificationCount={0}
-              onOpenNotifications={() => { }}
-              savedPlaces={currentUser.savedPlaces || []}
-              initialFilter={homeFilter}
-              onToggleSave={(id) => {
-                const next = currentUser.savedPlaces.includes(id) ? currentUser.savedPlaces.filter(x => x !== id) : [...currentUser.savedPlaces, id];
-                const u = { ...currentUser, savedPlaces: next };
-                setCurrentUser(u);
-                db.user.save(u);
+              onClose={() => setShowMoreMenu(false)}
+              onNavigate={(dest) => {
+                if (dest === Tab.EVENTS) {
+                  setHomeFilter(PlaceType.EVENTO);
+                  setActiveTab(Tab.HOME);
+                } else {
+                  setHomeFilter('ALL');
+                  setActiveTab(dest as Tab);
+                }
+                setShowMoreMenu(false);
+              }}
+              onOpenSettings={() => {
+                setShowMoreMenu(false);
+                setActiveTab(Tab.PROFILE);
               }}
             />
           )}
-          {activeTab === Tab.RADAR && <Radar places={places} onPlaceSelect={setSelectedPlace} />}
-          {activeTab === Tab.AI_FINDER && <AiConcierge />}
-          {activeTab === Tab.SOCIAL && <Social feed={feed} onToggleLike={async (id) => { /* update */ }} onComment={(id) => { /* logic */ }} onPlaceSelect={setSelectedPlace} places={places} />}
-          {activeTab === Tab.PROFILE && <Profile currentUser={currentUser} places={places} onLogout={handleLogout} onUpdateProfile={(upd) => { const u = { ...currentUser, ...upd }; setCurrentUser(u); db.user.save(u); }} />}
-          {activeTab === Tab.RANKING && <Ranking currentUser={currentUser} />}
-          {activeTab === Tab.CHALLENGES && <Challenges />}
-          {activeTab === Tab.STORE && <Store currentUser={currentUser} onPurchase={(cost) => { const u = { ...currentUser, points: currentUser.points - cost }; setCurrentUser(u); db.user.save(u); }} />}
-          {activeTab === Tab.DASHBOARD && currentUser.ownedPlaceId && (
-            <BusinessDashboard
-              placeId={currentUser.ownedPlaceId}
-              placeData={places.find(p => p.id === currentUser.ownedPlaceId)}
-            />
-          )}
 
-          {/* Tutorial Overlay */}
-          {showTutorial && (
-            <OnboardingTutorial onComplete={() => {
-              localStorage.setItem('voula_tutorial_seen_v1', 'true');
-              setShowTutorial(false);
-            }} />
-          )}
+          <nav className="bg-[var(--background)]/95 backdrop-blur-xl border-t border-white/5 flex justify-around items-center px-2 z-[90] pb-safe pt-2 min-h-[75px] xs:min-h-[85px] shrink-0">
+            <NavButton active={activeTab === Tab.HOME} onClick={() => { setHomeFilter('ALL'); setActiveTab(Tab.HOME); }} icon={<List className="w-5 h-5" />} label="Lista" />
+            <NavButton active={activeTab === Tab.RADAR} onClick={() => setActiveTab(Tab.RADAR)} icon={<Map className="w-5 h-5" />} label="Radar" />
+
+            <div className="relative -top-6 xs:-top-7">
+              <button onClick={() => setShowMoreMenu(true)} className={`w-14 h-14 rounded-full flex items-center justify-center transition-all active:scale-90 border-4 border-[var(--background)] ${showMoreMenu ? 'bg-white text-black' : 'bg-[var(--primary)] text-[var(--on-primary)] shadow-[0_0_20px_var(--primary-glow)]'}`}>
+                <LayoutGrid className="w-6 h-6 fill-current" />
+              </button>
+            </div>
+
+            <NavButton active={activeTab === Tab.SOCIAL} onClick={() => setActiveTab(Tab.SOCIAL)} icon={<MessageCircle className="w-5 h-5" />} label="Bonde" />
+            <NavButton active={activeTab === Tab.PROFILE} onClick={() => setActiveTab(Tab.PROFILE)} icon={<UserIcon className="w-5 h-5" />} label="Perfil" />
+          </nav>
         </div>
-      </main>
-
-      {selectedPlace && (
-        <div className="fixed inset-0 z-[100] bg-[var(--background)] animate-[slideUp_0.4s_cubic-bezier(0.16,1,0.3,1)] flex flex-col">
-          <div className="absolute top-safe left-4 z-50 pt-1">
-            <button onClick={() => { window.history.back(); }} className="p-2.5 rounded-full bg-black/40 text-white backdrop-blur-lg border border-white/10 active:scale-90 shadow-xl">
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-
-          <PlaceCard place={selectedPlace} onCheckIn={handleCheckIn} expanded={true} isCheckedIn={currentUser.history.some(h => h.placeId === selectedPlace.id)} isSaved={currentUser.savedPlaces?.includes(selectedPlace.id)} />
-        </div>
-      )}
-
-      {showMoreMenu && (
-        <MoreOptionsModal
-          currentUser={currentUser}
-          onClose={() => setShowMoreMenu(false)}
-          onNavigate={(dest) => {
-            if (dest === Tab.EVENTS) {
-              setHomeFilter(PlaceType.EVENTO);
-              setActiveTab(Tab.HOME);
-            } else {
-              setHomeFilter('ALL');
-              setActiveTab(dest as Tab);
-            }
-            setShowMoreMenu(false);
-          }}
-          onOpenSettings={() => {
-            setShowMoreMenu(false);
-            setActiveTab(Tab.PROFILE);
-          }}
-        />
-      )}
-
-      <nav className="bg-[var(--background)]/95 backdrop-blur-xl border-t border-white/5 flex justify-around items-center px-2 z-[90] pb-safe pt-2 min-h-[75px] xs:min-h-[85px] shrink-0">
-        <NavButton active={activeTab === Tab.HOME} onClick={() => { setHomeFilter('ALL'); setActiveTab(Tab.HOME); }} icon={<List className="w-5 h-5" />} label="Lista" />
-        <NavButton active={activeTab === Tab.RADAR} onClick={() => setActiveTab(Tab.RADAR)} icon={<Map className="w-5 h-5" />} label="Radar" />
-
-        <div className="relative -top-6 xs:-top-7">
-          <button onClick={() => setShowMoreMenu(true)} className={`w-14 h-14 rounded-full flex items-center justify-center transition-all active:scale-90 border-4 border-[var(--background)] ${showMoreMenu ? 'bg-white text-black' : 'bg-[var(--primary)] text-[var(--on-primary)] shadow-[0_0_20px_var(--primary-glow)]'}`}>
-            <LayoutGrid className="w-6 h-6 fill-current" />
-          </button>
-        </div>
-
-        <NavButton active={activeTab === Tab.SOCIAL} onClick={() => setActiveTab(Tab.SOCIAL)} icon={<MessageCircle className="w-5 h-5" />} label="Bonde" />
-        <NavButton active={activeTab === Tab.PROFILE} onClick={() => setActiveTab(Tab.PROFILE)} icon={<UserIcon className="w-5 h-5" />} label="Perfil" />
-      </nav>
-    </div>
+      </Suspense>
+    </>
   );
 }
 
