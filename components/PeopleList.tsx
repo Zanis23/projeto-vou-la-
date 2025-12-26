@@ -5,18 +5,71 @@ import { useHaptic } from '../hooks/useHaptic';
 
 interface PeopleListProps {
     placeName: string;
-    people: User[]; // This should be the list of people checked in
+    people: User[];
     currentUser: User;
     onClose: () => void;
     onConnect: (userId: string) => void;
+    isInline?: boolean; // New prop
 }
 
-export const PeopleList: React.FC<PeopleListProps> = ({ placeName, people, currentUser, onClose, onConnect }) => {
+export const PeopleList: React.FC<PeopleListProps> = ({ placeName, people, currentUser, onClose, onConnect, isInline = false }) => {
     const { trigger } = useHaptic();
 
     // Filter out users who have ghostMode enabled
     const visiblePeople = people.filter(p => !p.settings?.ghostMode);
 
+    if (isInline) {
+        return (
+            <div className="flex flex-col">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xl font-black text-white italic tracking-tighter uppercase leading-none">Quem tá aqui</h3>
+                    <div className="bg-[var(--primary)]/20 px-2 py-0.5 rounded-full border border-[var(--primary)]/30">
+                        <span className="text-[10px] font-black text-[var(--primary)]"> {visiblePeople.length} PESSOAS</span>
+                    </div>
+                </div>
+
+                {currentUser.settings?.ghostMode && (
+                    <div className="mb-4 bg-purple-500/10 border border-purple-500/30 p-3 rounded-xl flex items-center gap-3">
+                        <div className="p-2 bg-purple-500/20 rounded-full">
+                            <Ghost className="w-4 h-4 text-purple-400" />
+                        </div>
+                        <div>
+                            <p className="text-white font-bold text-xs uppercase">Modo Fantasma</p>
+                            <p className="text-purple-300 text-[10px]">Você está invisível.</p>
+                        </div>
+                    </div>
+                )}
+
+                {visiblePeople.length === 0 ? (
+                    <div className="bg-black/20 rounded-2xl p-6 text-center">
+                        <p className="text-slate-500 text-xs font-bold uppercase">Ninguém visível ainda.</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-2 gap-3">
+                        {visiblePeople.map((user) => (
+                            <div key={user.id} className="bg-[var(--background)] border border-white/5 rounded-2xl p-3 flex flex-col items-center gap-2 relative group">
+                                <div className="w-14 h-14 rounded-full p-0.5 border border-[var(--primary)]">
+                                    <img src={user.avatar} alt={user.name} className="w-full h-full rounded-full object-cover" />
+                                </div>
+                                <div className="text-center">
+                                    <h4 className="text-white font-bold text-sm leading-none">{user.name.split(' ')[0]}</h4>
+                                    <p className="text-[8px] text-slate-400 uppercase mt-0.5">{user.bio || "Vibing"}</p>
+                                </div>
+                                <button
+                                    onClick={() => onConnect(user.id)}
+                                    className="w-full py-1.5 bg-[var(--primary)] text-black rounded-lg font-black uppercase text-[9px] tracking-wide mt-1 hover:brightness-110"
+                                >
+                                    Conectar
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        );
+    }
+
+    // Default Modal View
     return (
         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex flex-col animate-[fadeIn_0.2s_ease-out]">
             {/* Header */}

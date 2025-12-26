@@ -343,9 +343,36 @@ export default function App() {
   }, [appState, currentUser?.history?.length]);
 
   const handleCheckIn = async (placeId: string, vibe?: string) => {
+    // 1. Find Target Place
     const target = places.find(p => p.id === placeId);
     if (!target) return;
 
+    // 2. Check if user is already checked in somewhere else active (within 12h)
+    const activeCheckIn = currentUser.history.find(h => {
+      const checkTime = new Date(h.timestamp).getTime();
+      const now = new Date().getTime();
+      return (now - checkTime) < 12 * 60 * 60 * 1000;
+    });
+
+    if (activeCheckIn && activeCheckIn.placeId === placeId) {
+      // Already checked in here, do nothing or show toast
+      console.log("Already checked in here!");
+      return;
+    }
+
+    // 3. If checked in elsewhere, "checkout" logically (decrement their count)
+    if (activeCheckIn) {
+      const oldPlace = places.find(p => p.id === activeCheckIn.placeId);
+      if (oldPlace) {
+        await db.places.update({
+          id: oldPlace.id,
+          peopleCount: Math.max(0, oldPlace.peopleCount - 1),
+          capacityPercentage: Math.max(0, oldPlace.capacityPercentage - 2)
+        });
+      }
+    }
+
+    // 4. Create New Check-in
     const xp = 50;
     const checkin: CheckIn = {
       id: Date.now().toString(),
@@ -357,6 +384,9 @@ export default function App() {
       vibe
     };
 
+    // 5. Update User State (New checkin top of list)
+    // NOTE: In a real app we might mark the old history item as 'checkout_at' but for now history is log-based.
+    // The "active" check-in is implicitly the most recent one if < 12h.
     const updatedUser = {
       ...currentUser,
       points: currentUser.points + xp,
@@ -366,6 +396,7 @@ export default function App() {
     setCurrentUser(updatedUser);
     await db.user.save(updatedUser);
 
+    // 6. Add Feed Item
     const newItem: FeedItem = {
       id: `f_${Date.now()} `,
       userId: currentUser.id,
@@ -380,6 +411,8 @@ export default function App() {
     };
 
     await db.feed.add(newItem);
+
+    // 7. Update Target Place Stats
     await db.places.update({
       id: placeId,
       peopleCount: target.peopleCount + 1,

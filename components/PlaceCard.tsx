@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { MapPin, Music, Users, Star, ChevronRight, Heart, Share2, Navigation, Info, Clock, Phone, Globe, Instagram, CheckCircle2, X, Loader2, Bookmark, Map as MapIcon, Car, Zap, Plus, Minus, ThumbsUp, ThumbsDown, Beer, Pizza, Disc } from 'lucide-react';
-import { Place, PlaceType, VibeLevel, User, MenuItem, OrderItem } from '../types';
+import { MapPin, Star, Bookmark, Music, Users, Zap, ThumbsUp, ThumbsDown, Disc, Info, Phone, Clock, Plus, Minus, Map as MapIcon, Car, CheckCircle2, Ghost, ChevronRight, Beer, Pizza } from 'lucide-react';
+import { Place, User, CheckIn, MenuItem, OrderItem } from '../types';
 import { useHaptic } from '../hooks/useHaptic';
 import { db } from '../utils/storage';
 import { PeopleList } from './PeopleList';
 import { Skeleton } from './Skeleton';
+import { MOCK_USER } from '../constants';
 
 const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1974&auto=format&fit=crop";
 
@@ -96,15 +97,15 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
     const { trigger } = useHaptic();
     const [imgLoaded, setImgLoaded] = useState(false);
     const [imgError, setImgError] = useState(false);
-    const [showPeopleList, setShowPeopleList] = useState(false);
+    // const [showPeopleList, setShowPeopleList] = useState(false); // Removed
     const [votedVibe, setVotedVibe] = useState<'up' | 'down' | null>(null);
 
     // Simplified Check-in Logic
     const handleCheckInToggle = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (isCheckedIn) {
-            // Already checked in -> Open People List
-            setShowPeopleList(true);
+            // Already checked in -> Do nothing (or un-checkin if we wanted)
+            if (onClick) onClick(); // Expand if not already
         } else {
             // Not checked in -> Check In
             trigger('success');
@@ -241,6 +242,28 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                         </div>
                     </div>
 
+                    {/* INLINE SOCIAL / MATCH TAB (Visible only when checked in) */}
+                    {isCheckedIn ? (
+                        <div className="bg-[var(--surface)] p-6 rounded-[2.5rem] border border-[var(--surface-highlight)] shadow-sm animate-[fadeIn_0.5s_ease-out]">
+                            <PeopleList
+                                placeName={place.name}
+                                people={peoplePresent || []}
+                                currentUser={currentUser || MOCK_USER}
+                                onClose={() => { }} // No close button needed for inline
+                                onConnect={(uid) => console.log("Connect", uid)}
+                                isInline={true}
+                            />
+                        </div>
+                    ) : (
+                        <div className="bg-[var(--surface)] p-8 rounded-[2.5rem] border border-[var(--surface-highlight)] shadow-sm flex flex-col items-center justify-center text-center opacity-70 grayscale">
+                            <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                                <Ghost className="w-8 h-8 text-slate-500" />
+                            </div>
+                            <h4 className="text-lg font-black text-white italic tracking-tighter uppercase mb-2">Lista Bloqueada</h4>
+                            <p className="text-xs text-slate-400 font-medium max-w-[200px]">Faça check-in para ver quem está no rolê e dar match!</p>
+                        </div>
+                    )}
+
                     {/* Vibe Check */}
                     <div className="bg-[var(--surface)] p-6 rounded-[2.5rem] border border-[var(--surface-highlight)] shadow-sm">
                         <h4 className="text-[10px] font-black text-[var(--text-main)] uppercase tracking-[0.2em] mb-4 flex items-center gap-2"><Zap className="w-3.5 h-3.5 text-yellow-500" /> Vibe da Galera</h4>
@@ -340,18 +363,8 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
 
     return (
         <>
-            {showPeopleList && place && (
-                <PeopleList
-                    placeName={place.name}
-                    people={peoplePresent || []}
-                    currentUser={currentUser || { id: 'me', name: 'Me', avatar: '', level: 1, points: 0, badges: [], history: [], savedPlaces: [], memberSince: '' }}
-                    onClose={() => setShowPeopleList(false)}
-                    onConnect={(uid) => {
-                        console.log("Connect with", uid);
-                        // Trigger chat or friend request
-                    }}
-                />
-            )}
+            {/* People List Inline Integration */}
+            {/* We no longer render it as a fixed modal here. Instead, it will be part of the expanded content below */}
 
             <div
                 onClick={onClick}
@@ -402,12 +415,16 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                         {/* UPDATED: People/Friends Section with Lock/Unlock Logic */}
                         <div
                             onClick={(e) => {
-                                e.stopPropagation();
-                                if (isCheckedIn) setShowPeopleList(true);
-                                else handleCheckInToggle(e); // Or shake to indicate locked
+                                // If checked in, just let it bubble up to expand the card
+                                if (isCheckedIn) {
+                                    // Let parent handle expand
+                                } else {
+                                    e.stopPropagation();
+                                    handleCheckInToggle(e);
+                                }
                             }}
                             className={`flex items-center gap-2 mt-2.5 transition-all relative
-                            ${isCheckedIn ? 'opacity-100 cursor-pointer' : 'opacity-70 blur-[2px] hover:blur-none transition-all duration-500'}`}
+                            ${isCheckedIn ? 'opacity-100' : 'opacity-70 blur-[2px] hover:blur-none transition-all duration-500'}`}
                         >
                             {/* Optional Lock Icon Overlay if not checked in */}
                             {!isCheckedIn && (
