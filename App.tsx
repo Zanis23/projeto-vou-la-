@@ -34,6 +34,15 @@ export default function App() {
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [showTutorial, setShowTutorial] = useState(false);
 
+  // Apply theme to document element
+  useEffect(() => {
+    if (currentUser.appMode === 'light') {
+      document.documentElement.classList.add('light-mode');
+    } else {
+      document.documentElement.classList.remove('light-mode');
+    }
+  }, [currentUser.appMode]);
+
   // Check tutorial on mount/login
   useEffect(() => {
     if (appState === 'MAIN' && !localStorage.getItem('voula_tutorial_seen_v1')) {
@@ -44,7 +53,7 @@ export default function App() {
   // Lógica para lidar com botão Voltar no Android (Nativo)
   useEffect(() => {
     const handleBackButton = (e: PopStateEvent) => {
-      // Prevent default browser behavior if needed, though for history it's already done
+      // Logic for modal closing on back
       if (selectedPlace) {
         setSelectedPlace(null);
         return;
@@ -265,7 +274,7 @@ export default function App() {
   );
 
   return (
-    <div className={`flex flex-col h-[100dvh] bg-[var(--background)] text-[var(--text-main)] overflow-hidden relative transition-colors duration-500 ${currentUser.appMode === 'light' ? 'light-mode' : ''}`}>
+    <div className="flex flex-col h-[100dvh] bg-[var(--background)] text-[var(--text-main)] overflow-hidden relative transition-colors duration-500">
 
       <main className="flex-1 overflow-hidden relative">
         <div key={activeTab} className="h-full scroll-container">
