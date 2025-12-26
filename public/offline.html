@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ccff00">
+  <title>Vou Lá - Offline</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(135deg, #0E1121 0%, #1a1d35 100%);
+      color: #ccff00;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 500px;
+      text-align: center;
+      animation: fadeIn 0.5s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .icon {
+      font-size: 5rem;
+      margin-bottom: 1.5rem;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      font-weight: 900;
+      text-shadow: 0 0 20px rgba(204, 255, 0, 0.5);
+    }
+
+    p {
+      font-size: 1.2rem;
+      line-height: 1.6;
+      color: #e0e0e0;
+      margin-bottom: 2rem;
+    }
+
+    .button {
+      background: #ccff00;
+      color: #0E1121;
+      border: none;
+      padding: 1rem 2.5rem;
+      font-size: 1.1rem;
+      font-weight: bold;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(204, 255, 0, 0.3);
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(204, 255, 0, 0.5);
+    }
+
+    .button:active {
+      transform: translateY(0);
+    }
+
+    .status {
+      margin-top: 2rem;
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      font-size: 0.9rem;
+      color: #999;
+    }
+
+    .status.online {
+      color: #4ade80;
+      background: rgba(74, 222, 128, 0.1);
+    }
+
+    .status.offline {
+      color: #f87171;
+      background: rgba(248, 113, 113, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">🌐</div>
+    <h1>Você está offline</h1>
+    <p>
+      Parece que você perdeu a conexão com a internet. 
+      Conecte-se novamente para continuar explorando os melhores rolês de Dourados!
+    </p>
+    <button class="button" onclick="tryReconnect()">
+      Tentar Novamente
+    </button>
+    <div id="status" class="status offline">
+      ⚠️ Sem conexão com a internet
+    </div>
+  </div>
+
+  <script>
+    function updateStatus() {
+      const statusEl = document.getElementById('status');
+      if (navigator.onLine) {
+        statusEl.className = 'status online';
+        statusEl.innerHTML = '✅ Conexão restaurada! Recarregando...';
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        statusEl.className = 'status offline';
+        statusEl.innerHTML = '⚠️ Sem conexão com a internet';
+      }
+    }
+
+    function tryReconnect() {
+      if (navigator.onLine) {
+        window.location.reload();
+      } else {
+        const statusEl = document.getElementById('status');
+        statusEl.innerHTML = '❌ Ainda sem conexão. Tente novamente em alguns segundos.';
+        setTimeout(updateStatus, 2000);
+      }
+    }
+
+    // Listen for online/offline events
+    window.addEventListener('online', updateStatus);
+    window.addEventListener('offline', updateStatus);
+
+    // Check status on load
+    updateStatus();
+  </script>
+</body>
+</html>

@@ -12,6 +12,7 @@
     "@google/genai": "^1.31.0",
     "@supabase/supabase-js": "^2.48.1",
     "html5-qrcode": "^2.3.8",
+    "idb": "^8.0.0",
     "lucide-react": "^0.556.0",
     "react": "^19.2.1",
     "react-dom": "^19.2.1"

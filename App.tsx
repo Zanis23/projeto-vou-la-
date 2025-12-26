@@ -1,9 +1,11 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Home } from './pages/Home';
-import { Radar } from './pages/Radar';
-import { Profile } from './pages/Profile';
-import { Social } from './pages/Social';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+
+// Lazy load pages for better performance
+const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home })));
+const Radar = lazy(() => import('./pages/Radar').then(m => ({ default: m.Radar })));
+const Profile = lazy(() => import('./pages/Profile').then(m => ({ default: m.Profile })));
+const Social = lazy(() => import('./pages/Social').then(m => ({ default: m.Social })));
 import { Login } from './pages/Login';
 import { AiConcierge } from './pages/AiConcierge';
 import { Ranking } from './pages/Ranking';
@@ -16,9 +18,27 @@ import { Map, List, User as UserIcon, MessageCircle, LayoutGrid, X, Loader2 } fr
 import { PlaceCard } from './components/PlaceCard';
 import { MoreOptionsModal } from './components/MoreOptionsModal';
 import { BusinessDashboard } from './components/BusinessDashboard';
+import { PWAUpdateNotification } from './components/PWAUpdateNotification';
 import { MOCK_USER } from './constants';
 import { db } from './utils/storage';
 import { supabase } from './services/supabase';
+
+// Loading component for lazy-loaded pages
+const PageLoader = () => (
+  <div style={{
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '100vh',
+    background: '#0E1121',
+    color: '#ccff00'
+  }}>
+    <div style={{ textAlign: 'center' }}>
+      <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⚡</div>
+      <div>Carregando...</div>
+    </div>
+  </div>
+);
 
 type AppState = 'LOADING' | 'LOGIN' | 'MAIN' | 'BUSINESS_REG';
 
