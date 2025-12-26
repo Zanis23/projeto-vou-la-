@@ -82,7 +82,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ user, onClose, o
                 avatar: user.avatar
             });
         }
-    }, [user.id, user.email, user.theme]);
+    }, [user.id, user.email, user.appMode, user.themeColor]);
 
     // -- BLOCKED USERS --
     const [blockedUsers, setBlockedUsers] = useState<string[]>(user.settings?.blockedUsers || []);

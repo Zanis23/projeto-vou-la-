@@ -204,8 +204,13 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                     <div className="absolute inset-0 bg-gradient-to-t from-[var(--background)] via-transparent to-black/30 pointer-events-none"></div>
                     <div className="absolute top-0 left-0 w-full p-4 pt-safe flex justify-between items-start z-30">
                         <button
-                            onClick={(e) => { e.stopPropagation(); onClick && onClick(); }}
-                            className="p-3 bg-black/40 backdrop-blur-md rounded-full text-white hover:bg-black/60 transition-colors shadow-lg active:scale-95"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                trigger('light');
+                                if (onClick) onClick();
+                                else window.history.back();
+                            }}
+                            className="p-3.5 bg-black/60 backdrop-blur-xl rounded-full text-white border border-white/20 shadow-2xl transition-all active:scale-90"
                         >
                             <ChevronRight className="w-6 h-6 rotate-180" />
                         </button>
