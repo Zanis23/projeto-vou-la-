@@ -102,27 +102,43 @@ export const Home: React.FC<HomeProps> = ({
       <div className="absolute -top-20 -right-20 w-64 h-64 bg-[var(--primary-main)] opacity-10 rounded-full blur-[80px] pointer-events-none z-0"></div>
 
       {/* Header Sticky */}
-      <div className="px-5 pb-2 z-20 flex flex-col gap-5 sticky top-0 backdrop-blur-md bg-[var(--bg-default)]/80 pt-4 border-b border-transparent transition-colors duration-500">
+      <div className="px-6 pb-4 z-20 flex flex-col gap-6 sticky top-0 backdrop-blur-xl bg-[var(--bg-default)]/70 pt-8 transition-all duration-500">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <motion.div whileTap={{ scale: 0.95 }} className="relative cursor-pointer">
+            <motion.div
+              whileTap={{ scale: 0.9 }}
+              className="relative group mr-1"
+            >
+              <div className="absolute -inset-1 bg-gradient-to-tr from-[var(--primary-main)] to-fuchsia-500 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
               <Avatar
                 src={currentUser.avatar}
                 fallback={firstName}
                 size="lg"
                 bordered
-                className="bg-[var(--bg-card)]"
+                className="bg-[var(--bg-card)] relative border-2 border-[var(--bg-default)] shadow-2xl"
               />
-              <div className="absolute bottom-0 right-0 w-4 h-4 bg-[var(--status-success)] rounded-full border-2 border-[var(--bg-default)] shadow-[0_0_8px_var(--status-success)]"></div>
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-[var(--status-success)] rounded-full border-4 border-[var(--bg-default)] shadow-lg"></div>
             </motion.div>
 
             <div className="flex flex-col justify-center">
-              <motion.p initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-0.5 flex items-center gap-1">
+              <motion.p
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.3em] mb-1"
+              >
                 {getGreeting()}
               </motion.p>
-              <motion.h2 initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }} className="text-3xl font-black text-[var(--text-primary)] italic tracking-tighter leading-none flex items-center gap-2 drop-shadow-md">
-                {firstName} <span className="text-2xl not-italic text-[var(--text-tertiary)]">|</span>
-              </motion.h2>
+              <div className="flex items-center gap-2">
+                <motion.h2
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="text-4xl font-black text-[var(--text-primary)] tracking-tighter leading-none"
+                >
+                  {firstName}
+                </motion.h2>
+                <div className="w-1 h-8 bg-[var(--primary-main)] rounded-full glow-primary opacity-80" />
+              </div>
             </div>
           </div>
 
@@ -132,13 +148,13 @@ export const Home: React.FC<HomeProps> = ({
                 variant="secondary"
                 size="icon"
                 onClick={() => { trigger('light'); onOpenNotifications(); }}
-                className="rounded-full w-12 h-12 border-[var(--bg-subtle)] shadow-lg"
+                className="rounded-2xl w-12 h-12 bg-[var(--bg-card)]/50 border border-white/5 shadow-2xl backdrop-blur-md"
               >
-                <Bell className="w-6 h-6" />
+                <Bell className="w-6 h-6 text-[var(--text-secondary)]" />
               </Button>
             </motion.div>
             {notificationCount > 0 && (
-              <span className="absolute top-0 right-0 w-3 h-3 bg-[var(--status-error)] rounded-full border-2 border-[var(--bg-default)] animate-pulse"></span>
+              <span className="absolute top-0 right-0 w-3.5 h-3.5 bg-[var(--status-error)] rounded-full border-2 border-[var(--bg-default)] shadow-lg"></span>
             )}
           </div>
         </div>
@@ -215,6 +231,7 @@ export const Home: React.FC<HomeProps> = ({
                     onClick={() => onPlaceSelect(place)}
                     isSaved={savedPlaces.includes(place.id)}
                     onToggleSave={onToggleSave}
+                    currentUser={currentUser}
                     isCheckedIn={currentUser.history?.some(h => {
                       const checkInDate = new Date(h.timestamp).getTime();
                       const now = new Date().getTime();

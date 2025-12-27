@@ -278,6 +278,7 @@ export default function App() {
                     return h.placeId === selectedPlace.id && (now - checkInDate) < eightHoursInMs;
                   })}
                   isSaved={currentUser.savedPlaces?.includes(selectedPlace.id)}
+                  currentUser={currentUser}
                 />
               </motion.div>
             )}

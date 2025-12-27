@@ -2,6 +2,7 @@ import { useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../services/supabase';
 import { db } from '../utils/storage';
+import { toCamel } from '../utils/mapping';
 import { Place, FeedItem, User } from '../types';
 
 export function useRealtimeData(appState: string, currentUser: User | null) {
@@ -32,60 +33,53 @@ export function useRealtimeData(appState: string, currentUser: User | null) {
             .channel('db-changes')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'places' }, (payload) => {
                 if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-                    const d = payload.new as any;
-                    const mappedPlace: Partial<Place> = {
-                        id: d.id,
-                        name: d.name,
-                        type: d.type,
-                        peopleCount: d.people_count,
-                        capacityPercentage: d.capacity_percentage,
-                        imageUrl: d.image_url,
-                        isTrending: d.is_trending,
-                        activeCalls: d.active_calls,
-                        currentMusic: d.current_music,
-                        sentimentScore: d.sentiment_score
-                    };
+                    const mappedPlace = toCamel(payload.new) as Place;
 
                     queryClient.setQueryData(['places'], (old: Place[] | undefined) => {
-                        if (!old) return [mappedPlace as Place];
-                        if (payload.eventType === 'INSERT') return [mappedPlace as Place, ...old];
-                        return old.map(p => p.id === d.id ? { ...p, ...mappedPlace } : p);
+                        if (!old) return [mappedPlace];
+                        if (payload.eventType === 'INSERT') return [mappedPlace, ...old];
+                        return old.map(p => p.id === mappedPlace.id ? { ...p, ...mappedPlace } : p);
                     });
                 } else if (payload.eventType === 'DELETE') {
                     queryClient.setQueryData(['places'], (old: Place[] | undefined) =>
-                        (old || []).filter(p => p.id !== payload.old.id)
+                        (old || []).filter(p => p.id === payload.old.id ? false : true)
                     );
                 }
             })
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'feed' }, (payload) => {
-                const f = payload.new as any;
-                const mappedFeed: FeedItem = {
-                    id: f.id,
-                    userId: f.user_id,
-                    userName: f.user_name,
-                    userAvatar: f.user_avatar,
-                    action: f.action,
-                    placeName: f.place_name,
-                    likesCount: f.likes_count,
-                    commentsCount: f.comments_count,
+                const mappedFeed = {
+                    ...toCamel(payload.new),
                     timeAgo: 'Agora pouco',
                     liked: false
-                };
+                } as FeedItem;
                 queryClient.setQueryData(['feed'], (old: FeedItem[] | undefined) => [mappedFeed, ...(old || [])]);
             })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'chats' }, (payload: any) => {
-                const chat = payload.new;
-                if (chat && (chat.user_id === currentUser.id || chat.target_id === currentUser.id)) {
+                const chat = toCamel(payload.new);
+                if (chat && (chat.userId === currentUser.id || chat.targetId === currentUser.id)) {
                     // Update chats list cache
                     queryClient.invalidateQueries({ queryKey: ['chats'] });
                     window.dispatchEvent(new CustomEvent('voula_chat_update', { detail: chat }));
 
                     // Trigger logical notification if it's a new message not from ME
-                    // In a more robust system, we'd check the last message sender_id
+                    // Only for INSERT to avoid spam on updates
+                    if (payload.eventType === 'INSERT') {
+                        window.dispatchEvent(new CustomEvent('voula_notification', {
+                            detail: {
+                                type: 'info',
+                                message: `Nova mensagem de ${chat.userName || 'Alguém'}`
+                            }
+                        }));
+                    }
+                }
+            })
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'friend_requests' }, (payload: any) => {
+                const req = toCamel(payload.new);
+                if (req.receiverId === currentUser.id) {
                     window.dispatchEvent(new CustomEvent('voula_notification', {
                         detail: {
-                            type: 'info',
-                            message: `Nova mensagem de ${chat.user_name || 'Alguém'}`
+                            type: 'success',
+                            message: `Novo pedido de amizade recebido!`
                         }
                     }));
                 }

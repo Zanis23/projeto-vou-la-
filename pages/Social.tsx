@@ -1,15 +1,17 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import { MessageSquare, Heart, MapPin, Search, ChevronLeft, Send, CheckCircle2, UserPlus, X, Camera, Mic, Share2, Plus, ShieldAlert, MoreVertical } from 'lucide-react';
+import { MessageSquare, Heart, MapPin, Search, ChevronLeft, Send, CheckCircle2, UserPlus, X, Mic, Share2, Plus, ShieldAlert, MoreVertical, Users, Sparkles, Zap } from 'lucide-react';
 import { Chat, FeedItem, Message, Place } from '../types';
 import { useHaptic } from '../hooks/useHaptic';
 import { AiStudio } from '../components/AiStudio';
 import { db } from '../utils/storage';
+import { supabase } from '../services/supabase';
+import { toCamel } from '../utils/mapping';
 import { User } from '../types';
-import { fadeIn, slideUp, slideInRight, scaleIn } from '../src/styles/animations';
+import { fadeIn, slideUp, slideInRight } from '../src/styles/animations';
 
-type ViewMode = 'feed' | 'chats' | 'plans' | 'chat_detail';
+type ViewMode = 'feed' | 'connect' | 'chats' | 'plans' | 'chat_detail';
 
 interface SocialProps {
   feed: FeedItem[];
@@ -31,6 +33,8 @@ export const Social: React.FC<SocialProps> = ({ feed, onToggleLike, onPlaceSelec
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [reportedIds, setReportedIds] = useState<string[]>([]);
   const [blockedUsers] = useState<string[]>([]);
+  const [sentRequests, setSentRequests] = useState<string[]>([]);
+  const [pendingInvitations, setPendingInvitations] = useState<any[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const loadChats = useCallback(async () => {
@@ -76,10 +80,27 @@ export const Social: React.FC<SocialProps> = ({ feed, onToggleLike, onPlaceSelec
   const handleSearch = async (q: string) => {
     setSearchQuery(q);
     if (q.length > 2) {
-      const results = await (db as any).user.search(q);
-      setSearchResults(results);
+      const { data } = await supabase.from('profiles').select('*').ilike('name', `%${q}%`).limit(10);
+      setSearchResults(data ? data.map((u: any) => toCamel(u)) : []);
     } else {
       setSearchResults([]);
+    }
+  };
+
+  const loadPendingInvitations = useCallback(async () => {
+    const invites = await (db as any).friends.getPending();
+    setPendingInvitations(invites);
+  }, []);
+
+  useEffect(() => {
+    loadPendingInvitations();
+  }, [loadPendingInvitations]);
+
+  const handleAddFriend = async (user: User) => {
+    trigger('medium');
+    const success = await (db as any).friends.request(user.id);
+    if (success) {
+      setSentRequests(prev => [...prev, user.id]);
     }
   };
 
@@ -211,20 +232,32 @@ export const Social: React.FC<SocialProps> = ({ feed, onToggleLike, onPlaceSelec
               className="flex-1 overflow-y-auto space-y-2"
             >
               {searchResults.map(user => (
-                <motion.button
+                <motion.div
                   variants={slideUp}
                   key={user.id}
-                  onClick={() => startNewChat(user)}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full flex items-center gap-4 p-4 bg-slate-800/40 rounded-2xl hover:bg-slate-800/60 border border-slate-800 transition-colors"
+                  className="w-full flex items-center gap-4 p-4 bg-slate-800/40 rounded-2xl border border-slate-800 transition-colors"
                 >
                   <img src={user.avatar} className="w-12 h-12 rounded-full object-cover border border-slate-700" alt="" />
-                  <div className="text-left">
+                  <div className="text-left flex-1">
                     <h4 className="font-bold text-white">{user.name}</h4>
                     <p className="text-xs text-slate-500">{user.bio || 'Membro do Vou Lá'}</p>
                   </div>
-                  <UserPlus className="ml-auto w-5 h-5 text-[var(--primary)]" />
-                </motion.button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => startNewChat(user)}
+                      className="p-2 bg-slate-700 rounded-lg text-[var(--primary)] active:scale-95 transition-transform"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                    </button>
+                    <button
+                      disabled={sentRequests.includes(user.id)}
+                      onClick={() => handleAddFriend(user)}
+                      className={`p-2 rounded-lg active:scale-95 transition-transform ${sentRequests.includes(user.id) ? 'bg-emerald-500/20 text-emerald-500' : 'bg-indigo-600 text-white'}`}
+                    >
+                      {sentRequests.includes(user.id) ? <CheckCircle2 className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </motion.div>
               ))}
               {searchQuery.length > 2 && searchResults.length === 0 && (
                 <p className="text-center text-slate-500 py-10">Nenhum usuário encontrado</p>
@@ -246,8 +279,12 @@ export const Social: React.FC<SocialProps> = ({ feed, onToggleLike, onPlaceSelec
           </div>
           {view !== 'chat_detail' && (
             <div className="flex p-1 bg-slate-800/80 backdrop-blur rounded-xl mb-2">
-              <button onClick={() => setView('feed')} className={`flex-1 py-2.5 text-xs font-black uppercase rounded-lg transition-all ${view === 'feed' ? 'bg-[var(--primary)] text-black shadow-lg' : 'text-slate-400'}`}>Feed</button>
-              <button onClick={() => setView('chats')} className={`flex-1 py-2.5 text-xs font-black uppercase rounded-lg transition-all ${view === 'chats' ? 'bg-[var(--primary)] text-black shadow-lg' : 'text-slate-400'}`}>Conversas</button>
+              <button onClick={() => setView('feed')} className={`flex-1 py-2.5 text-[10px] font-black uppercase rounded-lg transition-all relative ${view === 'feed' ? 'bg-[var(--primary)] text-black shadow-lg' : 'text-slate-400'}`}>Feed</button>
+              <button onClick={() => setView('connect')} className={`flex-1 py-2.5 text-[10px] font-black uppercase rounded-lg transition-all relative ${view === 'connect' ? 'bg-[var(--primary)] text-black shadow-lg' : 'text-slate-400'}`}>Connect</button>
+              <button onClick={() => setView('chats')} className={`flex-1 py-2.5 text-[10px] font-black uppercase rounded-lg transition-all relative ${view === 'chats' ? 'bg-[var(--primary)] text-black shadow-lg' : 'text-slate-400'}`}>
+                Conversas
+                {pendingInvitations.length > 0 && <span className="absolute top-1 right-2 w-2 h-2 bg-emerald-500 rounded-full animate-pulse border border-black" />}
+              </button>
             </div>
           )}
           <AnimatePresence mode="wait">
@@ -288,22 +325,7 @@ export const Social: React.FC<SocialProps> = ({ feed, onToggleLike, onPlaceSelec
             exit="hidden"
             className="flex-1 overflow-y-auto p-4 space-y-8 pb-32 bg-[var(--background)] scroll-container"
           >
-            <div className="flex gap-4 overflow-x-auto hide-scrollbar pl-1">
-              <motion.div variants={scaleIn} onClick={() => setShowAiStudio(true)} className="flex flex-col items-center gap-1.5 shrink-0 group active:scale-95">
-                <div className="w-[74px] h-[74px] rounded-full bg-slate-800 border-2 border-slate-700 border-dashed flex items-center justify-center text-[var(--primary)] shadow-lg group-hover:border-[var(--primary)] transition-colors">
-                  <Camera className="w-7 h-7" />
-                </div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase">AI Studio</span>
-              </motion.div>
-              {places.filter(p => p.isTrending).map(place => (
-                <motion.div variants={scaleIn} key={place.id} className="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer" onClick={() => onPlaceSelect?.(place)}>
-                  <div className="w-[74px] h-[74px] rounded-full p-[3px] bg-gradient-to-tr from-[var(--primary)] via-[#FF3399] to-[#0CC4FF] shadow-lg">
-                    <img src={place.imageUrl} className="w-full h-full rounded-full object-cover border-2 border-[var(--background)]" alt="" />
-                  </div>
-                  <span className="text-[10px] font-bold text-slate-300 truncate w-16 text-center">{place.name}</span>
-                </motion.div>
-              ))}
-            </div>
+            {/* Removed Stories Tray */}
 
             <div className="space-y-6">
               {filteredFeed.map((item) => (
@@ -342,6 +364,74 @@ export const Social: React.FC<SocialProps> = ({ feed, onToggleLike, onPlaceSelec
                     <button className="flex items-center gap-2 text-xs font-bold text-slate-400 ml-auto">
                       <Share2 className="w-4 h-4" />
                     </button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {view === 'connect' && (
+          <motion.div
+            key="connect"
+            variants={container}
+            initial="hidden"
+            animate="show"
+            exit="hidden"
+            className="flex-1 overflow-y-auto p-4 space-y-6 pb-32 bg-[var(--background)] scroll-container"
+          >
+            <div className="bg-gradient-to-br from-indigo-900/40 to-slate-900/40 p-6 rounded-[2.5rem] border border-indigo-500/20 mb-4 relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-4 opacity-10">
+                <Users className="w-20 h-20 text-indigo-400" />
+              </div>
+              <h3 className="text-xl font-black text-white italic tracking-tighter mb-2 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-indigo-400" /> RADAR SOCIAL
+              </h3>
+              <p className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest mb-6">Pessoas na sua vibe agora</p>
+
+              <div className="bg-slate-900/60 rounded-2xl p-4 border border-white/5 flex items-center justify-between">
+                <div className="flex -space-x-3">
+                  {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="w-10 h-10 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center overflow-hidden">
+                      <img src={`https://i.pravatar.cc/150?u=${i}`} alt="" />
+                    </div>
+                  ))}
+                </div>
+                <button onClick={() => setShowSearch(true)} className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider active:scale-95 transition-all">Explorar</button>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex justify-between items-center px-2">
+                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Recomendados</h4>
+                <Zap className="w-3.5 h-3.5 text-yellow-500" />
+              </div>
+
+              {/* Mocked Recommended Users for Connect View */}
+              {[
+                { id: '1', name: 'Julia Santos', bio: 'Apaixonada por música eletrônica 🎧', avatar: 'https://i.pravatar.cc/150?u=julia', distance: 'out' },
+                { id: '2', name: 'Marcos Lima', bio: 'Procurando a melhor batida da noite', avatar: 'https://i.pravatar.cc/150?u=marcos', distance: '1km' },
+                { id: '3', name: 'Carla Dias', bio: 'Vamo de barzinho hoje? 🍻', avatar: 'https://i.pravatar.cc/150?u=carla', distance: '500m' }
+              ].map((user) => (
+                <motion.div
+                  variants={slideUp}
+                  key={user.id}
+                  className="bg-slate-800/30 p-4 rounded-3xl border border-slate-700/40 flex items-center gap-4 group"
+                >
+                  <div className="relative">
+                    <img src={user.avatar} className="w-14 h-14 rounded-full object-cover border-2 border-slate-700 group-hover:border-indigo-500 transition-colors" alt="" />
+                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-slate-900 shadow-lg" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-bold text-white text-sm truncate">{user.name}</h4>
+                      <span className="px-1.5 py-0.5 bg-slate-900 text-[8px] font-black text-indigo-400 uppercase rounded border border-indigo-500/10">{user.distance}</span>
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-medium truncate mt-0.5">{user.bio}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => startNewChat(user as any)} className="p-2.5 bg-slate-800 rounded-xl text-slate-400 active:text-[var(--primary)] transition-colors"><MessageSquare className="w-4 h-4" /></button>
+                    <button onClick={() => handleAddFriend(user as any)} className="p-2.5 bg-slate-800 rounded-xl text-indigo-500 active:scale-95 transition-all"><UserPlus className="w-4 h-4" /></button>
                   </div>
                 </motion.div>
               ))}

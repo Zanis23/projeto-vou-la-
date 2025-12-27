@@ -245,17 +245,17 @@ export const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ placeId, p
 
     if (!place) {
         return (
-            <div className="flex-1 bg-[#0B0F19] flex flex-col items-center justify-center p-8 text-center animate-pulse">
-                <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-4" />
-                <h3 className="text-xl font-black text-white italic mb-2 uppercase tracking-tight">Carregando Painel...</h3>
-                <p className="text-slate-500 text-xs font-bold leading-relaxed max-w-xs uppercase">
-                    Sincronizando dados com o servidor.
-                </p>
-                {onClose && (
-                    <button onClick={onClose} className="mt-8 px-6 py-2 bg-slate-800 rounded-xl text-slate-400 font-bold uppercase text-[10px] border border-slate-700">
-                        Voltar
-                    </button>
-                )}
+            <div className="flex-1 bg-[#0B0F19] flex flex-col p-8 space-y-6">
+                <div className="h-12 w-48 bg-slate-800 rounded-xl animate-pulse" />
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="h-32 bg-slate-800 rounded-3xl animate-pulse" />
+                    <div className="h-32 bg-slate-800 rounded-3xl animate-pulse" />
+                </div>
+                <div className="h-64 bg-slate-800 rounded-[2rem] animate-pulse" />
+                <div className="flex flex-col items-center justify-center pt-10 text-center">
+                    <Loader2 className="w-8 h-8 text-indigo-500 animate-spin mb-4" />
+                    <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Sincronizando Dados Pro...</p>
+                </div>
             </div>
         );
     }
@@ -311,8 +311,8 @@ export const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ placeId, p
                             className="space-y-6"
                         >
                             <div className="grid grid-cols-2 gap-3">
-                                <motion.div variants={slideUp}><KPICard label="Faturamento" value={`R$ ${totals.revenue.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`} trend="+22%" icon={<DollarSign className="w-4 h-4 text-emerald-500" />} /></motion.div>
-                                <motion.div variants={slideUp}><KPICard label="Check-ins" value={`${place.peopleCount}`} trend="+14%" icon={<Users className="w-4 h-4 text-indigo-400" />} /></motion.div>
+                                <motion.div variants={slideUp}><KPICard label="Receita Estimada" value={`R$ ${totals.revenue.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`} trend="+22%" icon={<DollarSign className="w-4 h-4 text-emerald-500" />} /></motion.div>
+                                <motion.div variants={slideUp}><KPICard label="Pessoas na Casa" value={`${place.peopleCount}`} trend="+14%" icon={<Users className="w-4 h-4 text-indigo-400" />} /></motion.div>
                             </div>
 
                             <motion.div variants={slideUp} className="bg-[#1F2937] p-6 rounded-[2rem] border border-slate-700 shadow-xl">

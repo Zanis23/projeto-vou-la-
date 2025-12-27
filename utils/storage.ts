@@ -2,6 +2,7 @@ import { openDB, IDBPDatabase } from 'idb';
 import { User, Place, FeedItem, Chat, StaffCall } from '../types';
 import { MOCK_USER, MOCK_PLACES, MOCK_FEED, MOCK_CHATS } from '../constants';
 import { supabase } from '../services/supabase';
+import { toCamel, toSnake } from './mapping';
 
 const KEYS = {
   USER: 'voula_user_v3',
@@ -112,14 +113,8 @@ export const db = {
         if (profile) {
           const user = {
             ...MOCK_USER,
-            id: profile.id,
-            email: profile.email,
-            name: profile.name,
-            avatar: profile.avatar,
-            points: profile.points || 0,
-            level: profile.level || 1,
+            ...toCamel(profile),
             ownedPlaceId: profile.owned_place_id,
-            bio: profile.bio,
             history: profile.history || []
           };
           await saveLocal(KEYS.USER, user);
@@ -206,15 +201,9 @@ export const db = {
           const metadata = data.user.user_metadata || {};
           const user: User = {
             ...MOCK_USER,
-            id: profile.id,
-            email: profile.email,
-            name: profile.name,
-            avatar: profile.avatar || MOCK_USER.avatar,
-            points: profile.points || 0,
-            level: profile.level || 1,
+            ...toCamel(profile),
             // MERGE FIX: If DB hasn't updated yet, use metadata from registration
             ownedPlaceId: profile.owned_place_id || metadata.owned_place_id,
-            bio: profile.bio,
             history: profile.history || []
           };
           await saveLocal(KEYS.USER, user);
@@ -280,7 +269,7 @@ export const db = {
       await saveLocal(KEYS.USER, user);
       try {
         // Use UPSERT instead of UPDATE for robustness
-        const { error } = await supabase.from('profiles').upsert({
+        const dbProfile = toSnake({
           id: user.id,
           name: user.name,
           avatar: user.avatar,
@@ -288,8 +277,9 @@ export const db = {
           level: user.level,
           bio: user.bio,
           history: user.history,
-          owned_place_id: user.ownedPlaceId
+          ownedPlaceId: user.ownedPlaceId
         });
+        const { error } = await supabase.from('profiles').upsert(dbProfile);
 
         if (error) {
           console.error("Erro ao sincronizar perfil com Supabase:", error.message, error.details);
@@ -310,25 +300,7 @@ export const db = {
         if (error) throw error;
         if (data) {
           await saveLocal(KEYS.PLACES, data);
-          return data.map(d => ({
-            ...d,
-            peopleCount: d.people_count,
-            capacityPercentage: d.capacity_percentage,
-            imageUrl: d.image_url,
-            isTrending: d.is_trending,
-            coordinates: d.coordinates || { x: 0, y: 0 },
-            phoneNumber: d.phone_number,
-            openingHours: d.opening_hours,
-            currentMusic: d.current_music,
-            activeCalls: d.active_calls,
-            friendsPresent: d.friends_present,
-            liveRequests: d.live_requests,
-            upcomingEvents: d.upcoming_events,
-            activePromos: d.active_promos,
-            sentimentScore: d.sentiment_score,
-            crowdInsights: d.crowd_insights,
-            ownerId: d.owner_id
-          }));
+          return data.map(d => toCamel(d));
         }
       } catch (e) { }
       return await getLocal(KEYS.PLACES, MOCK_PLACES);
@@ -404,16 +376,8 @@ export const db = {
         const { data } = await supabase.from('feed').select('*').order('created_at', { ascending: false }).limit(30);
         if (data) {
           return data.map(f => ({
-            id: f.id,
-            userId: f.user_id,
-            userName: f.user_name,
-            userAvatar: f.user_avatar,
-            action: f.action,
-            placeName: f.place_name,
-            likesCount: f.likes_count,
-            commentsCount: f.comments_count,
+            ...toCamel(f),
             timeAgo: 'Agora pouco',
-            liked: f.liked
           }));
         }
       } catch (e) { }
@@ -536,6 +500,35 @@ export const db = {
       } catch (e) {
         return false;
       }
+    }
+  },
+
+  friends: {
+    request: async (targetId: string) => {
+      try {
+        const user = await db.user.get();
+        if (!user) return false;
+        const { error } = await supabase.from('friend_requests').upsert({
+          sender_id: user.id,
+          receiver_id: targetId,
+          status: 'pending'
+        });
+        return !error;
+      } catch (e) { return false; }
+    },
+    accept: async (requestId: string) => {
+      try {
+        const { error } = await supabase.from('friend_requests').update({ status: 'accepted' }).eq('id', requestId);
+        return !error;
+      } catch (e) { return false; }
+    },
+    getPending: async () => {
+      try {
+        const user = await db.user.get();
+        if (!user) return [];
+        const { data } = await supabase.from('friend_requests').select('*, profiles:sender_id(*)').eq('receiver_id', user.id).eq('status', 'pending');
+        return data ? data.map(d => toCamel(d)) : [];
+      } catch (e) { return []; }
     }
   }
 };
