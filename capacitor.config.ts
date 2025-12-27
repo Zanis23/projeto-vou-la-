@@ -13,26 +13,16 @@ const config: CapacitorConfig = {
             launchAutoHide: true,
             backgroundColor: '#0E1121',
             androidSplashResourceName: 'splash',
-            androidScaleType: 'CENTER_CROP',
             showSpinner: false,
-            androidSpinnerStyle: 'large',
-            iosSpinnerStyle: 'small',
-            spinnerColor: '#ccff00',
+            androidScaleType: 'CENTER_CROP',
             splashFullScreen: true,
-            splashImmersive: true
+            splashImmersive: true,
         },
         StatusBar: {
             style: 'dark',
-            backgroundColor: '#0E1121'
+            backgroundColor: '#0E1121',
         },
-        PushNotifications: {
-            presentationOptions: ['badge', 'sound', 'alert']
-        },
-        Camera: {
-            saveToGallery: true,
-            quality: 90
-        }
-    }
+    },
 };
 
 export default config;
