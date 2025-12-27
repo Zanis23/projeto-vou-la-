@@ -122,6 +122,9 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBusinessClick }) => {
             <div className="absolute -top-2 -right-2 bg-yellow-400 text-black text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg rotate-12">
               BETA
             </div>
+            <div className="absolute -bottom-2 -left-2 bg-indigo-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-lg">
+              v0.0.1
+            </div>
           </div>
           <h1 className="text-5xl font-black text-white italic tracking-tighter drop-shadow-xl mb-2">
             VOU LÁ
