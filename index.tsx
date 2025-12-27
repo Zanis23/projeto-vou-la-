@@ -1,4 +1,5 @@
 import React from 'react';
+// Deployment Trigger: 2025-12-27
 import ReactDOM from 'react-dom/client';
 import { Analytics } from '@vercel/analytics/react';
 import { initSentry, SentryErrorBoundary } from './utils/sentry';
