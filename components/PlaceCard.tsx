@@ -1,12 +1,13 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
-import { Place, MenuItem, OrderItem, StaffCall } from '../types';
-import { MapPin, Crown, Check, ChevronRight, User, Music, Star, Clock, Map, Car, ArrowUpRight, Bookmark, Flame, Utensils, BellRing, ThumbsUp, ThumbsDown, Zap, Users, X, Beer, Pizza, Loader2, CheckCircle2, Play, Disc, Plus, Minus, Receipt, HelpCircle, History, BarChart3, Sparkles, ClipboardList, CreditCard, QrCode, ShoppingBag } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Place, MenuItem, OrderItem } from '../types';
+import { MapPin, Crown, Check, ChevronRight, Music, Star, Clock, Bookmark, Flame, Utensils, BellRing, ThumbsUp, ThumbsDown, Zap, Users, X, Beer, Pizza, Loader2, CheckCircle2, Disc, Plus, Minus, Receipt, HelpCircle, History, BarChart3, Sparkles, ClipboardList, CreditCard, QrCode, ShoppingBag } from 'lucide-react';
 import { Skeleton } from './Skeleton';
 import { useHaptic } from '../hooks/useHaptic';
 import { FALLBACK_IMAGE, getUserById } from '../constants';
 import { MatchMode } from './MatchMode';
 import { db } from '../utils/storage';
+import { fadeIn, slideUp, springTransition } from '../src/styles/animations';
 
 interface PlaceCardProps {
     place?: Place;
@@ -43,7 +44,12 @@ const MenuItemRow: React.FC<{ item: MenuItem; qty: number; onAdd: () => void; on
             : 'https://images.unsplash.com/photo-1558444453-1fa7d88EEBD1?q=80&w=300&auto=format&fit=crop');
 
     return (
-        <div className="flex gap-3 xs:gap-4 p-3 xs:p-4 bg-slate-800/30 border border-slate-700/40 rounded-[1.8rem] mb-3 animate-[itemReveal_0.4s_ease-out] hover:bg-slate-800/40 transition-colors group relative overflow-hidden">
+        <motion.div
+            variants={slideUp}
+            initial="initial"
+            animate="animate"
+            className="flex gap-3 xs:gap-4 p-3 xs:p-4 bg-slate-800/30 border border-slate-700/40 rounded-[1.8rem] mb-3 hover:bg-slate-800/40 transition-colors group relative overflow-hidden"
+        >
             <div className="relative w-24 h-24 xs:w-28 xs:h-28 shrink-0 overflow-hidden rounded-2xl shadow-lg">
                 <img src={imageSrc} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={item.name} loading="lazy" />
                 {!item.available && (
@@ -83,7 +89,7 @@ const MenuItemRow: React.FC<{ item: MenuItem; qty: number; onAdd: () => void; on
                     )}
                 </div>
             </div>
-        </div>
+        </motion.div>
     );
 };
 
@@ -102,9 +108,9 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
     const [orderedItems, setOrderedItems] = useState<OrderItem[]>([]);
     const [isOrdering, setIsOrdering] = useState(false);
     const [showPaymentOverlay, setShowPaymentOverlay] = useState(false);
-    const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card' | null>(null);
+    const [, setPaymentMethod] = useState<'pix' | 'card' | null>(null);
     const [paymentStep, setPaymentStep] = useState<'select' | 'processing' | 'success'>('select');
-    const [checkingDistance, setCheckingDistance] = useState(false); // State for geo check status
+    const [checkingDistance, setCheckingDistance] = useState(false);
 
     const [showStaffOptions, setShowStaffOptions] = useState(false);
     const [staffState, setStaffState] = useState<'idle' | 'calling' | 'confirmed'>('idle');
@@ -116,7 +122,6 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
         'Sertanejo': 45, 'Funk': 32, 'Eletrônica': 18, 'Pop/Nacional': 5
     });
 
-    // Reset img state when place changes
     useEffect(() => {
         setImgLoaded(false);
         setImgError(false);
@@ -125,7 +130,6 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
     const handleGeoCheckIn = () => {
         if (!place || !onCheckIn || isCheckedIn) return;
 
-        // Se o lugar não tem coordenadas, bypass (para testes) ou erro
         if (!place.lat || !place.lng) {
             trigger('medium');
             alert("Este local não possui coordenadas cadastradas. Check-in liberado para testes.");
@@ -146,9 +150,7 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
             (position) => {
                 const userLat = position.coords.latitude;
                 const userLng = position.coords.longitude;
-
-                // Helper distance func (haversine inline or import)
-                const R = 6371e3; // metres
+                const R = 6371e3;
                 const φ1 = userLat * Math.PI / 180;
                 const φ2 = place.lat! * Math.PI / 180;
                 const Δφ = (place.lat! - userLat) * Math.PI / 180;
@@ -161,8 +163,6 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                 const d = R * c;
 
                 setCheckingDistance(false);
-
-                // Allow if distance < 200m (radius)
                 if (d <= 200) {
                     trigger('success');
                     onCheckIn(place.id);
@@ -182,7 +182,7 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
 
     if (loading) {
         return (
-            <div className="bg-slate-800/40 p-4 rounded-3xl border border-slate-700/30 mb-3">
+            <div className="bg-[var(--bg-card)]/40 p-4 rounded-3xl border border-[var(--border-default)] mb-3">
                 <div className="flex gap-4">
                     <Skeleton variant="circular" className="w-20 h-20 rounded-2xl shrink-0" />
                     <div className="flex-1 space-y-2 py-1">
@@ -225,7 +225,6 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
         trigger('success');
         setIsOrdering(true);
 
-        // Fix: addCall is async, handle with async setTimeout callback
         setTimeout(async () => {
             const newOrders: OrderItem[] = [];
             Object.entries(cart).forEach(([id, qty]) => {
@@ -268,7 +267,6 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
         }, 3000);
     };
 
-    // Fix: handleCallStaff now async to await db.places.addCall
     const handleCallStaff = async (reason: string) => {
         trigger('medium');
         setStaffState('calling');
@@ -293,229 +291,284 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
 
     if (expanded) {
         return (
-            <div className="h-full bg-[#0B0F19] overflow-y-auto scroll-container overscroll-contain pb-safe">
+            <div className="h-full bg-[var(--bg-default)] overflow-y-auto scroll-container overscroll-contain pb-safe">
                 {showMatchMode && <MatchMode placeName={place.name} onClose={() => setShowMatchMode(false)} />}
 
                 {/* MODAL PAGAMENTO */}
-                {showPaymentOverlay && (
-                    <div className="fixed inset-0 z-[150] bg-black/95 backdrop-blur-xl flex flex-col justify-center items-center p-6 animate-[fadeIn_0.2s_ease-out]">
-                        <div className="bg-slate-900 w-full max-w-sm rounded-[2.5rem] border border-slate-700 overflow-hidden relative shadow-2xl">
-                            <button onClick={() => setShowPaymentOverlay(false)} className="absolute top-4 right-4 p-2 text-slate-500 active:text-white"><X className="w-6 h-6" /></button>
+                <AnimatePresence>
+                    {showPaymentOverlay && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-[150] bg-black/95 backdrop-blur-xl flex flex-col justify-center items-center p-6"
+                        >
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.9, opacity: 0 }}
+                                className="bg-slate-900 w-full max-w-sm rounded-[2.5rem] border border-slate-700 overflow-hidden relative shadow-2xl"
+                            >
+                                <button onClick={() => setShowPaymentOverlay(false)} className="absolute top-4 right-4 p-2 text-slate-500 active:text-white"><X className="w-6 h-6" /></button>
 
-                            {paymentStep === 'select' && (
-                                <div className="p-8 text-center space-y-6">
-                                    <div className="w-16 h-16 bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto mb-2">
-                                        <CreditCard className="w-8 h-8 text-indigo-400" />
+                                {paymentStep === 'select' && (
+                                    <div className="p-8 text-center space-y-6">
+                                        <div className="w-16 h-16 bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                                            <CreditCard className="w-8 h-8 text-indigo-400" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-black text-white italic">FECHAR CONTA</h3>
+                                            <p className="text-slate-400 text-sm">Total a pagar: <span className="text-[var(--primary)] font-black">R$ {comandaTotal.toFixed(2)}</span></p>
+                                        </div>
+                                        <div className="space-y-3">
+                                            <button onClick={() => handlePayment('pix')} className="w-full py-4 bg-cyan-600 text-white rounded-2xl font-black uppercase text-xs flex items-center justify-center gap-2 active:scale-95 transition-all">
+                                                <QrCode className="w-4 h-4" /> Pagar via PIX
+                                            </button>
+                                            <button onClick={() => handlePayment('card')} className="w-full py-4 bg-slate-800 text-white rounded-2xl font-black uppercase text-xs flex items-center justify-center gap-2 active:scale-95 transition-all border border-slate-700">
+                                                <CreditCard className="w-4 h-4" /> Cartão (App)
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h3 className="text-xl font-black text-white italic">FECHAR CONTA</h3>
-                                        <p className="text-slate-400 text-sm">Total a pagar: <span className="text-[var(--primary)] font-black">R$ {comandaTotal.toFixed(2)}</span></p>
-                                    </div>
-                                    <div className="space-y-3">
-                                        <button onClick={() => handlePayment('pix')} className="w-full py-4 bg-cyan-600 text-white rounded-2xl font-black uppercase text-xs flex items-center justify-center gap-2 active:scale-95 transition-all">
-                                            <QrCode className="w-4 h-4" /> Pagar via PIX
-                                        </button>
-                                        <button onClick={() => handlePayment('card')} className="w-full py-4 bg-slate-800 text-white rounded-2xl font-black uppercase text-xs flex items-center justify-center gap-2 active:scale-95 transition-all border border-slate-700">
-                                            <CreditCard className="w-4 h-4" /> Cartão (App)
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
+                                )}
 
-                            {paymentStep === 'processing' && (
-                                <div className="p-12 text-center space-y-6 flex flex-col items-center">
-                                    <Loader2 className="w-12 h-12 text-[var(--primary)] animate-spin" />
-                                    <p className="text-white font-black uppercase tracking-widest text-sm">Processando Pagamento...</p>
-                                </div>
-                            )}
+                                {paymentStep === 'processing' && (
+                                    <div className="p-12 text-center space-y-6 flex flex-col items-center">
+                                        <Loader2 className="w-12 h-12 text-[var(--primary)] animate-spin" />
+                                        <p className="text-white font-black uppercase tracking-widest text-sm">Processando Pagamento...</p>
+                                    </div>
+                                )}
 
-                            {paymentStep === 'success' && (
-                                <div className="p-8 text-center space-y-6 animate-[pop_0.3s_ease-out]">
-                                    <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto shadow-[0_0_30px_rgba(34,197,94,0.4)]">
-                                        <Check className="w-10 h-10 text-white stroke-[4px]" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-2xl font-black text-white italic">CONTA PAGA!</h3>
-                                        <p className="text-slate-400 text-sm">Valeu pelo rolê! Seu recibo foi enviado por e-mail.</p>
-                                    </div>
-                                    <button onClick={() => { setShowPaymentOverlay(false); setShowMenu(false); setOrderedItems([]); }} className="w-full py-4 bg-white text-black rounded-2xl font-black uppercase text-xs active:scale-95 transition-all">VOLTAR PRO APP</button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )}
+                                {paymentStep === 'success' && (
+                                    <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="p-8 text-center space-y-6">
+                                        <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto shadow-[0_0_30px_rgba(34,197,94,0.4)]">
+                                            <Check className="w-10 h-10 text-white stroke-[4px]" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-2xl font-black text-white italic">CONTA PAGA!</h3>
+                                            <p className="text-slate-400 text-sm">Valeu pelo rolê! Seu recibo foi enviado por e-mail.</p>
+                                        </div>
+                                        <button onClick={() => { setShowPaymentOverlay(false); setShowMenu(false); setOrderedItems([]); }} className="w-full py-4 bg-white text-black rounded-2xl font-black uppercase text-xs active:scale-95 transition-all">VOLTAR PRO APP</button>
+                                    </motion.div>
+                                )}
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 {/* MODAL: ENQUETE MUSICAL */}
-                {showMusicPoll && (
-                    <div className="fixed inset-0 z-[120] bg-black/85 backdrop-blur-md flex items-end justify-center animate-[fadeIn_0.2s_ease-out]" onClick={() => setShowMusicPoll(false)}>
-                        <div className="bg-[#1e293b] w-full max-lg rounded-t-[2.5rem] p-6 xs:p-8 border-t border-slate-700 animate-[slideUp_0.3s_ease-out] pb-safe" onClick={e => e.stopPropagation()}>
-                            <div className="flex justify-between items-center mb-6">
-                                <div>
-                                    <h3 className="text-xl xs:text-2xl font-black text-white italic tracking-tighter">O QUE TOCA AGORA?</h3>
-                                    <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest mt-1 flex items-center gap-1"><Sparkles className="w-3 h-3" /> Escolha do Público</p>
+                <AnimatePresence>
+                    {showMusicPoll && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-[120] bg-black/85 backdrop-blur-md flex items-end justify-center"
+                            onClick={() => setShowMusicPoll(false)}
+                        >
+                            <motion.div
+                                initial={{ y: '100%' }}
+                                animate={{ y: 0 }}
+                                exit={{ y: '100%' }}
+                                transition={springTransition}
+                                className="bg-[#1e293b] w-full max-lg rounded-t-[2.5rem] p-6 xs:p-8 border-t border-slate-700 pb-safe"
+                                onClick={e => e.stopPropagation()}
+                            >
+                                <div className="flex justify-between items-center mb-6">
+                                    <div>
+                                        <h3 className="text-xl xs:text-2xl font-black text-white italic tracking-tighter">O QUE TOCA AGORA?</h3>
+                                        <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest mt-1 flex items-center gap-1"><Sparkles className="w-3 h-3" /> Escolha do Público</p>
+                                    </div>
+                                    <button onClick={() => setShowMusicPoll(false)} className="p-2.5 bg-slate-800 rounded-full text-slate-400"><X className="w-5 h-5" /></button>
                                 </div>
-                                <button onClick={() => setShowMusicPoll(false)} className="p-2.5 bg-slate-800 rounded-full text-slate-400"><X className="w-5 h-5" /></button>
-                            </div>
 
-                            <div className="space-y-3 mb-6">
-                                {Object.entries(pollResults).map(([genre, value]) => {
-                                    const total = (Object.values(pollResults) as number[]).reduce((a: number, b: number) => a + b, 0);
-                                    const percent = total > 0 ? Math.round(((value as number) / total) * 100) : 0;
-                                    const isSelected = votingGenre === genre;
+                                <div className="space-y-3 mb-6">
+                                    {Object.entries(pollResults).map(([genre, value]) => {
+                                        const total = (Object.values(pollResults) as number[]).reduce((a: number, b: number) => a + b, 0);
+                                        const percent = total > 0 ? Math.round(((value as number) / total) * 100) : 0;
+                                        const isSelected = votingGenre === genre;
 
-                                    return (
-                                        <button
-                                            key={genre}
-                                            disabled={hasVotedMusic}
-                                            onClick={() => handleVoteMusic(genre)}
-                                            className={`relative w-full p-4 xs:p-5 rounded-2xl border-2 transition-all flex items-center justify-between overflow-hidden
-                                    ${hasVotedMusic
-                                                    ? isSelected ? 'border-[var(--primary)] bg-[var(--primary)]/10' : 'border-slate-800 bg-slate-900/50'
-                                                    : 'border-slate-700 bg-slate-800/50 active:scale-[0.98]'}`}
-                                        >
-                                            {hasVotedMusic && (
-                                                <div className={`absolute left-0 top-0 bottom-0 transition-all duration-1000 ${isSelected ? 'bg-[var(--primary)]/20' : 'bg-slate-700/10'}`} style={{ width: `${percent}%` }} />
-                                            )}
-                                            <span className={`relative z-10 font-black text-xs xs:text-sm uppercase italic ${isSelected ? 'text-[var(--primary)]' : 'text-white'}`}>{genre}</span>
-                                            {hasVotedMusic && <span className="relative z-10 font-black text-[10px] text-slate-400">{percent}%</span>}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    </div>
-                )}
+                                        return (
+                                            <button
+                                                key={genre}
+                                                disabled={hasVotedMusic}
+                                                onClick={() => handleVoteMusic(genre)}
+                                                className={`relative w-full p-4 xs:p-5 rounded-2xl border-2 transition-all flex items-center justify-between overflow-hidden
+                                        ${hasVotedMusic
+                                                        ? isSelected ? 'border-[var(--primary)] bg-[var(--primary)]/10' : 'border-slate-800 bg-slate-900/50'
+                                                        : 'border-slate-700 bg-slate-800/50 active:scale-[0.98]'}`}
+                                            >
+                                                {hasVotedMusic && (
+                                                    <div className={`absolute left-0 top-0 bottom-0 transition-all duration-1000 ${isSelected ? 'bg-[var(--primary)]/20' : 'bg-slate-700/10'}`} style={{ width: `${percent}%` }} />
+                                                )}
+                                                <span className={`relative z-10 font-black text-xs xs:text-sm uppercase italic ${isSelected ? 'text-[var(--primary)]' : 'text-white'}`}>{genre}</span>
+                                                {hasVotedMusic && <span className="relative z-10 font-black text-[10px] text-slate-400">{percent}%</span>}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 {/* MODAL: MENU DIGITAL */}
-                {showMenu && (
-                    <div className="fixed inset-0 z-[120] bg-black/95 backdrop-blur-xl flex flex-col justify-end animate-[fadeIn_0.2s_ease-out]" onClick={() => setShowMenu(false)}>
-                        <div className="bg-[#0B0F19] rounded-t-[2.5rem] border-t border-slate-800 h-[94vh] flex flex-col animate-[slideUp_0.4s_cubic-bezier(0.16,1,0.3,1)] shadow-2xl relative overflow-hidden" onClick={e => e.stopPropagation()}>
-
-                            <div className="p-5 xs:p-6 border-b border-slate-800 flex justify-between items-center sticky top-0 bg-[#0B0F19]/90 backdrop-blur-md z-20">
-                                <div>
-                                    <h3 className="text-2xl xs:text-3xl font-black text-white italic tracking-tighter leading-none">VOU LÁ MENU</h3>
-                                    <p className="text-[10px] text-slate-500 font-bold uppercase mt-2 flex items-center gap-2">
-                                        <MapPin className="w-3 h-3" /> {place.name}
-                                    </p>
-                                </div>
-                                <button onClick={() => setShowMenu(false)} className="p-2.5 bg-slate-800 rounded-full text-slate-400 active:scale-90"><X className="w-6 h-6" /></button>
-                            </div>
-
-                            <div className="px-5 py-4 flex gap-2 overflow-x-auto hide-scrollbar sticky top-[80px] bg-[#0B0F19] z-10">
-                                <MenuCategoryTab label="Tudo" icon={<Sparkles className="w-3.5 h-3.5" />} active={menuCategory === 'all'} onClick={() => setMenuCategory('all')} />
-                                <MenuCategoryTab label="Bebidas" icon={<Beer className="w-3.5 h-3.5" />} active={menuCategory === 'drink'} onClick={() => setMenuCategory('drink')} />
-                                <MenuCategoryTab label="Comidas" icon={<Pizza className="w-3.5 h-3.5" />} active={menuCategory === 'food'} onClick={() => setMenuCategory('food')} />
-                                <MenuCategoryTab label="Outros" icon={<ShoppingBag className="w-3.5 h-3.5" />} active={menuCategory === 'other'} onClick={() => setMenuCategory('other')} />
-                                <MenuCategoryTab label="Comanda" icon={<ClipboardList className="w-3.5 h-3.5" />} active={menuCategory === 'orders'} onClick={() => setMenuCategory('orders')} badge={orderedItems.length} />
-                            </div>
-
-                            <div key={menuCategory} className="flex-1 overflow-y-auto px-5 pb-40 animate-[slideInRight_0.3s_ease-out] scroll-container">
-                                {menuCategory === 'orders' ? (
-                                    <div className="space-y-4 pt-2">
-                                        {orderedItems.length === 0 ? (
-                                            <div className="h-full flex flex-col items-center justify-center text-slate-600 opacity-40 py-20">
-                                                <ClipboardList className="w-20 h-20 mb-6 stroke-[0.5]" />
-                                                <p className="text-[10px] font-black uppercase tracking-widest">Sua comanda está vazia</p>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <div className="bg-indigo-600/10 p-5 rounded-3xl border border-indigo-500/20 mb-6">
-                                                    <div className="flex justify-between items-center">
-                                                        <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Status da Comanda</span>
-                                                        <span className="bg-indigo-500 text-white text-[9px] font-black px-2 py-0.5 rounded uppercase">Aberta</span>
-                                                    </div>
-                                                    <p className="text-3xl font-black text-white italic tracking-tighter mt-2">R$ {comandaTotal.toFixed(2)}</p>
-                                                    <button onClick={() => setShowPaymentOverlay(true)} className="w-full mt-4 py-3 bg-[var(--primary)] text-black rounded-xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all">Pagar Comanda Agora</button>
-                                                </div>
-                                                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 mb-2">Itens Pedidos</h4>
-                                                {orderedItems.map((item, idx) => (
-                                                    <div key={`${item.id}-${idx}`} className="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50 flex justify-between items-center animate-[fadeIn_0.3s_ease-out]">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-12 h-12 bg-slate-900 rounded-xl overflow-hidden">
-                                                                <img src={item.imageUrl || (item.category === 'drink' ? 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?q=80&w=300' : 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=300')} className="w-full h-full object-cover" alt="" />
-                                                            </div>
-                                                            <div>
-                                                                <p className="text-white font-bold text-sm leading-none">{item.quantity}x {item.name}</p>
-                                                                <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">{item.orderedAt} • R$ {(item.price * item.quantity).toFixed(2)}</p>
-                                                            </div>
-                                                        </div>
-                                                        <div className={`px-2 py-1 rounded-lg text-[8px] font-black uppercase ${item.status === 'preparing' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20 animate-pulse' : 'bg-green-500/10 text-green-500 border border-green-500/20'}`}>
-                                                            {item.status === 'preparing' ? 'Preparando' : 'Entregue'}
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </>
-                                        )}
+                <AnimatePresence>
+                    {showMenu && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-[120] bg-black/95 backdrop-blur-xl flex flex-col justify-end"
+                            onClick={() => setShowMenu(false)}
+                        >
+                            <motion.div
+                                initial={{ y: '100%' }}
+                                animate={{ y: 0 }}
+                                exit={{ y: '100%' }}
+                                transition={springTransition}
+                                className="bg-[var(--bg-default)] rounded-t-[2.5rem] border-t border-[var(--border-default)] h-[94vh] flex flex-col shadow-2xl relative overflow-hidden"
+                                onClick={e => e.stopPropagation()}
+                            >
+                                <div className="p-5 xs:p-6 border-b border-[var(--border-default)] flex justify-between items-center sticky top-0 bg-[var(--bg-default)]/90 backdrop-blur-md z-20">
+                                    <div>
+                                        <h3 className="text-2xl xs:text-3xl font-black text-white italic tracking-tighter leading-none">VOU LÁ MENU</h3>
+                                        <p className="text-[10px] text-slate-500 font-bold uppercase mt-2 flex items-center gap-2">
+                                            <MapPin className="w-3 h-3" /> {place.name}
+                                        </p>
                                     </div>
-                                ) : (
-                                    (!place.menu || place.menu.length === 0) ? (
-                                        <div className="h-full flex flex-col items-center justify-center text-slate-600 opacity-40 py-20">
-                                            <Utensils className="w-20 h-20 mb-6 stroke-[0.5]" />
-                                            <p className="text-[10px] font-black uppercase tracking-widest">Sem itens disponíveis</p>
+                                    <button onClick={() => setShowMenu(false)} className="p-2.5 bg-slate-800 rounded-full text-slate-400 active:scale-90"><X className="w-6 h-6" /></button>
+                                </div>
+
+                                <div className="px-5 py-4 flex gap-2 overflow-x-auto hide-scrollbar sticky top-[80px] bg-[var(--bg-default)] z-10">
+                                    <MenuCategoryTab label="Tudo" icon={<Sparkles className="w-3.5 h-3.5" />} active={menuCategory === 'all'} onClick={() => setMenuCategory('all')} />
+                                    <MenuCategoryTab label="Bebidas" icon={<Beer className="w-3.5 h-3.5" />} active={menuCategory === 'drink'} onClick={() => setMenuCategory('drink')} />
+                                    <MenuCategoryTab label="Comidas" icon={<Pizza className="w-3.5 h-3.5" />} active={menuCategory === 'food'} onClick={() => setMenuCategory('food')} />
+                                    <MenuCategoryTab label="Outros" icon={<ShoppingBag className="w-3.5 h-3.5" />} active={menuCategory === 'other'} onClick={() => setMenuCategory('other')} />
+                                    <MenuCategoryTab label="Comanda" icon={<ClipboardList className="w-3.5 h-3.5" />} active={menuCategory === 'orders'} onClick={() => setMenuCategory('orders')} badge={orderedItems.length} />
+                                </div>
+
+                                <div key={menuCategory} className="flex-1 overflow-y-auto px-5 pb-40 scroll-container">
+                                    {menuCategory === 'orders' ? (
+                                        <div className="space-y-4 pt-2">
+                                            {orderedItems.length === 0 ? (
+                                                <div className="h-full flex flex-col items-center justify-center text-slate-600 opacity-40 py-20">
+                                                    <ClipboardList className="w-20 h-20 mb-6 stroke-[0.5]" />
+                                                    <p className="text-[10px] font-black uppercase tracking-widest">Sua comanda está vazia</p>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <div className="bg-indigo-600/10 p-5 rounded-3xl border border-indigo-500/20 mb-6">
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Status da Comanda</span>
+                                                            <span className="bg-indigo-500 text-white text-[9px] font-black px-2 py-0.5 rounded uppercase">Aberta</span>
+                                                        </div>
+                                                        <p className="text-3xl font-black text-white italic tracking-tighter mt-2">R$ {comandaTotal.toFixed(2)}</p>
+                                                        <button onClick={() => setShowPaymentOverlay(true)} className="w-full mt-4 py-3 bg-[var(--primary)] text-black rounded-xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all">Pagar Comanda Agora</button>
+                                                    </div>
+                                                    <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 mb-2">Itens Pedidos</h4>
+                                                    {orderedItems.map((item, idx) => (
+                                                        <div key={`${item.id}-${idx}`} className="bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50 flex justify-between items-center">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-12 h-12 bg-slate-900 rounded-xl overflow-hidden">
+                                                                    <img src={item.imageUrl || (item.category === 'drink' ? 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?q=80&w=300' : 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=300')} className="w-full h-full object-cover" alt="" />
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-white font-bold text-sm leading-none">{item.quantity}x {item.name}</p>
+                                                                    <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">{item.orderedAt} • R$ {(item.price * item.quantity).toFixed(2)}</p>
+                                                                </div>
+                                                            </div>
+                                                            <div className={`px-2 py-1 rounded-lg text-[8px] font-black uppercase ${item.status === 'preparing' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20 animate-pulse' : 'bg-green-500/10 text-green-500 border border-green-500/20'}`}>
+                                                                {item.status === 'preparing' ? 'Preparando' : 'Entregue'}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </>
+                                            )}
                                         </div>
                                     ) : (
-                                        <div className="space-y-1">
-                                            {filteredMenu.map(item => (
-                                                <MenuItemRow key={item.id} item={item} qty={cart[item.id] || 0} onAdd={() => handleAddToCart(item.id)} onRemove={() => handleRemoveFromCart(item.id)} />
-                                            ))}
-                                        </div>
-                                    )
-                                )}
-                            </div>
-
-                            {cartCount > 0 && menuCategory !== 'orders' && (
-                                <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-[#0B0F19] via-[#0B0F19] to-transparent z-30 pb-safe">
-                                    <div className="bg-[var(--primary)] rounded-3xl p-4 xs:p-5 shadow-[0_12px_40px_rgba(204,255,0,0.25)] flex items-center justify-between border-t border-white/20">
-                                        <div className="flex items-center gap-3">
-                                            <div className="bg-black w-12 h-12 rounded-2xl flex items-center justify-center relative">
-                                                <Utensils className="w-5 h-5 text-[var(--primary)]" />
-                                                <div className="absolute -top-1.5 -right-1.5 bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black border-2 border-[var(--primary)] animate-[pop_0.3s_ease-out]">{cartCount}</div>
+                                        (!place.menu || place.menu.length === 0) ? (
+                                            <div className="h-full flex flex-col items-center justify-center text-slate-600 opacity-40 py-20">
+                                                <Utensils className="w-20 h-20 mb-6 stroke-[0.5]" />
+                                                <p className="text-[10px] font-black uppercase tracking-widest">Sem itens disponíveis</p>
                                             </div>
-                                            <div className="flex flex-col">
-                                                <span className="text-[9px] font-black text-black opacity-60 uppercase">Total</span>
-                                                <span className="text-xl font-black text-black italic leading-none">R$ {cartTotal.toFixed(2)}</span>
+                                        ) : (
+                                            <div className="space-y-1">
+                                                {filteredMenu.map(item => (
+                                                    <MenuItemRow key={item.id} item={item} qty={cart[item.id] || 0} onAdd={() => handleAddToCart(item.id)} onRemove={() => handleRemoveFromCart(item.id)} />
+                                                ))}
                                             </div>
-                                        </div>
-                                        <button onClick={handleCheckout} className="bg-black text-white px-6 py-3.5 rounded-2xl font-black uppercase text-[10px] tracking-wider flex items-center gap-2 active:scale-95 transition-all">
-                                            {isOrdering ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4 text-[var(--primary)]" />}
-                                            {isOrdering ? 'ENVIANDO' : 'PEDIR AGORA'}
-                                        </button>
-                                    </div>
+                                        )
+                                    )}
                                 </div>
-                            )}
-                        </div>
-                    </div>
-                )}
+
+                                {cartCount > 0 && menuCategory !== 'orders' && (
+                                    <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-[#0B0F19] via-[#0B0F19] to-transparent z-30 pb-safe">
+                                        <div className="bg-[var(--primary)] rounded-3xl p-4 xs:p-5 shadow-[0_12px_40px_rgba(204,255,0,0.25)] flex items-center justify-between border-t border-white/20">
+                                            <div className="flex items-center gap-3">
+                                                <div className="bg-black w-12 h-12 rounded-2xl flex items-center justify-center relative">
+                                                    <Utensils className="w-5 h-5 text-[var(--primary)]" />
+                                                    <div className="absolute -top-1.5 -right-1.5 bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black border-2 border-[var(--primary)] animate-[pop_0.3s_ease-out]">{cartCount}</div>
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-[9px] font-black text-black opacity-60 uppercase">Total</span>
+                                                    <span className="text-xl font-black text-black italic leading-none">R$ {cartTotal.toFixed(2)}</span>
+                                                </div>
+                                            </div>
+                                            <button onClick={handleCheckout} className="bg-black text-white px-6 py-3.5 rounded-2xl font-black uppercase text-[10px] tracking-wider flex items-center gap-2 active:scale-95 transition-all">
+                                                {isOrdering ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4 text-[var(--primary)]" />}
+                                                {isOrdering ? 'ENVIANDO' : 'PEDIR AGORA'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 {/* MODAL: STAFF */}
-                {showStaffOptions && (
-                    <div className="fixed inset-0 z-[120] bg-black/70 backdrop-blur-md flex items-end justify-center animate-[fadeIn_0.2s_ease-out]" onClick={() => setShowStaffOptions(false)}>
-                        <div className="w-full max-w-lg bg-[#1e293b] rounded-t-[2.5rem] border-t border-slate-700 p-6 xs:p-8 animate-[slideUp_0.3s_ease-out] pb-safe" onClick={e => e.stopPropagation()}>
-                            <div className="flex justify-between items-center mb-6">
-                                <h3 className="text-xl font-black text-white italic tracking-tighter">COMO AJUDAR?</h3>
-                                <button onClick={() => setShowStaffOptions(false)} className="bg-slate-800 p-2 rounded-full text-slate-400"><X className="w-5 h-5" /></button>
-                            </div>
-                            <div className="grid grid-cols-3 gap-3 mb-2">
-                                <button onClick={() => handleCallStaff('Pedido')} className="bg-slate-800 border border-slate-700 p-4 xs:p-6 rounded-2xl flex flex-col items-center gap-3 active:bg-slate-700 active:scale-95 transition-all">
-                                    <Utensils className="w-8 h-8 text-[var(--primary)]" />
-                                    <span className="text-[9px] font-black uppercase text-white">Pedido</span>
-                                </button>
-                                <button onClick={() => handleCallStaff('Conta')} className="bg-slate-800 border border-slate-700 p-4 xs:p-6 rounded-2xl flex flex-col items-center gap-3 active:bg-slate-700 active:scale-95 transition-all">
-                                    <Receipt className="w-8 h-8 text-green-500" />
-                                    <span className="text-[9px] font-black uppercase text-white">Conta</span>
-                                </button>
-                                <button onClick={() => handleCallStaff('Ajuda')} className="bg-slate-800 border border-slate-700 p-4 xs:p-6 rounded-2xl flex flex-col items-center gap-3 active:bg-slate-700 active:scale-95 transition-all">
-                                    <HelpCircle className="w-8 h-8 text-red-500" />
-                                    <span className="text-[9px] font-black uppercase text-white">Ajuda</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                <AnimatePresence>
+                    {showStaffOptions && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-[120] bg-black/70 backdrop-blur-md flex items-end justify-center"
+                            onClick={() => setShowStaffOptions(false)}
+                        >
+                            <motion.div
+                                initial={{ y: '100%' }}
+                                animate={{ y: 0 }}
+                                exit={{ y: '100%' }}
+                                transition={springTransition}
+                                className="w-full max-w-lg bg-[#1e293b] rounded-t-[2.5rem] border-t border-slate-700 p-6 xs:p-8 pb-safe"
+                                onClick={e => e.stopPropagation()}
+                            >
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="text-xl font-black text-white italic tracking-tighter">COMO AJUDAR?</h3>
+                                    <button onClick={() => setShowStaffOptions(false)} className="bg-slate-800 p-2 rounded-full text-slate-400"><X className="w-5 h-5" /></button>
+                                </div>
+                                <div className="grid grid-cols-3 gap-3 mb-2">
+                                    <button onClick={() => handleCallStaff('Pedido')} className="bg-slate-800 border border-slate-700 p-4 xs:p-6 rounded-2xl flex flex-col items-center gap-3 active:bg-slate-700 active:scale-95 transition-all">
+                                        <Utensils className="w-8 h-8 text-[var(--primary)]" />
+                                        <span className="text-[9px] font-black uppercase text-white">Pedido</span>
+                                    </button>
+                                    <button onClick={() => handleCallStaff('Conta')} className="bg-slate-800 border border-slate-700 p-4 xs:p-6 rounded-2xl flex flex-col items-center gap-3 active:bg-slate-700 active:scale-95 transition-all">
+                                        <Receipt className="w-8 h-8 text-green-500" />
+                                        <span className="text-[9px] font-black uppercase text-white">Conta</span>
+                                    </button>
+                                    <button onClick={() => handleCallStaff('Ajuda')} className="bg-slate-800 border border-slate-700 p-4 xs:p-6 rounded-2xl flex flex-col items-center gap-3 active:bg-slate-700 active:scale-95 transition-all">
+                                        <HelpCircle className="w-8 h-8 text-red-500" />
+                                        <span className="text-[9px] font-black uppercase text-white">Ajuda</span>
+                                    </button>
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 {/* HERO AREA */}
                 <div className="h-[45vh] xs:h-[50vh] relative w-full overflow-hidden shrink-0 bg-slate-900">
-                    {loading && <Skeleton className="w-full h-full" />}
                     <img src={imgError ? FALLBACK_IMAGE : (place.imageUrl || FALLBACK_IMAGE)} className={`w-full h-full object-cover transition-transform duration-[3s] ${imgLoaded ? 'scale-100' : 'scale-110 blur-xl opacity-0'}`} alt={place.name} onLoad={() => setImgLoaded(true)} onError={() => { setImgError(true); setImgLoaded(true); }} />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F19] via-transparent to-[#0B0F19]/40"></div>
 
@@ -555,7 +608,7 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                     </button>
 
                     {isCheckedIn && (
-                        <div className="space-y-4 animate-[fadeIn_0.5s_ease-out]">
+                        <div className="space-y-4">
                             <button onClick={() => { trigger('medium'); setShowMatchMode(true); }} className="w-full bg-gradient-to-br from-indigo-900 to-[#12122b] border border-indigo-500/20 rounded-2xl xs:rounded-[2.5rem] p-4 xs:p-5 flex items-center justify-between active:scale-[0.98] transition-all">
                                 <div className="flex items-center gap-4">
                                     <div className="w-14 h-14 rounded-2xl bg-indigo-500/20 flex items-center justify-center border border-indigo-400/20">
@@ -592,7 +645,7 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                     )}
 
                     <div className="grid grid-cols-2 gap-3 xs:gap-4">
-                        <div className="bg-slate-800/20 p-5 rounded-2xl xs:rounded-[2.5rem] border border-slate-700/30 group active:scale-95 transition-all" onClick={() => { trigger('light'); setShowMusicPoll(true); }}>
+                        <motion.div whileTap={{ scale: 0.95 }} className="bg-slate-800/20 p-5 rounded-2xl xs:rounded-[2.5rem] border border-slate-700/30 group active:scale-95 transition-all" onClick={() => { trigger('light'); setShowMusicPoll(true); }}>
                             <div className="flex items-center gap-2 mb-3">
                                 <Disc className="w-4 h-4 text-fuchsia-400" />
                                 <span className="text-[9px] font-black text-slate-400 uppercase">Som</span>
@@ -602,7 +655,7 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                                 <span className="text-[8px] font-black text-slate-600 uppercase flex items-center gap-1"><History className="w-2.5 h-2.5" /> Ver</span>
                                 {isCheckedIn && <BarChart3 className="w-3.5 h-3.5 text-fuchsia-400 ml-auto" />}
                             </div>
-                        </div>
+                        </motion.div>
 
                         <div className="bg-slate-800/20 p-5 rounded-2xl xs:rounded-[2.5rem] border border-slate-700/30">
                             <div className="flex items-center gap-2 mb-3">
@@ -619,17 +672,17 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                     </div>
 
                     <div className="grid grid-cols-2 gap-3 xs:gap-4">
-                        <button onClick={() => { trigger('light'); setShowMenu(true); }} className="bg-slate-800 border border-slate-700 p-5 rounded-2xl xs:rounded-[2.5rem] flex flex-col items-center gap-3 active:border-[var(--primary)] active:bg-slate-700 transition-all shadow-lg">
+                        <motion.button whileTap={{ scale: 0.95 }} onClick={() => { trigger('light'); setShowMenu(true); }} className="bg-slate-800 border border-slate-700 p-5 rounded-2xl xs:rounded-[2.5rem] flex flex-col items-center gap-3 active:border-[var(--primary)] active:bg-slate-700 transition-all shadow-lg">
                             <div className="p-3 bg-slate-900 rounded-xl"><Utensils className="w-7 h-7" /></div>
                             <span className="text-[10px] font-black text-white uppercase tracking-widest">Cardápio</span>
-                        </button>
-                        <button onClick={() => { if (staffState === 'idle') { trigger('light'); setShowStaffOptions(true); } }} disabled={staffState !== 'idle'} className={`bg-slate-800 border p-5 rounded-2xl xs:rounded-[2.5rem] flex flex-col items-center gap-3 active:bg-slate-700 transition-all shadow-lg
+                        </motion.button>
+                        <motion.button whileTap={{ scale: 0.95 }} onClick={() => { if (staffState === 'idle') { trigger('light'); setShowStaffOptions(true); } }} disabled={staffState !== 'idle'} className={`bg-slate-800 border p-5 rounded-2xl xs:rounded-[2.8rem] flex flex-col items-center gap-3 active:bg-slate-700 transition-all shadow-lg
                         ${staffState === 'calling' ? 'border-yellow-500' : staffState === 'confirmed' ? 'border-green-500' : 'border-slate-700'}`}>
                             <div className={`p-3 rounded-xl ${staffState === 'calling' ? 'bg-yellow-500 animate-pulse' : staffState === 'confirmed' ? 'bg-green-500' : 'bg-slate-900'}`}>
                                 {staffState === 'calling' ? <Loader2 className="w-7 h-7 text-black animate-spin" /> : staffState === 'confirmed' ? <CheckCircle2 className="w-7 h-7 text-white" /> : <BellRing className="w-7 h-7 text-indigo-400" />}
                             </div>
                             <span className={`text-[10px] font-black uppercase ${staffState === 'calling' ? 'text-yellow-500' : staffState === 'confirmed' ? 'text-green-500' : 'text-white'}`}>{staffState === 'calling' ? 'Chamando' : staffState === 'confirmed' ? 'Opa!' : 'Garçom'}</span>
-                        </button>
+                        </motion.button>
                     </div>
 
                     {kingUser && (
@@ -651,7 +704,14 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
     }
 
     return (
-        <div onClick={() => { trigger('light'); if (onClick) onClick(); }} className="bg-[#131620] rounded-[2rem] p-3.5 border border-slate-800/60 shadow-xl active:scale-[0.98] transition-all cursor-pointer mb-3 relative overflow-hidden">
+        <motion.div
+            variants={fadeIn}
+            initial="initial"
+            animate="animate"
+            whileTap={{ scale: 0.98 }}
+            onClick={() => { trigger('light'); if (onClick) onClick(); }}
+            className="bg-[var(--bg-card)]/60 rounded-[2rem] p-3.5 border border-[var(--border-default)] shadow-xl cursor-pointer mb-3 relative overflow-hidden premium-card"
+        >
             <div className="flex gap-4 items-center">
                 <div className="relative w-28 h-28 xs:w-32 xs:h-32 shrink-0 rounded-2xl overflow-hidden bg-slate-900 border border-white/5">
                     {!imgLoaded && !imgError && <Skeleton className="absolute inset-0 w-full h-full" />}
@@ -684,6 +744,6 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                 </div>
                 <ChevronRight className="w-5 h-5 text-slate-800 shrink-0" />
             </div>
-        </div>
+        </motion.div>
     );
 });

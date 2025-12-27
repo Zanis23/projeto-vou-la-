@@ -1,14 +1,14 @@
 
 import React, { useState } from 'react';
 import {
-    ArrowLeft, Store, BarChart3, Ticket, Zap, CheckCircle2, Building2,
+    ArrowLeft, Store, Ticket, Zap, CheckCircle2,
     Users, DollarSign, Clock, Music, Instagram, Camera, FileText, ChevronRight, MapPin
 } from 'lucide-react';
 import { Button } from '../components/Button';
 import { PlaceType, Place, User } from '../types';
 import { useHaptic } from '../hooks/useHaptic';
 import { db } from '../utils/storage';
-import { generateAIImage } from '../services/geminiService'; // Optional if we want AI avatar
+// import { generateAIImage } from '../services/geminiService'; // Optional if we want AI avatar
 
 interface BusinessRegistrationProps {
     onBack: () => void;
@@ -173,7 +173,7 @@ export const BusinessRegistration: React.FC<BusinessRegistrationProps> = ({ onBa
             // Use Promise.all but checking results
             // Note: db.places.add returns the Place object or null (it doesn't throw usually)
             // db.user.save now returns boolean
-            const [saveProfileSuccess, createdPlace] = await Promise.all([
+            const [saveProfileSuccess] = await Promise.all([
                 db.user.save(fullOwner),
                 db.places.add(newPlace)
             ]);
@@ -227,7 +227,7 @@ export const BusinessRegistration: React.FC<BusinessRegistrationProps> = ({ onBa
             {[1, 2, 3, 4].map((s) => (
                 <div
                     key={s}
-                    className={`h-1 flex-1 rounded-full transition-all duration-500 ${step >= s ? 'bg-[var(--primary)]' : 'bg-slate-800'}`}
+                    className={`h-1 flex-1 rounded-full transition-all duration-500 ${step >= s ? 'bg-[var(--primary-main)] shadow-[0_0_8px_var(--primary-glow)]' : 'bg-[var(--bg-card)]'}`}
                 />
             ))}
         </div>
@@ -239,7 +239,7 @@ export const BusinessRegistration: React.FC<BusinessRegistrationProps> = ({ onBa
             <div className="absolute -top-3 right-0 z-20 bg-[var(--primary)] text-[var(--on-primary)] text-[10px] font-black uppercase px-2 py-1 rounded-lg shadow-lg transform rotate-2">
                 Visão do Dono
             </div>
-            <div className="bg-[#1e293b] rounded-2xl border border-slate-700 p-4 shadow-2xl relative overflow-hidden">
+            <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border-default)] p-4 shadow-2xl relative overflow-hidden glass-card">
                 <div className="flex justify-between items-center mb-4 border-b border-slate-700/50 pb-3">
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center">
@@ -286,7 +286,7 @@ export const BusinessRegistration: React.FC<BusinessRegistrationProps> = ({ onBa
     // --- SUCCESS SCREEN ---
     if (step === 5) {
         return (
-            <div className="h-[100dvh] bg-[#0E1121] flex flex-col items-center justify-center p-8 text-center animate-[fadeIn_0.5s_ease-out]">
+            <div className="h-[100dvh] bg-[var(--bg-default)] flex flex-col items-center justify-center p-8 text-center animate-[fadeIn_0.5s_ease-out]">
                 <div className="w-24 h-24 bg-green-500/20 rounded-full flex items-center justify-center mb-6 border border-green-500/50 relative">
                     <div className="absolute inset-0 bg-green-500 blur-xl opacity-20 animate-pulse"></div>
                     <CheckCircle2 className="w-12 h-12 text-green-500 relative z-10" />
@@ -305,10 +305,10 @@ export const BusinessRegistration: React.FC<BusinessRegistrationProps> = ({ onBa
     // --- INTRO SCREEN ---
     if (step === 0) {
         return (
-            <div className="h-[100dvh] bg-[#0E1121] flex flex-col pt-safe relative overflow-hidden animate-[fadeIn_0.3s_ease-out]">
+            <div className="h-[100dvh] bg-[var(--bg-default)] flex flex-col pt-safe relative overflow-hidden animate-[fadeIn_0.3s_ease-out]">
                 <div className="absolute top-0 right-0 w-[90vw] h-[90vw] bg-indigo-600 rounded-full mix-blend-screen filter blur-[120px] opacity-10 pointer-events-none"></div>
                 <div className="flex-1 overflow-y-auto px-6 pt-4 pb-40 hide-scrollbar">
-                    <button onClick={onBack} className="w-10 h-10 flex items-center justify-center bg-slate-800/50 rounded-full text-slate-300 hover:text-white mb-4 backdrop-blur-sm border border-slate-700">
+                    <button onClick={onBack} className="w-10 h-10 flex items-center justify-center bg-[var(--bg-card)]/50 rounded-full text-[var(--text-secondary)] hover:text-white mb-4 backdrop-blur-sm border border-[var(--border-default)]">
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div className="mb-6">
@@ -344,8 +344,8 @@ export const BusinessRegistration: React.FC<BusinessRegistrationProps> = ({ onBa
                     </div>
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 p-6 pt-8 bg-gradient-to-t from-[#0E1121] via-[#0E1121] to-transparent pb-safe z-10">
-                    <Button fullWidth variant="primary" onClick={() => setStep(1)} className="py-4 text-base shadow-xl shadow-indigo-500/20 bg-indigo-600 border-indigo-400 hover:bg-indigo-500">
-                        CADASTRAR GRÁTIS <ChevronRight className="w-5 h-5 ml-1" />
+                    <Button fullWidth variant="primary" onClick={() => setStep(1)} className="py-4 text-base shadow-xl shadow-[var(--primary-glow)] bg-[var(--primary-main)] border-transparent text-[var(--primary-text)]">
+                        QUERO SER PARCEIRO <ChevronRight className="w-5 h-5 ml-1" />
                     </Button>
                     <p className="text-center text-[10px] text-slate-500 mt-3 font-medium">
                         Avaliação gratuita • Sem compromisso
@@ -361,8 +361,8 @@ export const BusinessRegistration: React.FC<BusinessRegistrationProps> = ({ onBa
     // --- WIZARD STEPS ---
     return (
         <div className="h-[100dvh] bg-[#0E1121] flex flex-col pt-safe animate-[slideLeft_0.3s_ease-out]">
-            <div className="px-4 py-4 border-b border-slate-800 flex items-center gap-4 bg-[#0E1121] sticky top-0 z-20 shrink-0">
-                <button onClick={handleBackStep} className="p-2 bg-slate-800 rounded-full text-white hover:bg-slate-700">
+            <div className="px-4 py-4 border-b border-[var(--border-default)] flex items-center gap-4 bg-[var(--bg-default)] sticky top-0 z-20 shrink-0">
+                <button onClick={handleBackStep} className="p-2 bg-[var(--bg-card)] rounded-full text-white hover:bg-[var(--bg-subtle)] border border-[var(--border-default)]">
                     <ArrowLeft className="w-5 h-5" />
                 </button>
                 <div>

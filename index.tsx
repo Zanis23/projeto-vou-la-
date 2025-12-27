@@ -48,11 +48,18 @@ function ErrorFallback() {
   );
 }
 
+import { QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { queryClient } from './src/core/queryClient';
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <SentryErrorBoundary fallback={<ErrorFallback />}>
-      <App />
-      <Analytics />
-    </SentryErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <SentryErrorBoundary fallback={<ErrorFallback />}>
+        <App />
+        <Analytics />
+      </SentryErrorBoundary>
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
   </React.StrictMode>
 );

@@ -26,7 +26,7 @@
   /* Typography */
   --font-sans: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-mono: 'Fira Code', monospace;
-  
+
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
@@ -47,7 +47,8 @@
 }
 
 /* Base Theme (Dark - Default) */
-:root, [data-theme="dark"] {
+:root,
+[data-theme="dark"] {
   /* Backgrounds */
   --bg-default: #0E1121;
   --bg-subtle: #161b33;
@@ -66,6 +67,8 @@
   --primary-light: #d9ff4d;
   --primary-glow: rgba(204, 255, 0, 0.4);
   --primary-text: #000000;
+  --primary: var(--primary-main);
+  /* Alias for legacy support */
 
   /* Borders */
   --border-default: rgba(255, 255, 255, 0.08);
@@ -79,7 +82,8 @@
 }
 
 /* Light Theme */
-[data-theme="light"] {
+[data-theme="light"],
+.light-mode {
   /* Backgrounds */
   --bg-default: #F8FAFC;
   --bg-subtle: #F1F5F9;
@@ -92,16 +96,20 @@
   --text-tertiary: #94A3B8;
   --text-inverse: #FFFFFF;
 
-  /* Brand / Primary (Inverted for Light Mode readability) */
-  --primary-main: #1e293b;
-  --primary-hover: #0f172a;
-  --primary-light: #334155;
-  --primary-glow: rgba(30, 41, 59, 0.2);
-  --primary-text: #FFFFFF;
+  /* Brand / Primary - Keeping Neon Identity in Light Mode */
+  --primary-main: #ccff00;
+  --primary-hover: #b3e600;
+  --primary-light: #d9ff4d;
+  --primary-glow: rgba(204, 255, 0, 0.2);
+  --primary-text: #0E1121;
+  --primary: var(--primary-main);
+
+  /* Special Background for Light mode elements using primary */
+  --primary-bg-alt: #0F172A;
 
   /* Borders */
   --border-default: #E2E8F0;
-  --border-active: #1e293b;
+  --border-active: #0F172A;
 
   /* Status */
   --status-success: #16a34a;

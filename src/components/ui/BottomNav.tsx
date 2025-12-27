@@ -1,4 +1,4 @@
-
+import { motion } from 'framer-motion';
 import { triggerHaptic } from '../../utils/haptics';
 
 export const BottomNav = ({ children, className = '' }: { children: React.ReactNode, className?: string }) => {
@@ -24,21 +24,39 @@ export const BottomNavItem = ({
 }) => {
     return (
         <button
-            onClick={(e) => {
+            onClick={() => {
                 triggerHaptic('light');
                 onClick?.();
             }}
-            className={`flex flex-col items-center gap-1 p-2 transition-all active:scale-95 relative group ${active ? 'text-[var(--primary-main)]' : 'text-[var(--text-secondary)]'}`}
+            className={`flex flex-col items-center gap-1 p-2 transition-all relative group flex-1 ${active ? 'text-[var(--primary-main)]' : 'text-[var(--text-secondary)]'}`}
         >
-            <div className={`transition-colors duration-300 ${active ? 'fill-current' : ''}`}>
+            <motion.div
+                animate={active ? { y: -2, scale: 1.1 } : { y: 0, scale: 1 }}
+                className={`transition-colors duration-300 ${active ? 'fill-current' : ''}`}
+            >
                 {icon}
-            </div>
-            <span className="text-[9px] font-black uppercase tracking-wider group-hover:text-[var(--text-primary)] transition-colors">{label}</span>
+            </motion.div>
+
+            <span className={`text-[9px] font-black uppercase tracking-wider transition-colors ${active ? 'text-[var(--primary-main)] opacity-100' : 'text-[var(--text-tertiary)] opacity-70 group-hover:opacity-100'}`}>
+                {label}
+            </span>
+
+            {active && (
+                <motion.div
+                    layoutId="activeTabIndicator"
+                    className="absolute -top-2 w-8 h-1 bg-[var(--primary-main)] rounded-full shadow-[0_0_10px_var(--primary-main)]"
+                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                />
+            )}
 
             {badge ? (
-                <span className="absolute top-1 right-1 w-4 h-4 bg-[var(--status-error)] text-white rounded-full text-[9px] flex items-center justify-center font-bold">
+                <motion.span
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute top-1 right-1/4 w-4 h-4 bg-[var(--status-error)] text-white rounded-full text-[9px] flex items-center justify-center font-bold border-2 border-[var(--bg-card)]"
+                >
                     {badge > 9 ? '9+' : badge}
-                </span>
+                </motion.span>
             ) : null}
         </button>
     );

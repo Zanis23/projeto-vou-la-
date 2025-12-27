@@ -1,5 +1,5 @@
-
-import { User, Place, FeedItem, Chat, StaffCall, Message } from '../types';
+import { openDB, IDBPDatabase } from 'idb';
+import { User, Place, FeedItem, Chat, StaffCall } from '../types';
 import { MOCK_USER, MOCK_PLACES, MOCK_FEED, MOCK_CHATS } from '../constants';
 import { supabase } from '../services/supabase';
 
@@ -10,21 +10,44 @@ const KEYS = {
   CHATS: 'voula_chats_v3',
 };
 
-const saveLocal = (key: string, data: any) => {
+const DB_NAME = 'voula_db';
+const DB_VERSION = 1;
+
+const initDB = async (): Promise<IDBPDatabase> => {
+  return openDB(DB_NAME, DB_VERSION, {
+    upgrade(db) {
+      if (!db.objectStoreNames.contains('keyval')) {
+        db.createObjectStore('keyval');
+      }
+    },
+  });
+};
+
+const saveLocal = async (key: string, data: any) => {
   try {
-    localStorage.setItem(key, JSON.stringify(data));
+    const db = await initDB();
+    await db.put('keyval', data, key);
   } catch (e) {
-    console.error("Erro ao salvar localmente", e);
+    console.error("Erro ao salvar no IndexedDB", e);
   }
 };
 
-const getLocal = (key: string, fallback: any) => {
-  const item = localStorage.getItem(key);
-  if (!item) return fallback;
+const getLocal = async (key: string, fallback: any) => {
   try {
-    return JSON.parse(item);
+    const db = await initDB();
+    const val = await db.get('keyval', key);
+    return val !== undefined ? val : fallback;
   } catch (e) {
     return fallback;
+  }
+};
+
+const removeLocal = async (key: string) => {
+  try {
+    const db = await initDB();
+    await db.delete('keyval', key);
+  } catch (e) {
+    console.error("Erro ao remover do IndexedDB", e);
   }
 };
 
@@ -99,7 +122,7 @@ export const db = {
             bio: profile.bio,
             history: profile.history || []
           };
-          saveLocal(KEYS.USER, user);
+          await saveLocal(KEYS.USER, user);
           return user;
         }
       }
@@ -154,7 +177,7 @@ export const db = {
       // Allow legacy admin bypass locally
       if (email.toLowerCase() === 'admin' && password === '123') {
         const admin = { ...MOCK_USER, id: 'u1', name: 'Gabriel Admin', ownedPlaceId: '1' };
-        saveLocal(KEYS.USER, admin);
+        await saveLocal(KEYS.USER, admin);
         localStorage.setItem('voula_logged_in', 'true');
         return { success: true, user: admin };
       }
@@ -194,7 +217,7 @@ export const db = {
             bio: profile.bio,
             history: profile.history || []
           };
-          saveLocal(KEYS.USER, user);
+          await saveLocal(KEYS.USER, user);
           localStorage.setItem('voula_logged_in', 'true');
           return { success: true, user };
         } else {
@@ -226,7 +249,7 @@ export const db = {
               ownedPlaceId: newProfile.owned_place_id,
               badges: metadata.badges || []
             };
-            saveLocal(KEYS.USER, user);
+            await saveLocal(KEYS.USER, user);
             localStorage.setItem('voula_logged_in', 'true');
             return { success: true, user };
           }
@@ -242,7 +265,7 @@ export const db = {
 
     logout: async () => {
       try { await supabase.auth.signOut(); } catch (e) { }
-      localStorage.removeItem(KEYS.USER);
+      await removeLocal(KEYS.USER);
       localStorage.removeItem('voula_logged_in');
     }
   },
@@ -251,10 +274,10 @@ export const db = {
     get: async (): Promise<User> => {
       const sessionUser = await db.auth.getSession();
       if (sessionUser) return sessionUser;
-      return getLocal(KEYS.USER, MOCK_USER);
+      return await getLocal(KEYS.USER, MOCK_USER);
     },
     save: async (user: User): Promise<boolean> => {
-      saveLocal(KEYS.USER, user);
+      await saveLocal(KEYS.USER, user);
       try {
         // Use UPSERT instead of UPDATE for robustness
         const { error } = await supabase.from('profiles').upsert({
@@ -286,7 +309,7 @@ export const db = {
         const { data, error } = await supabase.from('places').select('*').order('people_count', { ascending: false });
         if (error) throw error;
         if (data) {
-          saveLocal(KEYS.PLACES, data);
+          await saveLocal(KEYS.PLACES, data);
           return data.map(d => ({
             ...d,
             peopleCount: d.people_count,
@@ -308,7 +331,7 @@ export const db = {
           }));
         }
       } catch (e) { }
-      return getLocal(KEYS.PLACES, MOCK_PLACES);
+      return await getLocal(KEYS.PLACES, MOCK_PLACES);
     },
     add: async (place: Place) => {
       try {
@@ -342,7 +365,7 @@ export const db = {
           owner_id: place.ownerId
         };
 
-        const { data } = await supabase.from('places').insert([dbPlace]).select().single();
+        await supabase.from('places').insert([dbPlace]).select().single();
         return place;
       } catch (e) { }
       return place;
@@ -394,7 +417,7 @@ export const db = {
           }));
         }
       } catch (e) { }
-      return getLocal(KEYS.FEED, MOCK_FEED);
+      return await getLocal(KEYS.FEED, MOCK_FEED);
     },
     add: async (item: FeedItem) => {
       try {
@@ -435,10 +458,10 @@ export const db = {
           }
         }
       } catch (e) { }
-      return getLocal(KEYS.CHATS, MOCK_CHATS);
+      return await getLocal(KEYS.CHATS, MOCK_CHATS);
     },
     save: async (chats: Chat[]) => {
-      saveLocal(KEYS.CHATS, chats);
+      await saveLocal(KEYS.CHATS, chats);
     },
     add: async (chat: Chat) => {
       try {

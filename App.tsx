@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 
 // Lazy load pages for better performance
 const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home })));
@@ -12,19 +12,24 @@ import { Ranking } from './pages/Ranking';
 import { Store } from './pages/Store';
 import { Challenges } from './pages/Challenges';
 import { BusinessRegistration } from './pages/BusinessRegistration';
-import { Tab, Place, User, FeedItem, FeedCheckIn, PlaceType } from './types';
+import { Tab, Place, User, PlaceType } from './types';
 import { Map, List, User as UserIcon, MessageCircle, LayoutGrid, X, Loader2 } from 'lucide-react';
 import { PlaceCard } from './components/PlaceCard';
 import { MoreOptionsModal } from './components/MoreOptionsModal';
 import { BusinessDashboard } from './components/BusinessDashboard';
 import { PWAUpdateNotification } from './components/PWAUpdateNotification';
-import { MOCK_USER } from './constants';
 import { db } from './utils/storage';
-import { supabase } from './services/supabase';
 
 // UI Components
 import { BottomNav, BottomNavItem } from './src/components/ui/BottomNav';
 import { ContextualOnboarding } from './src/components/ContextualOnboarding';
+
+// Custom Hooks
+import { useAuth } from './hooks/useAuth';
+import { useRealtimeData } from './hooks/useRealtimeData';
+import { usePlaces } from './hooks/usePlaces';
+import { useFeed } from './hooks/useFeed';
+import { useCheckIn } from './hooks/useCheckIn';
 
 // Loading component for lazy-loaded pages
 const PageLoader = () => (
@@ -43,22 +48,35 @@ const PageLoader = () => (
   </div>
 );
 
-type AppState = 'LOADING' | 'LOGIN' | 'MAIN' | 'BUSINESS_REG';
+import { AnimatePresence, motion } from 'framer-motion';
+import { fadeIn } from './src/styles/animations';
 
 export default function App() {
-  const [appState, setAppState] = useState<AppState>('LOADING');
+  const {
+    appState,
+    setAppState,
+    currentUser,
+    setCurrentUser,
+    login,
+    logout,
+    loadUserData
+  } = useAuth();
+
+  const { loadInitialData } = useRealtimeData(appState, currentUser);
+  const { data: places = [] } = usePlaces();
+  const { data: feed = [] } = useFeed();
+  const checkInMutation = useCheckIn(currentUser);
+
   const [activeTab, setActiveTab] = useState<Tab>(Tab.HOME);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [homeFilter, setHomeFilter] = useState<PlaceType | 'ALL' | 'SAVED'>('ALL');
 
-  const [currentUser, setCurrentUser] = useState<User>(MOCK_USER);
-  const [places, setPlaces] = useState<Place[]>([]);
-  const [feed, setFeed] = useState<FeedItem[]>([]);
-
   // Apply theme to document element
   useEffect(() => {
-    if (currentUser.appMode === 'light') {
+    const theme = currentUser.appMode || 'dark';
+    document.documentElement.setAttribute('data-theme', theme);
+    if (theme === 'light') {
       document.documentElement.classList.add('light-mode');
     } else {
       document.documentElement.classList.remove('light-mode');
@@ -67,24 +85,18 @@ export default function App() {
 
   // Lógica para lidar com botão Voltar no Android (Nativo)
   useEffect(() => {
-    const handleBackButton = (e: PopStateEvent) => {
-      // Logic for modal closing on back
+    const handlePopState = () => {
       if (selectedPlace) {
         setSelectedPlace(null);
-        return;
-      }
-      if (showMoreMenu) {
+      } else if (showMoreMenu) {
         setShowMoreMenu(false);
-        return;
-      }
-      if (activeTab !== Tab.HOME) {
+      } else if (activeTab !== Tab.HOME) {
         setActiveTab(Tab.HOME);
-        return;
       }
     };
 
-    window.addEventListener('popstate', handleBackButton);
-    return () => window.removeEventListener('popstate', handleBackButton);
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, [selectedPlace, showMoreMenu, activeTab]);
 
   // Push state when opening modals to enable Back Button
@@ -100,144 +112,34 @@ export default function App() {
     }
   }, [showMoreMenu]);
 
-  const loadData = useCallback(async (optimisticUser?: User) => {
-    const [fetchedUser, allPlaces, allFeed] = await Promise.all([
-      optimisticUser ? Promise.resolve(optimisticUser) : db.user.get(),
-      db.places.get(),
-      db.feed.get()
-    ]);
-
-    const finalUser = optimisticUser || fetchedUser;
-
-    setCurrentUser(finalUser);
-    setPlaces(allPlaces);
-    setFeed(allFeed);
-
-    if (allPlaces.length === 0) {
-      await db.seed();
-      const freshPlaces = await db.places.get();
-      setPlaces(freshPlaces);
-    }
-
-    return finalUser;
+  // Handle Offline State
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
-  useEffect(() => {
-    const init = async () => {
-      const sessionUser = await db.auth.getSession();
-      if (sessionUser) {
-        setCurrentUser(sessionUser);
-        await loadData();
-        setAppState('MAIN');
-      } else {
-        const isLogged = localStorage.getItem('voula_logged_in');
-        if (isLogged) {
-          await loadData();
-          setAppState('MAIN');
-        } else {
-          setAppState('LOGIN');
-        }
-      }
-    };
-    init();
-  }, [loadData]);
-
-  // Realtime Subscriptions
-  useEffect(() => {
-    if (appState !== 'MAIN') return;
-
-    const channel = supabase
-      .channel('db-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'places' }, (payload) => {
-        if (payload.eventType === 'INSERT') {
-          setPlaces(prev => [payload.new as Place, ...prev]);
-        } else if (payload.eventType === 'UPDATE') {
-          setPlaces(prev => prev.map(p => p.id === payload.new.id ? { ...p, ...payload.new } : p));
-        } else if (payload.eventType === 'DELETE') {
-          setPlaces(prev => prev.filter(p => p.id !== payload.old.id));
-        }
-      })
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'feed' }, (payload) => {
-        setFeed(prev => [payload.new as FeedItem, ...prev]);
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'chats' }, (payload) => {
-        const chat = payload.new as any;
-        if (chat && currentUser && (chat.user_id === currentUser.id || chat.target_id === currentUser.id)) {
-          window.dispatchEvent(new CustomEvent('voula_chat_update'));
-        }
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'places' }, (payload) => {
-        const d = payload.new as any;
-        if (d && d.id) {
-          setPlaces(prev => prev.map(p => {
-            if (p.id !== d.id) return p;
-            return { ...p, ...d };
-          }));
-        }
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [appState, currentUser]);
-
-  const handleLogin = (name: string, isNewUser: boolean, user?: User) => {
+  const handleLogin = (_name: string, _isNewUser: boolean, user?: User) => {
     if (user) {
-      setCurrentUser(user);
-      loadData();
-      setAppState('MAIN');
+      login(user);
+      loadInitialData();
     }
-  };
-
-  const handleLogout = async () => {
-    await db.auth.logout();
-    setAppState('LOGIN');
-    setActiveTab(Tab.HOME);
-    setCurrentUser(MOCK_USER);
   };
 
   const handleCheckIn = async (placeId: string) => {
     const target = places.find(p => p.id === placeId);
     if (!target) return;
 
-    const xp = 50;
-    const checkin: FeedCheckIn = {
-      id: Date.now().toString(),
-      placeId,
-      placeName: target.name,
-      timestamp: new Date().toISOString(),
-      xpEarned: xp,
-      snapshotImageUrl: target.imageUrl
-    };
-
-    const updatedUser = {
-      ...currentUser,
-      points: currentUser.points + xp,
-      history: [checkin, ...currentUser.history]
-    };
-
-    setCurrentUser(updatedUser);
-    await db.user.save(updatedUser);
-
-    const newItem: FeedItem = {
-      id: `f_${Date.now()}`,
-      userId: currentUser.id,
-      userName: currentUser.name,
-      userAvatar: currentUser.avatar,
-      action: 'chegou no',
-      placeName: target.name,
-      timeAgo: 'Agora',
-      liked: false,
-      likesCount: 0,
-      commentsCount: 0
-    };
-
-    await db.feed.add(newItem);
-    await db.places.update({
-      id: placeId,
-      peopleCount: target.peopleCount + 1,
-      capacityPercentage: Math.min(100, target.capacityPercentage + 2)
+    checkInMutation.mutate({ placeId, target }, {
+      onSuccess: ({ updatedUser }) => {
+        setCurrentUser(updatedUser);
+      }
     });
   };
 
@@ -257,7 +159,7 @@ export default function App() {
       onBack={() => setAppState('LOGIN')}
       onRegisterSuccess={async (u) => {
         setCurrentUser(u);
-        await loadData(u);
+        await loadUserData(u);
         setActiveTab(Tab.DASHBOARD);
         setAppState('MAIN');
       }}
@@ -271,75 +173,117 @@ export default function App() {
         <div className="flex flex-col h-[100dvh] bg-[var(--bg-default)] text-[var(--text-primary)] overflow-hidden relative transition-colors duration-500">
 
           <main className="flex-1 overflow-hidden relative">
-            <div key={activeTab} className="h-full scroll-container animate-fade-in">
-              {activeTab === Tab.HOME && (
-                <Home
-                  currentUser={currentUser}
-                  places={places}
-                  onPlaceSelect={setSelectedPlace}
-                  notificationCount={0}
-                  onOpenNotifications={() => { }}
-                  savedPlaces={currentUser.savedPlaces || []}
-                  initialFilter={homeFilter}
-                  onToggleSave={(id) => {
-                    const next = currentUser.savedPlaces.includes(id) ? currentUser.savedPlaces.filter(x => x !== id) : [...currentUser.savedPlaces, id];
-                    const u = { ...currentUser, savedPlaces: next };
-                    setCurrentUser(u);
-                    db.user.save(u);
-                  }}
-                />
+            <AnimatePresence>
+              {!isOnline && (
+                <motion.div
+                  initial={{ y: -50 }}
+                  animate={{ y: 0 }}
+                  exit={{ y: -50 }}
+                  className="absolute top-0 left-0 right-0 z-[120] bg-orange-500 py-2 px-4 flex items-center justify-center gap-2"
+                >
+                  <span className="text-[10px] font-black uppercase text-white tracking-widest flex items-center gap-2">
+                    <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                    Você está offline - Usando dados locais
+                  </span>
+                </motion.div>
               )}
-              {activeTab === Tab.RADAR && <Radar places={places} onPlaceSelect={setSelectedPlace} />}
-              {activeTab === Tab.AI_FINDER && <AiConcierge />}
-              {activeTab === Tab.SOCIAL && <Social feed={feed} onToggleLike={async (id) => { /* update */ }} onComment={(id) => { /* logic */ }} onPlaceSelect={setSelectedPlace} places={places} />}
-              {activeTab === Tab.PROFILE && <Profile currentUser={currentUser} places={places} onLogout={handleLogout} onUpdateProfile={(upd) => { const u = { ...currentUser, ...upd }; setCurrentUser(u); db.user.save(u); }} />}
-              {activeTab === Tab.RANKING && <Ranking currentUser={currentUser} />}
-              {activeTab === Tab.CHALLENGES && <Challenges />}
-              {activeTab === Tab.STORE && <Store currentUser={currentUser} onPurchase={(cost) => { const u = { ...currentUser, points: currentUser.points - cost }; setCurrentUser(u); db.user.save(u); }} />}
-              {activeTab === Tab.DASHBOARD && currentUser.ownedPlaceId && (
-                <BusinessDashboard
-                  placeId={currentUser.ownedPlaceId}
-                  placeData={places.find(p => p.id === currentUser.ownedPlaceId)}
-                />
-              )}
+            </AnimatePresence>
 
-              {/* Contextual Onboarding Overlay */}
-              <ContextualOnboarding />
-            </div>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                className="h-full scroll-container"
+                variants={fadeIn}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+              >
+                {activeTab === Tab.HOME && (
+                  <Home
+                    currentUser={currentUser}
+                    places={places}
+                    onPlaceSelect={setSelectedPlace}
+                    notificationCount={0}
+                    onOpenNotifications={() => { }}
+                    savedPlaces={currentUser.savedPlaces || []}
+                    initialFilter={homeFilter}
+                    onToggleSave={(id) => {
+                      const next = currentUser.savedPlaces.includes(id) ? currentUser.savedPlaces.filter(x => x !== id) : [...currentUser.savedPlaces, id];
+                      const u = { ...currentUser, savedPlaces: next };
+                      setCurrentUser(u);
+                      db.user.save(u);
+                    }}
+                  />
+                )}
+                {activeTab === Tab.RADAR && <Radar places={places} onPlaceSelect={setSelectedPlace} />}
+                {activeTab === Tab.AI_FINDER && <AiConcierge />}
+                {activeTab === Tab.SOCIAL && <Social feed={feed} onToggleLike={async () => { /* update */ }} onComment={() => { /* logic */ }} onPlaceSelect={setSelectedPlace} places={places} />}
+                {activeTab === Tab.PROFILE && <Profile currentUser={currentUser} places={places} onLogout={logout} onUpdateProfile={(upd) => { const u = { ...currentUser, ...upd }; setCurrentUser(u); db.user.save(u); }} />}
+                {activeTab === Tab.RANKING && <Ranking currentUser={currentUser} />}
+                {activeTab === Tab.CHALLENGES && <Challenges />}
+                {activeTab === Tab.STORE && <Store currentUser={currentUser} onPurchase={(cost) => { const u = { ...currentUser, points: currentUser.points - cost }; setCurrentUser(u); db.user.save(u); }} />}
+                {activeTab === Tab.DASHBOARD && currentUser.ownedPlaceId && (
+                  <BusinessDashboard
+                    placeId={currentUser.ownedPlaceId}
+                    placeData={places.find(p => p.id === currentUser.ownedPlaceId)}
+                  />
+                )}
+
+                {/* Contextual Onboarding Overlay */}
+                <ContextualOnboarding />
+              </motion.div>
+            </AnimatePresence>
           </main>
 
-          {selectedPlace && (
-            <div className="fixed inset-0 z-[100] bg-[var(--bg-default)] animate-slide-up flex flex-col">
-              <div className="absolute top-safe left-4 z-50 pt-1">
-                <button onClick={() => { window.history.back(); }} className="p-2.5 rounded-full bg-black/40 text-white backdrop-blur-lg border border-white/10 active:scale-90 shadow-xl">
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
+          <AnimatePresence>
+            {selectedPlace && (
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                className="fixed inset-0 z-[100] bg-[var(--bg-default)] flex flex-col"
+              >
+                <div className="absolute top-safe left-4 z-50 pt-1">
+                  <button onClick={() => { window.history.back(); }} className="p-2.5 rounded-full bg-black/40 text-white backdrop-blur-lg border border-white/10 active:scale-90 shadow-xl">
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
 
-              <PlaceCard place={selectedPlace} onCheckIn={handleCheckIn} expanded={true} isCheckedIn={currentUser.history.some(h => h.placeId === selectedPlace.id)} isSaved={currentUser.savedPlaces?.includes(selectedPlace.id)} />
-            </div>
-          )}
+                <PlaceCard place={selectedPlace} onCheckIn={handleCheckIn} expanded={true} isCheckedIn={currentUser.history.some(h => h.placeId === selectedPlace.id)} isSaved={currentUser.savedPlaces?.includes(selectedPlace.id)} />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          {showMoreMenu && (
-            <MoreOptionsModal
-              currentUser={currentUser}
-              onClose={() => setShowMoreMenu(false)}
-              onNavigate={(dest) => {
-                if (dest === Tab.EVENTS) {
-                  setHomeFilter(PlaceType.EVENTO);
-                  setActiveTab(Tab.HOME);
-                } else {
-                  setHomeFilter('ALL');
-                  setActiveTab(dest as Tab);
-                }
-                setShowMoreMenu(false);
-              }}
-              onOpenSettings={() => {
-                setShowMoreMenu(false);
-                setActiveTab(Tab.PROFILE);
-              }}
-            />
-          )}
+          <AnimatePresence>
+            {showMoreMenu && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="fixed inset-0 z-[110]"
+              >
+                <MoreOptionsModal
+                  currentUser={currentUser}
+                  onClose={() => setShowMoreMenu(false)}
+                  onNavigate={(dest) => {
+                    if (dest === Tab.EVENTS) {
+                      setHomeFilter(PlaceType.EVENTO);
+                      setActiveTab(Tab.HOME);
+                    } else {
+                      setHomeFilter('ALL');
+                      setActiveTab(dest as Tab);
+                    }
+                    setShowMoreMenu(false);
+                  }}
+                  onOpenSettings={() => {
+                    setShowMoreMenu(false);
+                    setActiveTab(Tab.PROFILE);
+                  }}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <BottomNav>
             <BottomNavItem

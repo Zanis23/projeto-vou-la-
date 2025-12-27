@@ -13,10 +13,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { prompt, history = [] } = req.body;
+    const { action, params } = req.body;
+
+    if (!action) {
+      return res.status(400).json({ error: 'Action is required' });
+    }
+
+    let prompt = '';
+
+    // Mapear ações para prompts específicos ou lógica
+    switch (action) {
+      case 'getRecommendation':
+        prompt = `Com base na busca do usuário: "${params.userQuery}", recomende os melhores lugares em Dourados-MS. Responda em formato JSON com um campo "text" contendo a recomendação amigável.`;
+        break;
+      case 'getBusinessInsights':
+        prompt = `Analise os seguintes dados para o lugar "${params.placeName}": ${JSON.stringify(params.stats)}. Forneça insights estratégicos para o dono do negócio em formato JSON com campo "text".`;
+        break;
+      case 'generateIcebreaker':
+        prompt = `Gere um "quebra-gelo" criativo para iniciar uma conversa com ${params.targetName} no lugar ${params.placeName}. Interesses: ${params.targetTags.join(', ')}. Responda em JSON com campo "text".`;
+        break;
+      default:
+        prompt = params.prompt || '';
+    }
 
     if (!prompt) {
-      return res.status(400).json({ error: 'Prompt is required' });
+      return res.status(400).json({ error: 'Could not determine prompt from action/params' });
     }
 
     // Chamada para a API do Gemini
@@ -27,9 +48,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
       body: JSON.stringify({
         contents: [
-          ...history,
           { parts: [{ text: prompt }] }
-        ]
+        ],
+        generationConfig: {
+          response_mime_type: "application/json",
+        }
       })
     });
 
@@ -40,7 +63,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(response.status).json(data);
     }
 
-    return res.status(200).json(data);
+    // Extrair o conteúdo JSON da resposta do Gemini
+    const aiResponseText = data.candidates[0].content.parts[0].text;
+    const aiResponseJson = JSON.parse(aiResponseText);
+
+    return res.status(200).json(aiResponseJson);
   } catch (error) {
     console.error('Proxy error:', error);
     return res.status(500).json({ error: 'Internal server error' });

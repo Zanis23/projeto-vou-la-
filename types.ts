@@ -26,6 +26,8 @@ export enum Tab {
   DASHBOARD = 'DASHBOARD'
 }
 
+export type AppState = 'LOADING' | 'LOGIN' | 'MAIN' | 'BUSINESS_REG';
+
 export interface MenuItem {
   id: string;
   name: string;
