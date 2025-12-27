@@ -45,11 +45,14 @@ export function useCheckIn(currentUser: User | null) {
             await db.feed.add(newItem);
 
             // Update place stats
-            await db.places.update({
-                id: placeId,
-                peopleCount: target.peopleCount + 1,
-                capacityPercentage: Math.min(100, target.capacityPercentage + 2)
-            });
+            await Promise.all([
+                db.places.update({
+                    id: placeId,
+                    peopleCount: target.peopleCount + 1,
+                    capacityPercentage: Math.min(100, target.capacityPercentage + 2)
+                }),
+                db.metrics.logCheckIn(placeId, currentUser.id)
+            ]);
 
             return { updatedUser, newItem };
         },

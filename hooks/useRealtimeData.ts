@@ -31,12 +31,26 @@ export function useRealtimeData(appState: string, currentUser: User | null) {
         const channel = supabase
             .channel('db-changes')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'places' }, (payload) => {
-                if (payload.eventType === 'INSERT') {
-                    queryClient.setQueryData(['places'], (old: Place[] | undefined) => [payload.new as Place, ...(old || [])]);
-                } else if (payload.eventType === 'UPDATE') {
-                    queryClient.setQueryData(['places'], (old: Place[] | undefined) =>
-                        (old || []).map(p => p.id === payload.new.id ? { ...p, ...payload.new } : p)
-                    );
+                if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+                    const d = payload.new as any;
+                    const mappedPlace: Partial<Place> = {
+                        id: d.id,
+                        name: d.name,
+                        type: d.type,
+                        peopleCount: d.people_count,
+                        capacityPercentage: d.capacity_percentage,
+                        imageUrl: d.image_url,
+                        isTrending: d.is_trending,
+                        activeCalls: d.active_calls,
+                        currentMusic: d.current_music,
+                        sentimentScore: d.sentiment_score
+                    };
+
+                    queryClient.setQueryData(['places'], (old: Place[] | undefined) => {
+                        if (!old) return [mappedPlace as Place];
+                        if (payload.eventType === 'INSERT') return [mappedPlace as Place, ...old];
+                        return old.map(p => p.id === d.id ? { ...p, ...mappedPlace } : p);
+                    });
                 } else if (payload.eventType === 'DELETE') {
                     queryClient.setQueryData(['places'], (old: Place[] | undefined) =>
                         (old || []).filter(p => p.id !== payload.old.id)
@@ -44,12 +58,27 @@ export function useRealtimeData(appState: string, currentUser: User | null) {
                 }
             })
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'feed' }, (payload) => {
-                queryClient.setQueryData(['feed'], (old: FeedItem[] | undefined) => [payload.new as FeedItem, ...(old || [])]);
+                const f = payload.new as any;
+                const mappedFeed: FeedItem = {
+                    id: f.id,
+                    userId: f.user_id,
+                    userName: f.user_name,
+                    userAvatar: f.user_avatar,
+                    action: f.action,
+                    placeName: f.place_name,
+                    likesCount: f.likes_count,
+                    commentsCount: f.comments_count,
+                    timeAgo: 'Agora pouco',
+                    liked: false
+                };
+                queryClient.setQueryData(['feed'], (old: FeedItem[] | undefined) => [mappedFeed, ...(old || [])]);
             })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'chats' }, (payload: any) => {
                 const chat = payload.new;
                 if (chat && (chat.user_id === currentUser.id || chat.target_id === currentUser.id)) {
-                    window.dispatchEvent(new CustomEvent('voula_chat_update'));
+                    // Update chats list cache
+                    queryClient.invalidateQueries({ queryKey: ['chats'] });
+                    window.dispatchEvent(new CustomEvent('voula_chat_update', { detail: chat }));
                 }
             })
             .subscribe();

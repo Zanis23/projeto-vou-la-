@@ -1,13 +1,13 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MOCK_FRIEND_REQUESTS, MOCK_USER, MOCK_SUGGESTIONS, MOCK_PLACES, FALLBACK_IMAGE } from '../constants';
+
 import { MessageSquare, Heart, MapPin, Search, ChevronLeft, Send, CheckCircle2, UserPlus, X, Camera, Mic, Share2, Plus, ShieldAlert, MoreVertical } from 'lucide-react';
 import { Chat, FeedItem, Message, Place } from '../types';
 import { useHaptic } from '../hooks/useHaptic';
 import { AiStudio } from '../components/AiStudio';
 import { db } from '../utils/storage';
 import { User } from '../types';
-import { fadeIn, slideUp, slideInRight, scaleIn, springTransition } from '../src/styles/animations';
+import { fadeIn, slideUp, slideInRight, scaleIn } from '../src/styles/animations';
 
 type ViewMode = 'feed' | 'chats' | 'plans' | 'chat_detail';
 
@@ -19,7 +19,7 @@ interface SocialProps {
   places: Place[];
 }
 
-export const Social: React.FC<SocialProps> = ({ feed, onToggleLike, onComment, onPlaceSelect, places }) => {
+export const Social: React.FC<SocialProps> = ({ feed, onToggleLike, onPlaceSelect, places }) => {
   const { trigger } = useHaptic();
   const [view, setView] = useState<ViewMode>('feed');
   const [allChats, setAllChats] = useState<Chat[]>([]);
@@ -43,12 +43,28 @@ export const Social: React.FC<SocialProps> = ({ feed, onToggleLike, onComment, o
   }, [loadChats]);
 
   useEffect(() => {
-    const handleRealtimeUpdate = () => {
-      loadChats();
+    const handleRealtimeUpdate = (e: any) => {
+      const updatedChat = e.detail;
+      if (updatedChat) {
+        setAllChats(prev => {
+          const exists = prev.some(c => c.id === updatedChat.id);
+          if (exists) {
+            return prev.map(c => c.id === updatedChat.id ? {
+              ...c,
+              lastMessage: updatedChat.last_message,
+              messages: updatedChat.messages,
+              unreadCount: updatedChat.unread_count
+            } : c);
+          }
+          return [updatedChat, ...prev];
+        });
+      } else {
+        loadChats();
+      }
       trigger('light');
     };
-    window.addEventListener('voula_chat_update', handleRealtimeUpdate);
-    return () => window.removeEventListener('voula_chat_update', handleRealtimeUpdate);
+    window.addEventListener('voula_chat_update', handleRealtimeUpdate as any);
+    return () => window.removeEventListener('voula_chat_update', handleRealtimeUpdate as any);
   }, [loadChats, trigger]);
 
   const activeChat = allChats.find(c => c.id === activeChatId) || null;

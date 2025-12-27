@@ -1,24 +1,23 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AddMenuItemModal } from './AddMenuItemModal';
-import { Place, MenuItem, StaffCall, BusinessEvent, FlashPromo, CrowdInsight } from '../types';
+import { Place, MenuItem, StaffCall } from '../types';
 import { db } from '../utils/storage';
 import { useHaptic } from '../hooks/useHaptic';
 import { getBusinessInsights } from '../services/geminiService';
-import { fadeIn, slideUp, scaleIn, springTransition } from '../src/styles/animations';
+import { fadeIn, slideUp, scaleIn } from '../src/styles/animations';
 import {
-    BarChart3, Users, Music, Zap, Settings,
-    Save, BellRing, TrendingUp, ShieldCheck,
-    CheckCircle2, Utensils, Ticket,
+    BarChart3, Users, Zap, Settings,
+    Save, BellRing, TrendingUp,
+    Utensils,
     Sparkles, Plus, ClipboardList,
     Clock, Megaphone, Loader2, X,
-    DollarSign, UsersRound, Activity,
-    Camera, Edit3, Trash2, RefreshCw, HelpCircle, Calendar,
-    ChevronRight, ArrowUpRight, Eye, Layout, ScanLine,
-    Layers, Power, Flame, History, PieChart, ShoppingBag,
-    TrendingDown, Star, Filter, Share2, Disc, Mic2, Heart
+    DollarSign, Activity,
+    Camera, Edit3, Trash2, RefreshCw,
+    Flame, Disc, Heart, Mic2, ScanLine, Layers
 } from 'lucide-react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
+import { QRCodeModule } from './QRCodeModule';
 
 interface BusinessDashboardProps {
     placeId: string;
@@ -39,14 +38,6 @@ export const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ placeId, p
         }
     }, [placeData]);
 
-    const items = place?.menu || [];
-    const menuTotals = useMemo(() => ({
-        food: items.filter(i => i.category === 'food').length,
-        drinks: items.filter(i => i.category === 'drink').length,
-        available: items.filter(i => i.available).length
-    }), [items]);
-
-    const activeCalls = useMemo(() => (place?.activeCalls || []).sort((a, b) => b.timestamp.localeCompare(a.timestamp)), [place]);
 
     const [activeModule, setActiveModule] = useState<AdminModule>('metrics');
 
@@ -58,16 +49,16 @@ export const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ placeId, p
     const [isScanning, setIsScanning] = useState(false);
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingItem, setEditingItem] = useState<MenuItem | undefined>(undefined);
+    const [visitsByHour, setVisitsByHour] = useState<Record<number, number>>({});
 
-    const [insights, setInsights] = useState<CrowdInsight | null>(place?.crowdInsights || null);
+    const [isSaving, setIsSaving] = useState(false);
     const [editForm, setEditForm] = useState<Partial<Place>>({
         name: place?.name || '',
         description: place?.description || '',
         currentMusic: place?.currentMusic || '',
+        openingHours: place?.openingHours || ''
     });
-    const [isSaving, setIsSaving] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const isEditingRef = useRef(false);
 
     useEffect(() => {
         if (place) {
@@ -75,8 +66,12 @@ export const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ placeId, p
                 name: place.name,
                 description: place.description,
                 currentMusic: place.currentMusic,
+                openingHours: place.openingHours
             });
             setCapacity(place.capacityPercentage);
+
+            // Fetch real metrics
+            db.metrics.getVisitsByHour(place.id).then(setVisitsByHour);
         }
     }, [place]);
 
@@ -200,13 +195,20 @@ export const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ placeId, p
         }
     };
 
-    const handleHypeAlert = () => {
+    const handleHypeAlert = async () => {
+        if (!place) return;
         trigger('heavy');
         setIsFiringHype(true);
-        setTimeout(() => {
+
+        try {
+            await db.metrics.broadcastHype(place, "PISTA LOTADA E SOM NO TALO! 🔥");
+            setTimeout(() => {
+                setIsFiringHype(false);
+                alert("HYPE ALERT disparado com sucesso!");
+            }, 1000);
+        } catch (e) {
             setIsFiringHype(false);
-            alert("HYPE ALERT disparado com sucesso!");
-        }, 2000);
+        }
     };
 
     const generateNewInsight = async () => {
@@ -314,45 +316,31 @@ export const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ placeId, p
                             </div>
 
                             <motion.div variants={slideUp} className="bg-[#1F2937] p-6 rounded-[2rem] border border-slate-700 shadow-xl">
-                                <h3 className="text-xs font-black text-white uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
-                                    <PieChart className="w-4 h-4 text-fuchsia-500" /> Perfil do Público
+                                <h3 className="text-xs font-black text-white uppercase tracking-[0.2em] mb-6 flex items-center justify-between">
+                                    <span className="flex items-center gap-2"><BarChart3 className="w-4 h-4 text-fuchsia-500" /> Fluxo de Pessoas</span>
+                                    <span className="text-[9px] text-slate-500">Últimas 24h</span>
                                 </h3>
-                                <div className="flex items-center justify-between mb-6">
-                                    <div className="flex-1 h-32 relative">
-                                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                                            <circle cx="18" cy="18" r="16" fill="none" stroke="#334155" strokeWidth="4" />
-                                            <motion.circle
-                                                initial={{ strokeDasharray: "0 100" }}
-                                                animate={{ strokeDasharray: "55 100" }}
-                                                transition={{ duration: 1.5, ease: "easeOut" }}
-                                                cx="18" cy="18" r="16" fill="none" stroke="#ec4899" strokeWidth="4"
-                                            />
-                                            <motion.circle
-                                                initial={{ strokeDasharray: "0 100", strokeDashoffset: 0 }}
-                                                animate={{ strokeDasharray: "42 100", strokeDashoffset: -55 }}
-                                                transition={{ duration: 1.5, ease: "easeOut", delay: 0.2 }}
-                                                cx="18" cy="18" r="16" fill="none" stroke="#06b6d4" strokeWidth="4"
-                                            />
-                                        </svg>
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                            <span className="text-xl font-black text-white leading-none">24</span>
-                                            <span className="text-[8px] font-bold text-slate-500 uppercase">Anos (Média)</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex-1 space-y-3 pl-6">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-pink-500"></div><span className="text-[10px] text-slate-300 font-bold uppercase">Mulheres</span></div>
-                                            <span className="text-xs font-black text-white">{totals.female}%</span>
-                                        </div>
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-cyan-500"></div><span className="text-[10px] text-slate-300 font-bold uppercase">Homens</span></div>
-                                            <span className="text-xs font-black text-white">{totals.male}%</span>
-                                        </div>
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-slate-500"></div><span className="text-[10px] text-slate-300 font-bold uppercase">Outros</span></div>
-                                            <span className="text-xs font-black text-white">{totals.others}%</span>
-                                        </div>
-                                    </div>
+
+                                <div className="h-40 flex items-end gap-1 px-2 mb-2">
+                                    {Array.from({ length: 24 }).map((_, i) => {
+                                        const hour = (new Date().getHours() - (23 - i) + 24) % 24;
+                                        const count = visitsByHour[hour] || 0;
+                                        const max = Math.max(...Object.values(visitsByHour), 1);
+                                        const height = (count / max) * 100;
+
+                                        return (
+                                            <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
+                                                <div className="w-full relative flex items-end justify-center min-h-[4px]">
+                                                    <motion.div
+                                                        initial={{ height: 0 }}
+                                                        animate={{ height: `${Math.max(4, height)}%` }}
+                                                        className={`w-full rounded-t-sm transition-colors ${count === max ? 'bg-[var(--primary-main)]' : 'bg-slate-700 group-hover:bg-slate-600'}`}
+                                                    />
+                                                </div>
+                                                <span className="text-[7px] font-bold text-slate-600 group-hover:text-slate-400">{hour}h</span>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </motion.div>
 
@@ -491,7 +479,7 @@ export const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ placeId, p
                                         <div className="bg-slate-800 p-6 rounded-[2rem] border border-slate-700 shadow-xl">
                                             <h3 className="text-xs font-black text-white uppercase tracking-widest mb-4 flex items-center gap-2"><Mic2 className="w-4 h-4 text-indigo-400" /> Ao Vivo Agora</h3>
                                             <div className="space-y-4">
-                                                <AdminInput label="Artista / Banda" value={editForm.currentMusic} onChange={v => setEditForm({ ...editForm, currentMusic: v })} />
+                                                <AdminInput label="Artista / Banda" value={editForm.currentMusic} onChange={(v: string) => setEditForm({ ...editForm, currentMusic: v })} />
                                                 <motion.button whileTap={{ scale: 0.98 }} className="w-full py-3 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg">Banner Pro Público</motion.button>
                                             </div>
                                         </div>
@@ -581,6 +569,10 @@ export const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ placeId, p
                                     </motion.button>
                                 </div>
                             </div>
+
+                            <motion.div variants={slideUp} className="mt-8">
+                                <QRCodeModule placeId={place.id} placeName={place.name} />
+                            </motion.div>
                         </motion.div>
                     )}
 
@@ -610,17 +602,17 @@ export const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ placeId, p
                                         const file = e.target.files?.[0];
                                         if (file) {
                                             const reader = new FileReader();
-                                            reader.onloadend = () => setEditForm(prev => ({ ...prev, imageUrl: reader.result as string }));
+                                            reader.onloadend = () => setEditForm((prev: any) => ({ ...prev, imageUrl: reader.result as string }));
                                             reader.readAsDataURL(file);
                                         }
                                     }} />
                                 </motion.div>
 
                                 <motion.div variants={slideUp} className="space-y-4 pt-2">
-                                    <AdminInput label="Nome Fantasia" value={editForm.name} onChange={v => setEditForm({ ...editForm, name: v })} />
-                                    <AdminInput label="Gênero Musical" value={editForm.currentMusic} onChange={v => setEditForm({ ...editForm, currentMusic: v })} />
-                                    <AdminInput label="Horário" value={editForm.openingHours} onChange={v => setEditForm({ ...editForm, openingHours: v })} />
-                                    <AdminInput label="Bio" value={editForm.description} onChange={v => setEditForm({ ...editForm, description: v })} isTextArea />
+                                    <AdminInput label="Nome Fantasia" value={editForm.name} onChange={(v: string) => setEditForm({ ...editForm, name: v })} />
+                                    <AdminInput label="Gênero Musical" value={editForm.currentMusic} onChange={(v: string) => setEditForm({ ...editForm, currentMusic: v })} />
+                                    <AdminInput label="Horário" value={editForm.openingHours} onChange={(v: string) => setEditForm({ ...editForm, openingHours: v })} />
+                                    <AdminInput label="Bio" value={editForm.description} onChange={(v: string) => setEditForm({ ...editForm, description: v })} isTextArea />
                                 </motion.div>
 
                                 <motion.button variants={slideUp} onClick={handleSaveConfig} disabled={isSaving} className="w-full py-5 bg-[var(--primary)] text-black rounded-[1.5rem] font-black uppercase text-xs tracking-[0.25em] shadow-xl active:scale-98 transition-all flex items-center justify-center gap-3 mt-4">
