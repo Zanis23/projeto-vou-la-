@@ -65,8 +65,8 @@ export const ContextualOnboarding = () => {
     const step = STEPS[currentStepIndex];
 
     return (
-        <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-[fadeIn_0.3s_ease-out]">
-            <div className="w-full max-w-sm animate-[slideUp_0.3s_ease-out]">
+        <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+            <div className="w-full max-w-sm animate-slide-up">
                 <Card variant="solid" className="bg-[var(--bg-card)] border-[var(--primary-main)]/30 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
                     <div className="absolute top-4 right-4">
                         <Button variant="ghost" size="icon" onClick={handleComplete} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">

@@ -271,7 +271,7 @@ export default function App() {
         <div className="flex flex-col h-[100dvh] bg-[var(--bg-default)] text-[var(--text-primary)] overflow-hidden relative transition-colors duration-500">
 
           <main className="flex-1 overflow-hidden relative">
-            <div key={activeTab} className="h-full scroll-container">
+            <div key={activeTab} className="h-full scroll-container animate-fade-in">
               {activeTab === Tab.HOME && (
                 <Home
                   currentUser={currentUser}
@@ -309,7 +309,7 @@ export default function App() {
           </main>
 
           {selectedPlace && (
-            <div className="fixed inset-0 z-[100] bg-[var(--bg-default)] animate-[slideUp_0.4s_cubic-bezier(0.16,1,0.3,1)] flex flex-col">
+            <div className="fixed inset-0 z-[100] bg-[var(--bg-default)] animate-slide-up flex flex-col">
               <div className="absolute top-safe left-4 z-50 pt-1">
                 <button onClick={() => { window.history.back(); }} className="p-2.5 rounded-full bg-black/40 text-white backdrop-blur-lg border border-white/10 active:scale-90 shadow-xl">
                   <X className="w-6 h-6" />

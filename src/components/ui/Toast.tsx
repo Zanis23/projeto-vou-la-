@@ -36,7 +36,7 @@ export const Toast = ({
     };
 
     return (
-        <div className={`flex items-center gap-3 p-4 rounded-lg shadow-lg border border-[var(--border-default)] animate-[slideInRight_0.3s_ease-out] min-w-[300px] ${variants[type]}`}>
+        <div className={`flex items-center gap-3 p-4 rounded-lg shadow-lg border border-[var(--border-default)] animate-slide-in-right min-w-[300px] ${variants[type]}`}>
             {icons[type]}
             <p className="flex-1 text-sm font-medium">{message}</p>
             {onClose && (

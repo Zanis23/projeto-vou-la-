@@ -1,0 +1,85 @@
+﻿git : remote: error: GH013: 
+Repository rule violations 
+found for refs/heads/feat/spri
+nt3-performance.        
+No linha:1 caractere:1
++ git push origin 
+feat/sprint3-performance 2>&1 
+| Out-File -FilePath pu ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : 
+    NotSpecified: (remote: e  
+  rror: ...rmance.        :   
+ String) [], RemoteExcepti    
+on
+    + FullyQualifiedErrorId : 
+    NativeCommandError
+ 
+remote: 
+remote: - GITHUB PUSH 
+PROTECTION        
+remote:   ÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇ
+öÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇ
+öÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇ
+öÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇ
+öÔÇöÔÇöÔÇöÔÇö        
+remote:     Resolve the 
+following violations before 
+pushing again        
+remote: 
+remote:     - Push cannot 
+contain secrets        
+remote: 
+remote:             
+remote:      (?) Learn how to 
+resolve a blocked push        
+remote:      https://docs.gith
+ub.com/code-security/secret-sc
+anning/working-with-secret-sca
+nning-and-push-protection/work
+ing-with-push-protection-from-
+the-command-line#resolving-a-b
+locked-push        
+remote:             
+remote:             
+remote:       ÔÇöÔÇö Slack 
+Incoming Webhook URL ÔÇöÔÇöÔÇö
+ÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇö
+ÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇö
+ÔÇö        
+remote:        locations:     
+   
+remote:          - commit: 042
+3534898e46b77f93e43b158ae175fa
+ed47582        
+remote:            path: 
+.sentry/alerts.yml:6        
+remote:          - commit: 042
+3534898e46b77f93e43b158ae175fa
+ed47582        
+remote:            path: 
+.sentry/alerts.yml:11        
+remote:             
+remote:        (?) To push, 
+remove secret from commit(s) 
+or follow this URL to allow 
+the secret.        
+remote:        https://github.
+com/Zanis23/projeto-vou-la-/se
+curity/secret-scanning/unblock
+-secret/37P3iAnmeVcvt4YbP0EudC
+c06IS        
+remote:             
+remote: 
+remote: 
+To https://github.com/Zanis23/
+projeto-vou-la-.git
+ ! [remote rejected] 
+feat/sprint3-performance -> 
+feat/sprint3-performance 
+(push declined due to 
+repository rule violations)
+error: failed to push some 
+refs to 'https://github.com/Za
+nis23/projeto-vou-la-.git'

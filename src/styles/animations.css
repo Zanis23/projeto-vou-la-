@@ -1,0 +1,248 @@
+/* ===========================================
+   KEYFRAME ANIMATIONS
+   =========================================== */
+
+/* Fade Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}
+
+/* Slide Animations */
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Scale Animations */
+@keyframes scaleIn {
+    from {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes scaleOut {
+    from {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    to {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+}
+
+/* Bounce Effect */
+@keyframes bounceIn {
+    0% {
+        transform: scale(0.3);
+        opacity: 0;
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    70% {
+        transform: scale(0.9);
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Float Animation */
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+/* Shimmer/Loading Effect */
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+/* Pulse Glow */
+@keyframes pulseGlow {
+
+    0%,
+    100% {
+        box-shadow: 0 0 20px rgba(204, 255, 0, 0.3);
+    }
+
+    50% {
+        box-shadow: 0 0 40px rgba(204, 255, 0, 0.6);
+    }
+}
+
+/* ===========================================
+   UTILITY CLASSES
+   =========================================== */
+
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+.animate-slide-up {
+    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-slide-down {
+    animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-slide-in-right {
+    animation: slideInRight 0.3s ease-out;
+}
+
+.animate-slide-in-left {
+    animation: slideInLeft 0.3s ease-out;
+}
+
+.animate-scale-in {
+    animation: scaleIn 0.2s ease-out;
+}
+
+.animate-bounce-in {
+    animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.animate-pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite;
+}
+
+.animate-float {
+    animation: float 3s ease-in-out infinite;
+}
+
+/* Transition Utilities */
+.transition-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-fast {
+    transition: all 0.15s ease-out;
+}
+
+.transition-slow {
+    transition: all 0.5s ease-in-out;
+}
+
+/* Hover Effects */
+.hover-lift {
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.hover-grow {
+    transition: transform 0.2s ease-out;
+}
+
+.hover-grow:hover {
+    transform: scale(1.05);
+}
+
+/* Stagger Delays (for list items) */
+.stagger-1 {
+    animation-delay: 0.05s;
+}
+
+.stagger-2 {
+    animation-delay: 0.1s;
+}
+
+.stagger-3 {
+    animation-delay: 0.15s;
+}
+
+.stagger-4 {
+    animation-delay: 0.2s;
+}
+
+.stagger-5 {
+    animation-delay: 0.25s;
+}
