@@ -188,6 +188,7 @@ export interface User {
   status?: string;
   wallet?: Ticket[];
   appMode?: 'light' | 'dark';
+  pushToken?: string;
 }
 
 export interface FeedItem {

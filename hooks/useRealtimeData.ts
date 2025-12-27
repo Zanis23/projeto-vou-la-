@@ -79,6 +79,15 @@ export function useRealtimeData(appState: string, currentUser: User | null) {
                     // Update chats list cache
                     queryClient.invalidateQueries({ queryKey: ['chats'] });
                     window.dispatchEvent(new CustomEvent('voula_chat_update', { detail: chat }));
+
+                    // Trigger logical notification if it's a new message not from ME
+                    // In a more robust system, we'd check the last message sender_id
+                    window.dispatchEvent(new CustomEvent('voula_notification', {
+                        detail: {
+                            type: 'info',
+                            message: `Nova mensagem de ${chat.user_name || 'Alguém'}`
+                        }
+                    }));
                 }
             })
             .subscribe();

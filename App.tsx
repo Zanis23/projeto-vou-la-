@@ -19,6 +19,7 @@ import { MoreOptionsModal } from './components/MoreOptionsModal';
 import { BusinessDashboard } from './components/BusinessDashboard';
 import { PWAUpdateNotification } from './components/PWAUpdateNotification';
 import { db } from './utils/storage';
+import { Toast, ToastProps } from './src/components/ui/Toast';
 
 // UI Components
 import { BottomNav, BottomNavItem } from './src/components/ui/BottomNav';
@@ -30,6 +31,8 @@ import { useRealtimeData } from './hooks/useRealtimeData';
 import { usePlaces } from './hooks/usePlaces';
 import { useFeed } from './hooks/useFeed';
 import { useCheckIn } from './hooks/useCheckIn';
+import { usePushNotifications } from './hooks/usePushNotifications';
+import { useBackgroundGeo } from './hooks/useBackgroundGeo';
 
 // Loading component for lazy-loaded pages
 const PageLoader = () => (
@@ -67,10 +70,15 @@ export default function App() {
   const { data: feed = [] } = useFeed();
   const checkInMutation = useCheckIn(currentUser);
 
+  // Native Power Features
+  usePushNotifications(currentUser?.id);
+  useBackgroundGeo();
+
   const [activeTab, setActiveTab] = useState<Tab>(Tab.HOME);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [homeFilter, setHomeFilter] = useState<PlaceType | 'ALL' | 'SAVED'>('ALL');
+  const [toast, setToast] = useState<ToastProps | null>(null);
 
   // Apply theme to document element
   useEffect(() => {
@@ -98,6 +106,15 @@ export default function App() {
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, [selectedPlace, showMoreMenu, activeTab]);
+
+  // Global Toast Listener
+  useEffect(() => {
+    const handleNotification = (e: any) => {
+      setToast(e.detail);
+    };
+    window.addEventListener('voula_notification', handleNotification);
+    return () => window.removeEventListener('voula_notification', handleNotification);
+  }, []);
 
   // Push state when opening modals to enable Back Button
   useEffect(() => {
@@ -318,6 +335,22 @@ export default function App() {
               label="Perfil"
             />
           </BottomNav>
+
+          {/* Global Notification Toast */}
+          <div className="fixed top-safe left-0 right-0 z-[1000] flex justify-center pointer-events-none px-4 pt-4">
+            <AnimatePresence>
+              {toast && (
+                <motion.div
+                  initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                  className="pointer-events-auto"
+                >
+                  <Toast {...toast} onClose={() => setToast(null)} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </Suspense>
     </>
