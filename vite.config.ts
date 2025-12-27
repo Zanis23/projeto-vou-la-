@@ -134,7 +134,7 @@ export default defineConfig(({ mode }) => {
         output: {
           manualChunks: {
             vendor: ['react', 'react-dom'],
-            ui: ['lucide-react', 'framer-motion'],
+            ui: ['lucide-react'],
             supabase: ['@supabase/supabase-js'],
             capacitor: ['@capacitor/core', '@capacitor/haptics', '@capacitor/app']
           }
