@@ -267,7 +267,18 @@ export default function App() {
                   </button>
                 </div>
 
-                <PlaceCard place={selectedPlace} onCheckIn={handleCheckIn} expanded={true} isCheckedIn={currentUser.history.some(h => h.placeId === selectedPlace.id)} isSaved={currentUser.savedPlaces?.includes(selectedPlace.id)} />
+                <PlaceCard
+                  place={selectedPlace}
+                  onCheckIn={handleCheckIn}
+                  expanded={true}
+                  isCheckedIn={currentUser.history.some(h => {
+                    const checkInDate = new Date(h.timestamp).getTime();
+                    const now = new Date().getTime();
+                    const eightHoursInMs = 8 * 60 * 60 * 1000;
+                    return h.placeId === selectedPlace.id && (now - checkInDate) < eightHoursInMs;
+                  })}
+                  isSaved={currentUser.savedPlaces?.includes(selectedPlace.id)}
+                />
               </motion.div>
             )}
           </AnimatePresence>

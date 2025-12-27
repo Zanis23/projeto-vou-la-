@@ -215,6 +215,12 @@ export const Home: React.FC<HomeProps> = ({
                     onClick={() => onPlaceSelect(place)}
                     isSaved={savedPlaces.includes(place.id)}
                     onToggleSave={onToggleSave}
+                    isCheckedIn={currentUser.history?.some(h => {
+                      const checkInDate = new Date(h.timestamp).getTime();
+                      const now = new Date().getTime();
+                      const eightHoursInMs = 8 * 60 * 60 * 1000;
+                      return h.placeId === place.id && (now - checkInDate) < eightHoursInMs;
+                    })}
                   />
                 </motion.div>
               ))}

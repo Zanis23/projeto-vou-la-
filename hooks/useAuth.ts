@@ -20,13 +20,8 @@ export function useAuth() {
                 setCurrentUser(sessionUser);
                 setAppState('MAIN');
             } else {
-                const isLogged = localStorage.getItem('voula_logged_in');
-                if (isLogged) {
-                    await loadUserData();
-                    setAppState('MAIN');
-                } else {
-                    setAppState('LOGIN');
-                }
+                // If no real session, force login even if flag exists
+                setAppState('LOGIN');
             }
         } catch (error) {
             console.error('Auth initialization error:', error);
@@ -45,6 +40,7 @@ export function useAuth() {
 
     const logout = async () => {
         await db.auth.logout();
+        localStorage.removeItem('voula_logged_in'); // Cleanup legacy flag
         setAppState('LOGIN');
         setCurrentUser(MOCK_USER);
     };

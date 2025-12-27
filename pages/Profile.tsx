@@ -136,7 +136,7 @@ export const Profile: React.FC<ProfileProps> = ({ currentUser = MOCK_USER, onLog
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
-            className="fixed inset-0 bg-[var(--bg-default)] pb-24 z-[110] flex flex-col"
+            className="fixed top-0 left-0 w-full h-[100dvh] bg-[var(--bg-default)] z-[110] flex flex-col shadow-2xl"
           >
             <div className="pt-safe px-4 pb-4 flex items-center justify-between border-b border-[var(--border-default)] bg-[var(--bg-default)] sticky top-0 z-20">
               <Button variant="secondary" size="icon" onClick={() => setIsEditing(false)} className="rounded-full">
@@ -146,7 +146,7 @@ export const Profile: React.FC<ProfileProps> = ({ currentUser = MOCK_USER, onLog
               <div className="w-9"></div>
             </div>
 
-            <div className="p-6 space-y-8 overflow-y-auto flex-1 pb-32">
+            <div className="p-6 space-y-8 overflow-y-auto flex-1 pb-20">
               <div className="flex flex-col items-center gap-4">
                 <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
                   <Avatar src={editForm.avatar} size="xl" className="w-32 h-32 border-4 border-[var(--bg-surface)] shadow-2xl" />
@@ -185,8 +185,8 @@ export const Profile: React.FC<ProfileProps> = ({ currentUser = MOCK_USER, onLog
               </div>
             </div>
 
-            <div className="p-4 bg-[var(--bg-default)] pb-safe border-t border-[var(--border-default)]">
-              <Button fullWidth onClick={handleSave}>SALVAR PERFIL</Button>
+            <div className="p-4 bg-[var(--bg-default)]/80 backdrop-blur-xl border-t border-[var(--border-default)] safe-bottom pb-8 min-h-[100px] flex items-center justify-center">
+              <Button fullWidth onClick={handleSave} className="h-14 text-base font-black shadow-2xl glow-primary">SALVAR PERFIL</Button>
             </div>
           </motion.div>
         )}
