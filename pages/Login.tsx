@@ -1,9 +1,9 @@
-
-
-import React, { useState } from 'react';
-import { Button } from '../components/Button';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Button } from '../src/components/ui/Button';
+import { Input } from '../src/components/ui/Input';
 import { Logo } from '../components/Logo';
-import { Building2, ChevronRight, AlertCircle, Loader2, UserCircle, MapPin, Star } from 'lucide-react';
+import { Building2, ChevronRight, AlertCircle, Mail, Lock, User as UserIcon, Chrome, Apple } from 'lucide-react';
 import { db } from '../utils/storage';
 import { useHaptic } from '../hooks/useHaptic';
 import { User } from '../types';
@@ -71,6 +71,8 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBusinessClick }) => {
           history: [],
           savedPlaces: [],
           email: formData.email,
+          appMode: 'dark',
+          accentColor: 'neon'
         };
 
         const res = await db.auth.register(newUser, formData.password);
@@ -101,137 +103,231 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBusinessClick }) => {
     }
   };
 
+  const socialLogins = [
+    { icon: <Chrome className="w-5 h-5" />, label: 'Google', color: 'hover:bg-white/5' },
+    { icon: <Apple className="w-5 h-5" />, label: 'Apple', color: 'hover:bg-white/5' },
+  ];
+
   return (
-    <div className="min-h-screen relative flex items-center justify-center overflow-hidden bg-[#0E1121]">
-      {/* Dynamic Background */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1a1f35] via-[#0E1121] to-black opacity-90"></div>
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[120px] mix-blend-screen animate-pulse"></div>
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-fuchsia-600/10 rounded-full blur-[120px] mix-blend-screen pointer-events-none"></div>
+    <div className="full-screen bg-[#050505] overflow-hidden flex flex-col">
+      {/* Dynamic Immersive Background */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <motion.div
+          animate={{
+            scale: [1, 1.1, 1],
+            opacity: [0.4, 0.6, 0.4],
+            rotate: [0, 90, 0]
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute -top-[20%] -right-[10%] w-[120vw] h-[120vw] rounded-full bg-gradient-to-br from-primary-main/20 via-primary-main/5 to-transparent blur-[120px]"
+        />
+        <motion.div
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.5, 0.3],
+            x: [0, -50, 0]
+          }}
+          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+          className="absolute -bottom-[30%] -left-[20%] w-[130vw] h-[130vw] rounded-full bg-gradient-to-tr from-indigo-500/15 via-purple-500/10 to-transparent blur-[140px]"
+        />
+
+        {/* Subtle Noise Texture */}
+        <div className="absolute inset-0 opacity-[0.03] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] blend-overlay" />
+
+        {/* Grid Overlay */}
+        <div className="absolute inset-0 opacity-[0.05]"
+          style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 0.5px, transparent 0)', backgroundSize: '32px 32px' }}
+        />
       </div>
 
-      <div className="relative z-10 w-full max-w-[360px] p-6 animate-[fadeIn_0.5s_ease-out]">
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center p-6 pt-safe pb-safe overflow-y-auto hide-scrollbar">
 
-        {/* Header */}
-        <div className="text-center mb-10">
-          <div className="relative inline-flex mb-6 group">
-            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-fuchsia-500 rounded-3xl blur opacity-40 group-hover:opacity-60 transition-opacity"></div>
-            <div className="relative w-24 h-24 bg-[#161b2e] rounded-3xl border border-white/10 flex items-center justify-center shadow-2xl">
-              <Logo className="w-14 h-14" />
-            </div>
-            <div className="absolute -top-2 -right-2 bg-yellow-400 text-black text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg rotate-12">
-              BETA
-            </div>
-            <div className="absolute -bottom-2 -left-2 bg-indigo-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-lg">
-              v0.0.1
-            </div>
-          </div>
-          <h1 className="text-5xl font-black text-white italic tracking-tighter drop-shadow-xl mb-2">
-            VOU LÁ
-          </h1>
-          <div className="flex items-center justify-center gap-2 text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em]">
-            <MapPin className="w-3 h-3 text-[var(--primary)]" /> Dourados / MS
-          </div>
-        </div>
-
-        {/* Login Form */}
-        <div className="bg-[#161b2e]/80 backdrop-blur-xl border border-white/5 rounded-3xl p-2 shadow-2xl mb-6">
-          <div className="p-4 space-y-4">
-            {error && (
-              <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-xl flex items-center gap-3 text-red-400 text-xs font-bold animate-[shake_0.4s_ease-in-out]">
-                <AlertCircle className="w-4 h-4 shrink-0" /> {error}
+        {/* Logo Section */}
+        <motion.div
+          initial={{ opacity: 0, y: -40, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+          className="text-center mb-10 w-full"
+        >
+          <div className="relative inline-flex mb-8">
+            <motion.div
+              animate={{ scale: [1, 1.05, 1], opacity: [0.5, 0.8, 0.5] }}
+              transition={{ duration: 4, repeat: Infinity }}
+              className="absolute -inset-4 bg-primary-main/20 rounded-[2.5rem] blur-[30px]"
+            ></motion.div>
+            <div className="relative w-28 h-28 glass-card !bg-white/5 rounded-[2.5rem] flex items-center justify-center shadow-2xl border border-white/10 backdrop-blur-3xl overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-tr from-primary-main/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+              <Logo className="w-16 h-16 relative z-10" />
+              <div className="absolute -top-1 -right-1 bg-primary-main text-black text-[9px] font-black px-2.5 py-1 rounded-full shadow-xl rotate-12">
+                PWA
               </div>
-            )}
-
-            <div className="space-y-3">
-              {isRegister && (
-                <input
-                  type="text"
-                  placeholder="Nome completo"
-                  value={formData.name}
-                  onChange={e => handleChange('name', e.target.value)}
-                  className="w-full bg-[#0E1121] border border-white/5 rounded-xl px-4 py-3.5 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-[var(--primary)] focus:bg-[#0E1121] transition-all"
-                />
-              )}
-              <input
-                type="text"
-                placeholder="E-mail"
-                value={formData.email}
-                onChange={e => handleChange('email', e.target.value)}
-                className="w-full bg-[#0E1121] border border-white/5 rounded-xl px-4 py-3.5 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-[var(--primary)] focus:bg-[#0E1121] transition-all"
-              />
-              <input
-                type="password"
-                placeholder="Senha"
-                value={formData.password}
-                onChange={e => handleChange('password', e.target.value)}
-                className="w-full bg-[#0E1121] border border-white/5 rounded-xl px-4 py-3.5 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-[var(--primary)] focus:bg-[#0E1121] transition-all"
-              />
             </div>
-
-            <div className="pt-2">
-              <Button fullWidth onClick={handleSubmit} variant="neon" disabled={isLoading} className="h-12 shadow-lg shadow-indigo-500/20">
-                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (isRegister ? 'CRIAR CONTA' : 'ACESSAR')}
-              </Button>
-            </div>
-
-            {!isRegister && (
-              <button
-                onClick={handleDemoLogin}
-                className="w-full py-3 rounded-xl text-slate-500 text-[10px] font-bold uppercase tracking-widest hover:text-white hover:bg-white/5 transition-all flex items-center justify-center gap-2"
-              >
-                <UserCircle className="w-3 h-3" /> Visitante
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="space-y-4">
-          <button onClick={() => { setIsRegister(!isRegister); setError(null); }} className="w-full text-center text-xs font-bold text-slate-500 hover:text-white transition-colors uppercase tracking-wider">
-            {isRegister ? 'Já tenho conta' : 'Criar nova conta'}
-          </button>
-
-          <div className="flex items-center gap-4 px-2 opacity-50">
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
-            <Star className="w-3 h-3 text-slate-700" />
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
           </div>
 
-          <button
-            onClick={() => {
-              trigger('medium');
-              if (onBusinessClick) onBusinessClick();
-            }}
-            className="w-full group relative overflow-hidden rounded-2xl p-[1px]"
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-[var(--primary)] to-fuchsia-600 opacity-50 group-hover:opacity-100 transition-opacity"></div>
-            <div className="relative bg-[#161b2e] rounded-2xl p-4 flex items-center gap-4 transition-transform group-active:scale-[0.98]">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--primary)] to-indigo-700 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
-                <Building2 className="w-5 h-5" />
+            <h1 className="text-7xl font-black text-white italic tracking-tighter leading-none mb-3">
+              VOU LÁ
+            </h1>
+            <p className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.4em] flex items-center justify-center gap-3">
+              <span className="w-8 h-[1px] bg-white/10" />
+              Your Night, Your Rules
+              <span className="w-8 h-[1px] bg-white/10" />
+            </p>
+          </motion.div>
+        </motion.div>
+
+        {/* Auth Container */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.7 }}
+          className="w-full max-w-sm"
+        >
+          <div className="glass-card !bg-white/[0.03] rounded-[3rem] p-5 shadow-2xl border border-white/5 backdrop-blur-2xl relative overflow-hidden mb-8">
+            <div className="p-2 space-y-6">
+              <AnimatePresence mode="wait">
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    key="error-msg"
+                    className="bg-status-error/10 border border-status-error/20 p-4 rounded-2xl flex items-center gap-3 text-status-error text-[11px] font-bold"
+                  >
+                    <AlertCircle className="w-4 h-4 shrink-0" /> {error}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <div className="space-y-4">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={isRegister ? 'register' : 'login'}
+                    initial={{ opacity: 0, x: isRegister ? 20 : -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: isRegister ? -20 : 20 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-4"
+                  >
+                    {isRegister && (
+                      <Input
+                        placeholder="Nome completo"
+                        value={formData.name}
+                        onChange={e => handleChange('name', e.target.value)}
+                        startIcon={<UserIcon className="w-4 h-4" />}
+                        className="!bg-white/5"
+                      />
+                    )}
+
+                    <Input
+                      type="email"
+                      placeholder="E-mail"
+                      value={formData.email}
+                      onChange={e => handleChange('email', e.target.value)}
+                      startIcon={<Mail className="w-4 h-4" />}
+                      className="!bg-white/5"
+                    />
+
+                    <Input
+                      type="password"
+                      placeholder="Senha"
+                      value={formData.password}
+                      onChange={e => handleChange('password', e.target.value)}
+                      startIcon={<Lock className="w-4 h-4" />}
+                      className="!bg-white/5"
+                    />
+                  </motion.div>
+                </AnimatePresence>
               </div>
-              <div className="flex-1 text-left">
-                <div className="text-white font-bold text-sm">PARA EMPRESAS</div>
-                <div className="text-[var(--primary-light)] text-[10px] font-medium">Cadastre seu estabelecimento</div>
+
+              <div className="pt-2">
+                <Button
+                  fullWidth
+                  size="lg"
+                  onClick={handleSubmit}
+                  isLoading={isLoading}
+                  className="rounded-2xl !bg-primary-main !text-black shadow-[0_12px_30px_-10px_rgba(204,255,0,0.5)] active:scale-[0.98]"
+                >
+                  {isRegister ? 'CRIAR CONTA' : 'ACESSAR'}
+                </Button>
               </div>
-              <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-white group-hover:translate-x-1 transition-all" />
+
+              <div className="relative py-2">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-white/10"></div>
+                </div>
+                <div className="relative flex justify-center text-[9px] uppercase font-black tracking-widest text-text-tertiary">
+                  <span className="bg-[#0c0c0c] px-4 rounded-full">OU ENTRE COM</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {socialLogins.map(social => (
+                  <button
+                    key={social.label}
+                    onClick={() => trigger('light')}
+                    className={`flex items-center justify-center gap-3 py-4 rounded-2xl bg-white/[0.03] border border-white/5 text-xs font-bold text-white transition-all active:scale-95 ${social.color}`}
+                  >
+                    {social.icon} {social.label}
+                  </button>
+                ))}
+              </div>
+
+              {!isRegister && (
+                <button
+                  onClick={handleDemoLogin}
+                  className="w-full py-2 text-text-tertiary text-[10px] font-bold uppercase tracking-[0.2em] hover:text-primary-main transition-colors"
+                >
+                  Continuar como Visitante
+                </button>
+              )}
             </div>
-          </button>
-        </div>
+          </div>
 
-        <p className="mt-8 text-center text-[10px] text-slate-600">
-          &copy; 2024 Vou Lá. Todos os direitos reservados.
-        </p>
+          {/* Toggle Action */}
+          <div className="space-y-8">
+            <button
+              onClick={() => { trigger('light'); setIsRegister(!isRegister); setError(null); }}
+              className="w-full text-center text-sm font-bold text-text-secondary transition-colors"
+            >
+              {isRegister ? 'Já tem uma conta?' : 'Novo por aqui?'}
+              <span className="text-primary-main ml-2 font-black italic">{isRegister ? 'ENTRAR' : 'CRIAR CONTA'}</span>
+            </button>
 
+            <motion.button
+              whileTap={{ scale: 0.98 }}
+              onClick={() => {
+                trigger('medium');
+                if (onBusinessClick) onBusinessClick();
+              }}
+              className="w-full glass-card !bg-white/[0.02] rounded-[2.5rem] p-5 flex items-center gap-5 group transition-all border border-white/5 hover:bg-white/[0.05]"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-main to-indigo-600 flex items-center justify-center text-black shadow-2xl shrink-0">
+                <Building2 className="w-7 h-7" />
+              </div>
+              <div className="flex-1 text-left min-w-0">
+                <div className="text-white font-black text-sm uppercase italic leading-none mb-1">PARA BUSINESS</div>
+                <div className="text-text-tertiary text-[10px] font-bold uppercase tracking-tighter truncate">Gestão & Inteligência</div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-text-tertiary group-hover:text-white group-hover:translate-x-1 transition-all" />
+            </motion.button>
+          </div>
+        </motion.div>
+
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1 }}
+          className="mt-16 text-center text-[9px] text-text-tertiary font-bold uppercase tracking-[0.2em] leading-relaxed opacity-50"
+        >
+          &copy; 2024 VOU LÁ APP &bull; DOURADOS MS<br />
+          THE ULTIMATE NIGHTLIFE EXPERIENCE
+        </motion.p>
       </div>
-
-      <style>{`
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          25% { transform: translateX(-5px); }
-          75% { transform: translateX(5px); }
-        }
-      `}</style>
     </div>
   );
 };

@@ -140,13 +140,23 @@ export const MatchMode: React.FC<MatchModeProps> = ({ placeName, onClose }) => {
                             >
                                 OI ENVIADO!
                             </motion.h2>
-                            <p className="text-white text-sm font-bold mt-2 bg-black/50 px-3 py-1 rounded-full">Confira na aba "Bonde"</p>
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: [0, 1, 0] }}
+                                transition={{ duration: 1, repeat: Infinity }}
+                                className="absolute inset-x-0 h-40 bg-pink-500/20 blur-[100px] -z-10"
+                            />
+                            <p className="text-white text-[10px] font-black uppercase tracking-widest mt-2 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10">Confira na aba "Bonde"</p>
                         </motion.div>
                     )}
                 </AnimatePresence>
 
                 {!isFinished ? (
                     <div className="relative w-full max-w-sm aspect-[3/4]">
+                        {/* Background Cards for Stack Depth */}
+                        <div className="absolute inset-0 translate-y-4 scale-90 bg-slate-800/20 rounded-3xl border border-white/5 z-0" />
+                        <div className="absolute inset-0 translate-y-2 scale-95 bg-slate-800/40 rounded-3xl border border-white/5 z-0" />
+
                         <motion.div
                             style={{ x, rotate, opacity }}
                             drag="x"

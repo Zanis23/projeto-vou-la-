@@ -2,10 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Place } from '../types';
-import { Navigation, Loader2, Camera, Zap } from 'lucide-react';
+import { Navigation, Loader2, Camera, Zap, Compass } from 'lucide-react';
 import { FALLBACK_IMAGE } from '../constants';
-import { Button } from '../src/components/ui/Button';
 import { fadeIn, scaleIn } from '../src/styles/animations';
+import { Header } from '../src/components/ui/Header';
 
 declare global {
   interface Window { L: any; }
@@ -36,7 +36,7 @@ const PinMarker: React.FC<{ place: Place; zoom: number; onSelect: (p: Place) => 
   const isWarm = place.capacityPercentage >= 50;
 
   const color = isHot ? '#ff0055' : isWarm ? '#ccff00' : '#00ddeb';
-  const SHOW_PINS = zoom >= 15; // Increased threshold for full pin view
+  const SHOW_PINS = zoom >= 15;
 
   return (
     <motion.div
@@ -114,15 +114,13 @@ export const Radar: React.FC<RadarProps> = ({ places, onPlaceSelect }) => {
     if (!mapInstanceRef.current || !window.L) return;
     const map = mapInstanceRef.current;
 
-    // Cleanup previous markers
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
 
-    const GRID_SIZE = 0.005; // ~500m cluster area
+    const GRID_SIZE = 0.005;
     const clusters: Record<string, { lat: number; lng: number; count: number; places: Place[] }> = {};
 
     if (currentZoom < 14) {
-      // Clustering logic
       places.forEach(place => {
         if (!place.lat || !place.lng) return;
         const gridX = Math.floor(place.lat / GRID_SIZE);
@@ -151,7 +149,6 @@ export const Radar: React.FC<RadarProps> = ({ places, onPlaceSelect }) => {
         markersRef.current.push(marker);
       });
     } else {
-      // Normal PinMarkers
       places.forEach(place => {
         if (!place.lat || !place.lng) return;
         const container = document.createElement('div');
@@ -194,90 +191,105 @@ export const Radar: React.FC<RadarProps> = ({ places, onPlaceSelect }) => {
       variants={fadeIn}
       initial="initial"
       animate="animate"
-      className="h-full w-full relative bg-[var(--bg-default)]"
+      className="full-screen bg-bg-default"
     >
-      <div ref={mapContainerRef} className="w-full h-full z-0" style={{ backgroundColor: 'var(--bg-default)' }} />
+      <Header
+        left={
+          <div className="w-10 h-10 rounded-xl bg-primary-main/10 flex items-center justify-center border border-primary-main/20">
+            <Compass className="w-5 h-5 text-primary-main animate-spin-slow" />
+          </div>
+        }
+        title="RADAR"
+        subtitle="Explorar Dourados/MS"
+        right={<div className="w-10" />}
+        border={false}
+      />
 
-      {/* HEATMAP LEGEND - SPRINT 1 */}
-      <div className="absolute top-20 left-4 z-[400] flex flex-col gap-2 pointer-events-none">
-        <div className="bg-[var(--bg-card)]/80 backdrop-blur-xl border border-white/10 rounded-2xl p-3 flex flex-col gap-2 shadow-2xl">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-[#ff0055] animate-pulse shadow-[0_0_8px_#ff0055]" />
-            <span className="text-[10px] font-black text-white italic uppercase tracking-tighter">BOMBANDO</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-[#ccff00] shadow-[0_0_8px_#ccff00]" />
-            <span className="text-[10px] font-black text-white italic uppercase tracking-tighter">AGITADO</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-[#00ddeb] shadow-[0_0_8px_#00ddeb]" />
-            <span className="text-[10px] font-black text-white italic uppercase tracking-tighter">TRANQUILO</span>
+      <div className="flex-1 relative overflow-hidden">
+        <div ref={mapContainerRef} className="w-full h-full z-0" style={{ backgroundColor: 'var(--bg-default)' }} />
+
+        <div className="absolute top-6 left-6 z-[400] pointer-events-none">
+          <div className="glass-card !bg-black/60 !backdrop-blur-2xl rounded-2xl p-4 flex flex-col gap-3 shadow-2xl border-white/5">
+            <div className="flex items-center gap-3">
+              <div className="w-2.5 h-2.5 rounded-full bg-[#ff0055] animate-pulse shadow-[0_0_12px_#ff0055]" />
+              <span className="text-[9px] font-black text-white italic uppercase tracking-widest">Bombando</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-2.5 h-2.5 rounded-full bg-[#ccff00] shadow-[0_0_12px_#ccff00]" />
+              <span className="text-[9px] font-black text-white italic uppercase tracking-widest">Agitado</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-2.5 h-2.5 rounded-full bg-[#00ddeb] shadow-[0_0_12px_#00ddeb]" />
+              <span className="text-[9px] font-black text-white italic uppercase tracking-widest">Tranquilo</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="absolute bottom-24 right-4 z-[400] flex flex-col gap-3">
-        <motion.div variants={scaleIn}>
-          <Button
-            variant={gpsActive ? 'primary' : 'secondary'}
-            size="icon"
-            onClick={handleRecenter}
-            className="rounded-full w-14 h-14 shadow-xl border-2 border-[var(--bg-default)] active:scale-90 transition-transform"
-          >
-            {findingLocation ? <Loader2 className="w-6 h-6 animate-spin" /> : <Navigation className="w-6 h-6" />}
-          </Button>
-        </motion.div>
-
-        <motion.div variants={scaleIn}>
-          <Button
-            variant="primary"
-            size="icon"
-            className="rounded-full w-14 h-14 shadow-xl border-2 border-[var(--bg-default)] active:scale-90 transition-transform"
-          >
-            <Camera className="w-6 h-6" />
-          </Button>
-        </motion.div>
-      </div>
-
-      {/* COMPACT PREVIEW MODAL - SPRINT 1 */}
-      <AnimatePresence>
-        {selectedPlace && (
-          <motion.div
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            className="absolute bottom-28 left-4 right-20 z-[500]"
-          >
-            <div
-              onClick={() => onPlaceSelect(selectedPlace)}
-              className="bg-slate-900 border border-white/10 rounded-3xl p-4 flex gap-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)] active:scale-95 transition-transform"
+        <div className="absolute bottom-32 right-6 z-[400] flex flex-col gap-4">
+          <motion.div variants={scaleIn}>
+            <button
+              onClick={handleRecenter}
+              className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-2xl border-2 transition-all active:scale-90
+                         ${gpsActive ? 'bg-primary-main text-black border-primary-main/50 shadow-primary-main/20' : 'bg-black/60 text-white border-white/10 backdrop-blur-xl'}`}
             >
-              <div className="w-20 h-20 rounded-2xl overflow-hidden shrink-0">
-                <img src={selectedPlace.imageUrl} className="w-full h-full object-cover" alt="" />
-              </div>
-              <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
-                <h4 className="text-white font-black italic uppercase tracking-tight truncate">{selectedPlace.name}</h4>
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1 text-[var(--primary-main)]">
-                    <Zap className="w-3 h-3 fill-current" />
-                    <span className="text-[10px] font-bold">{selectedPlace.capacityPercentage}%</span>
+              {findingLocation ? <Loader2 className="w-6 h-6 animate-spin" /> : <Navigation className="w-6 h-6" />}
+            </button>
+          </motion.div>
+
+          <motion.div variants={scaleIn}>
+            <button
+              className="w-14 h-14 rounded-2xl bg-black/60 text-white flex items-center justify-center shadow-2xl border-2 border-white/10 backdrop-blur-xl active:scale-90 transition-all"
+            >
+              <Camera className="w-6 h-6" />
+            </button>
+          </motion.div>
+        </div>
+
+        <AnimatePresence>
+          {selectedPlace && (
+            <motion.div
+              initial={{ y: 120, opacity: 0, scale: 0.95 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: 120, opacity: 0, scale: 0.95 }}
+              className="absolute bottom-32 left-6 right-24 z-[500]"
+            >
+              <div
+                onClick={() => onPlaceSelect(selectedPlace)}
+                className="glass-card !bg-black/80 !backdrop-blur-3xl rounded-[2.5rem] p-5 flex gap-5 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] border-white/10 ring-1 ring-white/10 active:scale-[0.98] transition-all cursor-pointer group"
+              >
+                <div className="w-24 h-24 rounded-[1.5rem] overflow-hidden shrink-0 border border-white/10 relative">
+                  <img src={selectedPlace.imageUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="" />
+                  <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md p-1.5 rounded-lg border border-white/10">
+                    <Zap className="w-3 h-3 text-primary-main fill-current" />
                   </div>
-                  <span className="text-[10px] text-slate-500 font-bold">• {selectedPlace.type}</span>
                 </div>
-                <button className="mt-1 w-full py-2 bg-[var(--primary-main)] text-black rounded-xl text-[10px] font-black uppercase tracking-widest">
-                  VER DETALHES
+
+                <div className="flex-1 min-w-0 flex flex-col justify-center">
+                  <div className="mb-2">
+                    <p className="text-[10px] font-black text-primary-main uppercase tracking-widest mb-1">{selectedPlace.type}</p>
+                    <h4 className="text-white font-black italic uppercase text-base tracking-tight truncate leading-none">{selectedPlace.name}</h4>
+                  </div>
+
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="text-[10px] text-text-tertiary font-bold uppercase tracking-widest">Ocupação: {selectedPlace.capacityPercentage}%</span>
+                  </div>
+
+                  <button className="w-full py-3 bg-primary-main text-black rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-primary-main/20 active:scale-95 transition-all">
+                    VER DETALHES
+                  </button>
+                </div>
+
+                <button
+                  onClick={(e) => { e.stopPropagation(); setSelectedPlace(null); }}
+                  className="absolute -top-3 -right-3 w-10 h-10 bg-black/80 backdrop-blur-xl rounded-full border border-white/20 flex items-center justify-center text-white shadow-2xl active:scale-90"
+                >
+                  <span className="text-lg font-bold">✕</span>
                 </button>
               </div>
-              <button
-                onClick={(e) => { e.stopPropagation(); setSelectedPlace(null); }}
-                className="absolute -top-2 -right-2 w-8 h-8 bg-black/50 backdrop-blur-md rounded-full border border-white/10 flex items-center justify-center"
-              >
-                <span className="text-white text-xs">✕</span>
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </motion.div>
   );
 };

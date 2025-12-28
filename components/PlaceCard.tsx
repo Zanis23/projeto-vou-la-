@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Place, MenuItem, OrderItem } from '../types';
-import { MapPin, Music, Flame, Star, Bookmark, Share2, Clock, CheckCircle2, Loader2, Zap, ThumbsUp, ThumbsDown, Users, Utensils, BellRing, Check, Car, Navigation, Minus, Plus, X, BarChart3, Sparkles, ClipboardList, CreditCard, QrCode, ShoppingBag, Receipt, HelpCircle, Disc, Crown, History, Beer, Pizza } from 'lucide-react';
+import { MapPin, Music, Flame, Star, Bookmark, Share2, CheckCircle2, Loader2, Zap, ThumbsUp, ThumbsDown, Users, Utensils, BellRing, Check, Car, Navigation, Minus, Plus, X, Sparkles, ClipboardList, CreditCard, QrCode, ShoppingBag, Receipt, HelpCircle, Disc, Crown, History, Beer, Pizza } from 'lucide-react';
 import { Skeleton } from './Skeleton';
 import { Badge } from '../src/components/ui/Badge';
 import { useHaptic } from '../hooks/useHaptic';
@@ -28,12 +28,12 @@ interface PlaceCardProps {
 const MenuCategoryTab: React.FC<{ label: string; active: boolean; onClick: () => void; icon: React.ReactNode; badge?: number }> = ({ label, active, onClick, icon, badge }) => (
     <button
         onClick={onClick}
-        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap border-2 relative
-        ${active ? 'bg-[var(--primary)] border-[var(--primary)] text-black shadow-[0_0_12px_var(--primary-glow)] scale-105' : 'bg-slate-800/50 text-slate-500 border-transparent active:bg-slate-800'}`}
+        className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-[11px] font-bold uppercase tracking-wider transition-all whitespace-nowrap border-2 relative
+        ${active ? 'bg-primary-main border-primary-main text-black shadow-lg scale-105' : 'bg-bg-surface-1/50 text-text-secondary border-transparent active:bg-bg-surface-2'}`}
     >
         {icon} {label}
         {typeof badge === 'number' && badge > 0 && (
-            <div className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-[8px] font-black border border-slate-900 animate-bounce">
+            <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-status-error text-white rounded-full flex items-center justify-center text-[10px] font-black border-2 border-bg-default animate-bounce">
                 {badge}
             </div>
         )}
@@ -41,54 +41,48 @@ const MenuCategoryTab: React.FC<{ label: string; active: boolean; onClick: () =>
 );
 
 const MenuItemRow: React.FC<{ item: MenuItem; qty: number; onAdd: () => void; onRemove: () => void }> = ({ item, qty, onAdd, onRemove }) => {
-    const imageSrc = item.imageUrl || (item.category === 'drink'
-        ? 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?q=70&w=300&auto=format&fit=crop'
-        : item.category === 'food'
-            ? 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=70&w=300&auto=format&fit=crop'
-            : 'https://images.unsplash.com/photo-1558444453-1fa7d88EEBD1?q=70&w=300&auto=format&fit=crop');
+    const imageSrc = item.imageUrl || FALLBACK_IMAGE;
 
     return (
         <motion.div
             variants={slideUp}
-            initial="initial"
-            animate="animate"
-            className="flex gap-3 xs:gap-4 p-3 xs:p-4 bg-slate-800/30 border border-slate-700/40 rounded-[1.8rem] mb-3 hover:bg-slate-800/40 transition-colors group relative overflow-hidden"
+            className="flex gap-4 p-4 bg-bg-surface-1/40 border border-border-default rounded-[2rem] mb-4 group relative overflow-hidden transition-all hover:bg-bg-surface-1/60"
         >
-            <div className="relative w-24 h-24 xs:w-28 xs:h-28 shrink-0 overflow-hidden rounded-2xl shadow-lg">
+            <div className="relative w-24 h-24 shrink-0 overflow-hidden rounded-2xl shadow-md">
                 <img src={imageSrc} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={item.name} loading="lazy" />
                 {!item.available && (
-                    <div className="absolute inset-0 bg-black/70 backdrop-blur-[1px] flex items-center justify-center">
-                        <span className="text-[8px] font-black text-white uppercase border border-white/30 px-2 py-0.5 rounded">Esgotado</span>
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-[2px] flex items-center justify-center">
+                        <span className="text-[9px] font-black text-white uppercase border border-white/20 px-2.5 py-1 rounded-lg">Esgotado</span>
                     </div>
                 )}
             </div>
 
-            <div className="flex-1 flex flex-col justify-between py-1 min-w-0">
-                <div className="min-w-0">
-                    <h4 className="font-black text-white text-base xs:text-lg leading-tight mb-1 italic truncate">{item.name}</h4>
-                    <p className="text-[10px] text-slate-500 font-medium leading-tight line-clamp-2 pr-2">Sabor intenso, preparado com ingredientes selecionados para sua melhor experiência.</p>
+            <div className="flex-1 flex flex-col justify-between py-0.5 min-w-0">
+                <div>
+                    <h4 className="font-black text-white text-lg leading-tight mb-1 italic truncate">{item.name}</h4>
+                    <p className="text-[10px] text-text-tertiary font-medium leading-tight line-clamp-2 pr-2">Sabor intenso, preparado com ingredientes selecionados para sua melhor experiência.</p>
                 </div>
 
-                <div className="flex justify-between items-end mt-4">
+                <div className="flex justify-between items-end mt-2">
                     <div className="flex flex-col">
-                        <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest mb-0.5">Preço</span>
-                        <span className="font-black text-cyan-400 text-lg xs:text-xl tracking-tighter">R$ {item.price.toFixed(2)}</span>
+                        <span className="font-black text-primary-main text-xl tracking-tighter">R$ {item.price.toFixed(2)}</span>
                     </div>
 
                     {qty === 0 ? (
-                        <button
+                        <motion.button
+                            whileTap={{ scale: 0.94 }}
                             onClick={(e) => { e.stopPropagation(); onAdd(); }}
                             disabled={!item.available}
-                            className={`px-4 py-2 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg active:scale-90
-                            ${item.available ? 'bg-white text-black hover:bg-cyan-400' : 'bg-slate-800 text-slate-600 cursor-not-allowed'}`}
+                            className={`px-5 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all
+                            ${item.available ? 'bg-white text-black hover:bg-primary-main' : 'bg-bg-surface-2 text-text-tertiary cursor-not-allowed opacity-50'}`}
                         >
-                            ADICIONAR
-                        </button>
+                            ADD
+                        </motion.button>
                     ) : (
-                        <div className="flex items-center bg-slate-900 rounded-2xl border border-white/5 p-1 shadow-2xl">
-                            <button onClick={(e) => { e.stopPropagation(); onRemove(); }} className="p-2 text-slate-400 hover:text-white transition-colors"><Minus className="w-4 h-4" /></button>
+                        <div className="flex items-center bg-bg-surface-2 rounded-xl p-1 shadow-inner ring-1 ring-border-default">
+                            <button onClick={(e) => { e.stopPropagation(); onRemove(); }} className="p-2 text-text-tertiary hover:text-white transition-colors"><Minus className="w-4 h-4" /></button>
                             <span className="w-8 text-center text-sm font-black text-white">{qty}</span>
-                            <button onClick={(e) => { e.stopPropagation(); onAdd(); }} className="p-2 text-cyan-400 hover:text-white transition-colors"><Plus className="w-4 h-4" /></button>
+                            <button onClick={(e) => { e.stopPropagation(); onAdd(); }} className="p-2 text-primary-main hover:text-white transition-colors"><Plus className="w-4 h-4" /></button>
                         </div>
                     )}
                 </div>
@@ -104,6 +98,84 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
     const { showToast } = useToast();
     const [imgLoaded, setImgLoaded] = useState(false);
     const [imgError, setImgError] = useState(false);
+
+    // Compact layout update
+    if (!expanded && place) {
+        return (
+            <motion.div
+                whileTap={{ scale: 0.98 }}
+                onClick={onClick}
+                className="premium-card relative overflow-hidden flex gap-4 p-4 shadow-lg mb-2"
+            >
+                {/* Visual Rank Indicator */}
+                {rank && (
+                    <div className="absolute top-0 left-0 w-8 h-8 bg-primary-main flex items-center justify-center text-black font-black italic rounded-br-2xl z-20 shadow-lg">
+                        {rank}
+                    </div>
+                )}
+
+                <div className="relative w-28 h-28 shrink-0 overflow-hidden rounded-[1.5rem] shadow-md border border-white/5">
+                    <img
+                        src={imgError ? FALLBACK_IMAGE : place.imageUrl || FALLBACK_IMAGE}
+                        className={`w-full h-full object-cover transition-all duration-700 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
+                        onLoad={() => setImgLoaded(true)}
+                        onError={() => setImgError(true)}
+                        alt={place.name}
+                    />
+                    {place.capacityPercentage >= 80 && (
+                        <div className="absolute bottom-1 right-1 bg-status-error text-white px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-lg">
+                            <Flame className="w-3 h-3 fill-current" />
+                            <span className="text-[8px] font-black uppercase">VOU!</span>
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex-1 flex flex-col justify-between py-1 min-w-0">
+                    <div>
+                        <div className="flex items-center gap-1.5 mb-1 opacity-60">
+                            <span className="text-[9px] font-bold text-primary-main uppercase tracking-widest">{place.type}</span>
+                            <span className="text-[8px] text-text-tertiary">•</span>
+                            <span className="text-[9px] font-medium text-text-tertiary uppercase">{place.distance}</span>
+                        </div>
+                        <h4 className="text-xl font-black text-white italic tracking-tighter truncate leading-none">
+                            {place.name.toUpperCase()}
+                        </h4>
+                        <p className="text-[10px] text-text-tertiary font-medium truncate mt-1">
+                            {place.address}
+                        </p>
+                    </div>
+
+                    <div className="flex items-center justify-between mt-auto">
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-1 text-primary-main">
+                                <Star className="w-4 h-4 fill-current" />
+                                <span className="text-sm font-black">{place.rating}</span>
+                            </div>
+                            <div className="h-4 w-[1px] bg-border-default" />
+                            <div className="flex items-center gap-1 text-text-secondary">
+                                <Users className="w-3.5 h-3.5" />
+                                <span className="text-[11px] font-bold uppercase">{place.capacityPercentage}%</span>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <motion.button
+                                whileTap={{ scale: 0.8 }}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    trigger('light');
+                                    onToggleSave?.(place.id);
+                                }}
+                                className={`p-2.5 rounded-xl border transition-all ${isSaved ? 'bg-primary-main border-primary-main text-black' : 'bg-bg-surface-2/50 border-border-default text-text-tertiary'}`}
+                            >
+                                <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
+                            </motion.button>
+                        </div>
+                    </div>
+                </div>
+            </motion.div>
+        );
+    }
     const [votedVibe, setVotedVibe] = useState<'up' | 'down' | null>(null);
     const [showMatchMode, setShowMatchMode] = useState(false);
 
@@ -262,6 +334,14 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
     }, [place.menu, menuCategory]);
 
     const handleCheckout = () => {
+        if (!isCheckedIn) {
+            trigger('heavy');
+            showToast({
+                type: 'info',
+                message: 'Você precisa fazer check-in para realizar pedidos! 📍'
+            });
+            return;
+        }
         if (cartCount === 0) return;
         trigger('success');
         setIsOrdering(true);
@@ -315,6 +395,14 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
 
     const handleCallStaff = async (reason: string) => {
         if (!currentUser) return;
+        if (!isCheckedIn) {
+            trigger('heavy');
+            showToast({
+                type: 'info',
+                message: 'Faça check-in para chamar o staff! 📍'
+            });
+            return;
+        }
         trigger('medium');
         setStaffState('calling');
         setShowStaffOptions(false);
@@ -532,10 +620,10 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                                                                 </div>
                                                                 <div>
                                                                     <p className="text-white font-bold text-sm leading-none">{item.quantity}x {item.name}</p>
-                                                                    <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">{item.orderedAt} • R$ {(item.price * item.quantity).toFixed(2)}</p>
+                                                                    <p className="text-[9px] text-text-tertiary font-bold uppercase mt-1">{item.orderedAt} • R$ {(item.price * item.quantity).toFixed(2)}</p>
                                                                 </div>
                                                             </div>
-                                                            <div className={`px-2 py-1 rounded-lg text-[8px] font-black uppercase ${item.status === 'preparing' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20 animate-pulse' : 'bg-green-500/10 text-green-500 border border-green-500/20'}`}>
+                                                            <div className={`px-2 py-1 rounded-lg text-[8px] font-black uppercase ${item.status === 'preparing' ? 'bg-status-warning/10 text-status-warning border border-status-warning/20 animate-pulse' : 'bg-status-success/10 text-status-success border border-status-success/20'}`}>
                                                                 {item.status === 'preparing' ? 'Preparando' : 'Entregue'}
                                                             </div>
                                                         </div>
@@ -545,7 +633,7 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                                         </div>
                                     ) : (
                                         (!place.menu || place.menu.length === 0) ? (
-                                            <div className="h-full flex flex-col items-center justify-center text-slate-600 opacity-40 py-20">
+                                            <div className="h-full flex flex-col items-center justify-center text-text-tertiary opacity-40 py-20">
                                                 <Utensils className="w-20 h-20 mb-6 stroke-[0.5]" />
                                                 <p className="text-[10px] font-black uppercase tracking-widest">Sem itens disponíveis</p>
                                             </div>
@@ -560,12 +648,12 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                                 </div>
 
                                 {cartCount > 0 && menuCategory !== 'orders' && (
-                                    <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-[#0B0F19] via-[#0B0F19] to-transparent z-30 pb-safe">
-                                        <div className="bg-[var(--primary)] rounded-3xl p-4 xs:p-5 shadow-[0_12px_40px_rgba(204,255,0,0.25)] flex items-center justify-between border-t border-white/20">
+                                    <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-bg-default via-bg-default to-transparent z-30 pb-safe">
+                                        <div className="bg-primary-main rounded-3xl p-4 xs:p-5 shadow-[0_12px_40px_rgba(204,255,0,0.25)] flex items-center justify-between border-t border-white/20">
                                             <div className="flex items-center gap-3">
                                                 <div className="bg-black w-12 h-12 rounded-2xl flex items-center justify-center relative">
-                                                    <Utensils className="w-5 h-5 text-[var(--primary)]" />
-                                                    <div className="absolute -top-1.5 -right-1.5 bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black border-2 border-[var(--primary)] animate-[pop_0.3s_ease-out]">{cartCount}</div>
+                                                    <Utensils className="w-5 h-5 text-primary-main" />
+                                                    <div className="absolute -top-1.5 -right-1.5 bg-status-error text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black border-2 border-primary-main animate-[pop_0.3s_ease-out]">{cartCount}</div>
                                                 </div>
                                                 <div className="flex flex-col">
                                                     <span className="text-[9px] font-black text-black opacity-60 uppercase">Total</span>
@@ -573,7 +661,7 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                                                 </div>
                                             </div>
                                             <button onClick={handleCheckout} className="bg-black text-white px-6 py-3.5 rounded-2xl font-black uppercase text-[10px] tracking-wider flex items-center gap-2 active:scale-95 transition-all">
-                                                {isOrdering ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4 text-[var(--primary)]" />}
+                                                {isOrdering ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4 text-primary-main" />}
                                                 {isOrdering ? 'ENVIANDO' : 'PEDIR AGORA'}
                                             </button>
                                         </div>
@@ -599,25 +687,25 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                                 animate={{ y: 0 }}
                                 exit={{ y: '100%' }}
                                 transition={springTransition}
-                                className="w-full max-w-lg bg-[#1e293b] rounded-t-[2.5rem] border-t border-slate-700 p-6 xs:p-8 pb-safe"
+                                className="w-full max-w-lg bg-bg-surface-1 rounded-t-[3rem] border-t border-border-default p-8 pb-safe"
                                 onClick={e => e.stopPropagation()}
                             >
-                                <div className="flex justify-between items-center mb-6">
-                                    <h3 className="text-xl font-black text-white italic tracking-tighter">COMO AJUDAR?</h3>
-                                    <button onClick={() => setShowStaffOptions(false)} className="bg-slate-800 p-2 rounded-full text-slate-400"><X className="w-5 h-5" /></button>
+                                <div className="flex justify-between items-center mb-8">
+                                    <h3 className="text-2xl font-black text-white italic tracking-tighter">COMO AJUDAR?</h3>
+                                    <button onClick={() => setShowStaffOptions(false)} className="bg-bg-surface-2 p-3 rounded-full text-text-tertiary"><X className="w-5 h-5" /></button>
                                 </div>
-                                <div className="grid grid-cols-3 gap-3 mb-2">
-                                    <button onClick={() => handleCallStaff('Pedido')} className="bg-slate-800 border border-slate-700 p-4 xs:p-6 rounded-2xl flex flex-col items-center gap-3 active:bg-slate-700 active:scale-95 transition-all">
-                                        <Utensils className="w-8 h-8 text-[var(--primary)]" />
-                                        <span className="text-[9px] font-black uppercase text-white">Pedido</span>
+                                <div className="grid grid-cols-3 gap-4 mb-2">
+                                    <button onClick={() => handleCallStaff('Pedido')} className="bg-bg-surface-2 border border-border-default p-6 rounded-2xl flex flex-col items-center gap-3 active:bg-bg-surface-2/70 active:scale-95 transition-all">
+                                        <Utensils className="w-8 h-8 text-primary-main" />
+                                        <span className="text-[10px] font-black uppercase text-white">Pedido</span>
                                     </button>
-                                    <button onClick={() => handleCallStaff('Conta')} className="bg-slate-800 border border-slate-700 p-4 xs:p-6 rounded-2xl flex flex-col items-center gap-3 active:bg-slate-700 active:scale-95 transition-all">
-                                        <Receipt className="w-8 h-8 text-green-500" />
-                                        <span className="text-[9px] font-black uppercase text-white">Conta</span>
+                                    <button onClick={() => handleCallStaff('Conta')} className="bg-bg-surface-2 border border-border-default p-6 rounded-2xl flex flex-col items-center gap-3 active:bg-bg-surface-2/70 active:scale-95 transition-all">
+                                        <Receipt className="w-8 h-8 text-status-success" />
+                                        <span className="text-[10px] font-black uppercase text-white">Conta</span>
                                     </button>
-                                    <button onClick={() => handleCallStaff('Ajuda')} className="bg-slate-800 border border-slate-700 p-4 xs:p-6 rounded-2xl flex flex-col items-center gap-3 active:bg-slate-700 active:scale-95 transition-all">
-                                        <HelpCircle className="w-8 h-8 text-red-500" />
-                                        <span className="text-[9px] font-black uppercase text-white">Ajuda</span>
+                                    <button onClick={() => handleCallStaff('Ajuda')} className="bg-bg-surface-2 border border-border-default p-6 rounded-2xl flex flex-col items-center gap-3 active:bg-bg-surface-2/70 active:scale-95 transition-all">
+                                        <HelpCircle className="w-8 h-8 text-status-error" />
+                                        <span className="text-[10px] font-black uppercase text-white">Ajuda</span>
                                     </button>
                                 </div>
                             </motion.div>
@@ -626,7 +714,7 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                 </AnimatePresence>
 
                 {/* HERO AREA */}
-                <div className="h-[45vh] xs:h-[50vh] relative w-full overflow-hidden shrink-0 bg-slate-900">
+                <div className="h-[45vh] xs:h-[50vh] relative w-full overflow-hidden shrink-0 bg-bg-surface-1">
                     <img
                         src={imgError ? FALLBACK_IMAGE : `${place.imageUrl?.split('?')[0]}?q=75&w=800&auto=format&fit=crop` || FALLBACK_IMAGE}
                         className={`w-full h-full object-cover transition-transform duration-[3s] ${imgLoaded ? 'scale-100' : 'scale-110 blur-xl opacity-0'}`}
@@ -634,65 +722,80 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                         onLoad={() => setImgLoaded(true)}
                         onError={() => { setImgError(true); setImgLoaded(true); }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F19] via-transparent to-[#0B0F19]/40"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-bg-default via-bg-default/20 to-bg-default/40"></div>
 
-                    <div className="absolute bottom-0 left-0 right-0 p-8 xs:p-10">
-                        <div className="flex justify-between items-end mb-6 gap-6">
-                            <div className="min-w-0">
-                                <div className="flex flex-wrap items-center gap-2 mb-3">
-                                    <span className="bg-indigo-600/30 backdrop-blur-md text-white text-[10px] font-black px-3 py-1 rounded-lg uppercase border border-white/10">{place.type}</span>
-                                    {place.isTrending && <span className="bg-orange-600 text-white text-[10px] font-black px-3 py-1 rounded-lg uppercase flex items-center gap-1.5 shadow-lg shadow-orange-600/20"><Flame className="w-3 h-3 fill-current" /> Hype</span>}
+                    {/* Top Actions */}
+                    <div className="absolute top-12 left-6 right-6 flex justify-between items-center z-30">
+                        <button onClick={onClick} className="w-12 h-12 rounded-2xl bg-black/40 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white active:scale-90 transition-all">
+                            <X className="w-6 h-6" />
+                        </button>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onToggleSave?.(place.id);
+                            }}
+                            className={`w-12 h-12 rounded-2xl backdrop-blur-xl border flex items-center justify-center transition-all active:scale-90
+                            ${isSaved ? 'bg-primary-main border-primary-main text-black' : 'bg-black/40 border-white/10 text-white'}`}
+                        >
+                            <Bookmark className={`w-6 h-6 ${isSaved ? 'fill-current' : ''}`} />
+                        </button>
+                    </div>
+
+                    <div className="absolute bottom-0 left-0 right-0 p-8 pt-20">
+                        <div className="flex flex-col gap-4">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="glass-card !bg-primary-main/20 text-primary-main text-[10px] font-black px-3 py-1.5 rounded-xl uppercase border border-primary-main/20">{place.type}</span>
+                                {place.isTrending && <span className="bg-status-warning text-black text-[10px] font-black px-3 py-1.5 rounded-xl uppercase flex items-center gap-1.5 shadow-lg shadow-status-warning/20"><Flame className="w-3.5 h-3.5 fill-current" /> Hype</span>}
+                            </div>
+                            <div className="flex justify-between items-end gap-6">
+                                <div className="min-w-0">
+                                    <h1 className="text-4xl xs:text-5xl font-black text-white italic tracking-tighter leading-[0.85] drop-shadow-2xl truncate uppercase">{place.name}</h1>
+                                    <p className="text-text-secondary text-xs font-medium flex items-center gap-2 mt-3"><MapPin className="w-4 h-4 text-primary-main" /> {place.address}</p>
                                 </div>
-                                <h1 className="text-4xl xs:text-5xl sm:text-6xl font-black text-white italic tracking-tighter leading-[0.85] drop-shadow-2xl truncate mb-1">{place.name.toUpperCase()}</h1>
-                                <p className="text-slate-300/80 text-xs font-medium flex items-center gap-1.5 mt-2"><MapPin className="w-3.5 h-3.5" /> {place.address || 'Endereço não disponível'}</p>
+                                <div className="glass-card !bg-bg-default/40 p-4 rounded-3xl border border-white/10 flex flex-col items-center shrink-0 shadow-2xl">
+                                    <span className="text-[9px] font-black text-text-tertiary uppercase mb-1 tracking-widest">Score</span>
+                                    <div className="flex items-center gap-1.5 text-primary-main font-black text-2xl"><Star className="w-5 h-5 fill-current" /> {place.rating}</div>
+                                </div>
                             </div>
-                            <div className="bg-white/10 backdrop-blur-2xl p-4 rounded-3xl border border-white/20 flex flex-col items-center shrink-0 shadow-2xl">
-                                <span className="text-[9px] font-black text-slate-300 uppercase mb-1 tracking-widest">Vibe Score</span>
-                                <div className="flex items-center gap-1.5 text-[var(--primary)] font-black text-xl xs:text-2xl"><Star className="w-5 h-5 xs:w-6 xs:h-6 fill-current" /> {place.rating}</div>
-                            </div>
-                        </div>
-                        <div className="flex flex-wrap gap-3">
-                            <span className="flex items-center gap-2 bg-black/50 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 text-[10px] text-white font-black uppercase tracking-wider"><MapPin className="w-4 h-4 text-[var(--primary)]" /> {place.distance}</span>
-                            <span className="flex items-center gap-2 bg-black/50 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 text-[10px] text-white font-black uppercase tracking-wider"><Clock className="w-4 h-4 text-[var(--primary)]" /> {place.openingHours}</span>
                         </div>
                     </div>
                 </div>
 
                 {/* BODY */}
-                <div className="px-5 xs:px-6 -mt-10 relative z-20 space-y-6 pb-40">
-                    <div className="flex flex-col gap-3">
+                <div className="px-6 -mt-8 relative z-20 space-y-6 pb-40">
+                    <div className="flex flex-col gap-4">
                         {/* Main Check-in Button */}
                         <button
                             onClick={(e) => { e.stopPropagation(); handleGeoCheckIn(); }}
                             disabled={isCheckedIn || checkingDistance}
-                            className={`w-full min-h-[56px] py-5 rounded-[var(--radius-cta)] font-black uppercase text-base tracking-[0.2em] flex items-center justify-center gap-3 shadow-2xl transition-all active:scale-[0.97] border border-white/20
+                            className={`w-full min-h-[64px] py-5 rounded-[2rem] font-black uppercase text-base tracking-[0.2em] flex items-center justify-center gap-3 shadow-2xl transition-all active:scale-[0.97] border border-white/10
                             ${isCheckedIn
-                                    ? 'bg-emerald-500 text-white shadow-[0_10px_25px_rgba(16,185,129,0.3)]'
-                                    : 'bg-[var(--primary)] text-black shadow-[0_10px_30px_rgba(var(--primary-rgb),0.3)]'}`}
+                                    ? 'bg-status-success text-white shadow-[0_12px_32px_rgba(34,197,94,0.3)]'
+                                    : 'bg-primary-main text-black shadow-[0_12px_32px_rgba(217,255,0,0.3)]'}`}
                         >
                             {checkingDistance ? (
-                                <><Loader2 className="w-5 h-5 animate-spin" /> VERIFICANDO...</>
+                                <><Loader2 className="w-6 h-6 animate-spin" /> VERIFICANDO...</>
                             ) : isCheckedIn ? (
-                                <><CheckCircle2 className="w-5 h-5" /> ESTOU AQUI</>
+                                <><CheckCircle2 className="w-6 h-6" /> ESTOU AQUI</>
                             ) : (
-                                <><MapPin className="w-5 h-5" /> VOU LÁ AGORA</>
+                                <><Navigation className="w-6 h-6" /> VOU LÁ AGORA</>
                             )}
                         </button>
 
                         {/* Secondary Actions Row */}
                         {!isCheckedIn && (
                             <div className="grid grid-cols-3 gap-3">
-                                <button onClick={handleOpenMaps} className="bg-slate-800/80 backdrop-blur-xl border border-white/10 rounded-2xl py-4 flex flex-col items-center justify-center gap-1 active:scale-95 transition-all text-white group">
-                                    <Navigation className="w-5 h-5 text-cyan-400 group-active:scale-110" />
-                                    <span className="text-[8px] font-black uppercase tracking-tighter">MAPS</span>
+                                <button onClick={handleOpenMaps} className="glass-card bg-bg-surface-1/40 rounded-2xl py-4 flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-all text-white group">
+                                    <MapPin className="w-5 h-5 text-primary-main" />
+                                    <span className="text-[9px] font-black uppercase tracking-wider">MAPS</span>
                                 </button>
-                                <button onClick={handleOpenUber} className="bg-slate-800/80 backdrop-blur-xl border border-white/10 rounded-2xl py-4 flex flex-col items-center justify-center gap-1 active:scale-95 transition-all text-white group">
-                                    <Car className="w-5 h-5 text-[var(--primary)] group-active:scale-110" />
-                                    <span className="text-[8px] font-black uppercase tracking-tighter">UBER</span>
+                                <button onClick={handleOpenUber} className="glass-card bg-bg-surface-1/40 rounded-2xl py-4 flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-all text-white group">
+                                    <Car className="w-5 h-5 text-primary-main" />
+                                    <span className="text-[9px] font-black uppercase tracking-wider">UBER</span>
                                 </button>
-                                <button onClick={handleShare} className="bg-slate-800/80 backdrop-blur-xl border border-white/10 rounded-2xl py-4 flex flex-col items-center justify-center gap-1 active:scale-95 transition-all text-white group">
-                                    <Share2 className="w-5 h-5 text-indigo-400 group-active:scale-110" />
-                                    <span className="text-[8px] font-black uppercase tracking-tighter">SHARE</span>
+                                <button onClick={handleShare} className="glass-card bg-bg-surface-1/40 rounded-2xl py-4 flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-all text-white group">
+                                    <Share2 className="w-5 h-5 text-primary-main" />
+                                    <span className="text-[9px] font-black uppercase tracking-wider">SHARE</span>
                                 </button>
                             </div>
                         )}
@@ -700,63 +803,62 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
 
                     {isCheckedIn && (
                         <div className="space-y-4">
-                            <button onClick={() => { trigger('medium'); setShowMatchMode(true); }} className="w-full bg-gradient-to-br from-indigo-900/90 to-[#12122b] backdrop-blur-xl border border-indigo-500/20 rounded-[2.5rem] p-5 flex items-center justify-between active:scale-[0.98] transition-all shadow-xl">
+                            <button onClick={() => { trigger('medium'); setShowMatchMode(true); }} className="w-full bg-gradient-to-br from-primary-main/10 to-transparent backdrop-blur-xl border border-primary-main/20 rounded-[2.5rem] p-6 flex items-center justify-between active:scale-[0.98] transition-all shadow-xl group">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center border border-indigo-400/20">
-                                        <Users className="w-7 h-7 text-indigo-400" />
+                                    <div className="w-16 h-16 rounded-3xl bg-primary-main/10 flex items-center justify-center border border-primary-main/20 group-hover:scale-110 transition-transform">
+                                        <Users className="w-8 h-8 text-primary-main" />
                                     </div>
                                     <div className="text-left min-w-0">
-                                        <h4 className="text-xl font-black text-white italic truncate">QUEM TÁ AQUI?</h4>
-                                        <p className="text-[10px] text-indigo-300/60 font-black uppercase tracking-widest mt-0.5">Vibe Tinder ativada</p>
+                                        <h4 className="text-2xl font-black text-white italic truncate">QUEM TÁ AQUI?</h4>
+                                        <p className="text-[10px] text-text-tertiary font-black uppercase tracking-widest mt-0.5">Vibe Tinder ativada</p>
                                     </div>
                                 </div>
-                                <div className="bg-indigo-500/20 px-4 py-2 rounded-2xl text-[10px] font-black text-indigo-300 border border-indigo-500/20 shadow-inner">12+ ON</div>
+                                <div className="bg-primary-main text-black px-4 py-2 rounded-2xl text-[11px] font-black shadow-lg">12+ ON</div>
                             </button>
 
-                            <div className="bg-slate-800/40 backdrop-blur-md p-6 rounded-[2.5rem] border border-white/5 shadow-inner">
-                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4 flex items-center gap-2"><Zap className="w-4 h-4 text-yellow-400 animate-pulse" /> Vibe Check Realtime</h4>
+                            <div className="bg-bg-surface-1/40 backdrop-blur-md p-6 rounded-[2.5rem] border border-border-default shadow-inner">
+                                <h4 className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.3em] mb-4 flex items-center gap-2"><Zap className="w-4 h-4 text-primary-main animate-pulse" /> Vibe Check Realtime</h4>
                                 {!votedVibe ? (
                                     <div className="flex gap-4">
-                                        <button onClick={() => { trigger('success'); setVotedVibe('up'); }} className="flex-1 bg-green-500/5 border border-green-500/10 p-4 rounded-2xl flex flex-col items-center gap-1.5 active:bg-green-500 active:text-black transition-all group">
-                                            <ThumbsUp className="w-6 h-6 text-green-500 group-active:text-black" />
+                                        <button onClick={() => { trigger('success'); setVotedVibe('up'); }} className="flex-1 bg-status-success/5 border border-status-success/10 p-4 rounded-2xl flex flex-col items-center gap-1.5 active:bg-status-success active:text-white transition-all group">
+                                            <ThumbsUp className="w-6 h-6 text-status-success group-active:text-white" />
                                             <span className="text-[10px] font-black uppercase tracking-tighter">BOMBANDO</span>
                                         </button>
-                                        <button onClick={() => { trigger('success'); setVotedVibe('down'); }} className="flex-1 bg-red-500/5 border border-red-500/10 p-4 rounded-2xl flex flex-col items-center gap-1.5 active:bg-red-500 active:text-black transition-all group">
-                                            <ThumbsDown className="w-6 h-6 text-red-500 group-active:text-black" />
+                                        <button onClick={() => { trigger('success'); setVotedVibe('down'); }} className="flex-1 bg-status-error/5 border border-status-error/10 p-4 rounded-2xl flex flex-col items-center gap-1.5 active:bg-status-error active:text-white transition-all group">
+                                            <ThumbsDown className="w-6 h-6 text-status-error group-active:text-white" />
                                             <span className="text-[10px] font-black uppercase tracking-tighter">FLOPADO</span>
                                         </button>
                                     </div>
                                 ) : (
-                                    <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-[var(--primary)]/10 border border-[var(--primary)]/20 rounded-2xl p-5 text-center shadow-inner">
-                                        <p className="text-xs font-black text-[var(--primary)] italic tracking-widest">FEEDBACK ENVIADO COM SUCESSO!</p>
+                                    <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-primary-main/10 border border-primary-main/20 rounded-2xl p-5 text-center shadow-inner">
+                                        <p className="text-xs font-black text-primary-main italic tracking-widest">FEEDBACK ENVIADO! VALEU!</p>
                                     </motion.div>
                                 )}
                             </div>
                         </div>
                     )}
 
-                    <div className="grid grid-cols-2 gap-3 xs:gap-4">
-                        <motion.div whileTap={{ scale: 0.95 }} className="bg-slate-800/20 p-5 rounded-2xl xs:rounded-[2.5rem] border border-slate-700/30 group active:scale-95 transition-all" onClick={() => { trigger('light'); setShowMusicPoll(true); }}>
+                    <div className="grid grid-cols-2 gap-4">
+                        <motion.div whileTap={{ scale: 0.95 }} className="bg-bg-surface-1/40 p-5 rounded-[2.5rem] border border-border-default group active:scale-95 transition-all" onClick={() => { trigger('light'); setShowMusicPoll(true); }}>
                             <div className="flex items-center gap-2 mb-3">
-                                <Disc className="w-4 h-4 text-fuchsia-400" />
-                                <span className="text-[9px] font-black text-slate-400 uppercase">Som</span>
+                                <Disc className="w-4 h-4 text-primary-main" />
+                                <span className="text-[10px] font-black text-text-tertiary uppercase">Som</span>
                             </div>
-                            <p className="text-white font-black text-sm italic truncate">{place.currentMusic || 'VIBE MISTERIOSA'}</p>
+                            <p className="text-white font-black text-sm italic truncate uppercase">{place.currentMusic || 'VIBE MISTERIOSA'}</p>
                             <div className="mt-3 flex items-center gap-2">
-                                <span className="text-[8px] font-black text-slate-600 uppercase flex items-center gap-1"><History className="w-2.5 h-2.5" /> Ver</span>
-                                {isCheckedIn && <BarChart3 className="w-3.5 h-3.5 text-fuchsia-400 ml-auto" />}
+                                <span className="text-[9px] font-black text-text-tertiary uppercase flex items-center gap-1"><History className="w-3 h-3" /> Ver History</span>
                             </div>
                         </motion.div>
 
-                        <div className="bg-slate-800/20 p-5 rounded-2xl xs:rounded-[2.5rem] border border-slate-700/30">
+                        <div className="bg-bg-surface-1/40 p-5 rounded-[2.5rem] border border-border-default">
                             <div className="flex items-center gap-2 mb-3">
-                                <Users className="w-4 h-4 text-cyan-400" />
-                                <span className="text-[9px] font-black text-slate-400 uppercase">Giro</span>
+                                <Users className="w-4 h-4 text-primary-main" />
+                                <span className="text-[10px] font-black text-text-tertiary uppercase">Giro</span>
                             </div>
                             <div className="flex flex-col gap-2">
-                                <p className="text-white font-black text-xl leading-none">{place.capacityPercentage}%</p>
-                                <div className="w-full h-1.5 bg-slate-900 rounded-full overflow-hidden border border-white/5">
-                                    <div className={`h-full rounded-full transition-all duration-1000 ${isHot ? 'bg-red-500' : 'bg-green-500'}`} style={{ width: `${place.capacityPercentage}%` }} />
+                                <p className="text-white font-black text-2xl leading-none">{place.capacityPercentage}%</p>
+                                <div className="w-full h-2 bg-bg-default rounded-full overflow-hidden border border-border-default mt-1">
+                                    <div className={`h-full rounded-full transition-all duration-1000 ${place.capacityPercentage >= 80 ? 'bg-status-error' : 'bg-primary-main'}`} style={{ width: `${place.capacityPercentage}%` }} />
                                 </div>
                             </div>
                         </div>
@@ -766,14 +868,15 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                         <motion.button
                             whileTap={{ scale: 0.95 }}
                             onClick={() => { trigger('light'); setShowMenu(true); }}
-                            className="bg-slate-800/40 backdrop-blur-xl border border-white/5 p-8 rounded-[2.5rem] flex flex-col items-center gap-4 transition-all shadow-xl group hover:bg-slate-800/60"
+                            className="bg-bg-surface-1/60 backdrop-blur-xl border border-border-default p-8 rounded-[2.5rem] flex flex-col items-center gap-4 transition-all shadow-xl group"
                         >
-                            <div className="w-16 h-16 bg-cyan-500/10 rounded-3xl flex items-center justify-center border border-cyan-500/10 group-hover:scale-110 transition-transform">
-                                <Utensils className="w-8 h-8 text-cyan-400" />
+                            <div className="w-16 h-16 bg-primary-main/10 rounded-3xl flex items-center justify-center border border-primary-main/10 group-hover:scale-110 transition-transform">
+                                <Utensils className="w-8 h-8 text-primary-main" />
                             </div>
-                            <div className="text-center">
-                                <span className="text-xs font-black text-white uppercase tracking-widest block">CARDÁPIO</span>
-                                <span className="text-[8px] text-slate-500 font-bold uppercase mt-1 tracking-tighter">Pedidos Online</span>
+                            <div className="text-center relative">
+                                {!isCheckedIn && <div className="absolute -top-12 left-1/2 -translate-x-1/2 text-primary-main/40"><Zap className="w-4 h-4" /></div>}
+                                <span className={`text-xs font-black uppercase tracking-widest block ${!isCheckedIn ? 'text-text-tertiary' : 'text-white'}`}>CARDÁPIO</span>
+                                <span className="text-[9px] text-text-tertiary font-bold uppercase mt-1 tracking-tighter">{isCheckedIn ? 'Pedidos Online' : 'Apenas Visualizar'}</span>
                             </div>
                         </motion.button>
 
@@ -781,29 +884,29 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                             whileTap={{ scale: 0.95 }}
                             onClick={() => { if (staffState === 'idle') { trigger('light'); setShowStaffOptions(true); } }}
                             disabled={staffState !== 'idle'}
-                            className={`bg-slate-800/40 backdrop-blur-xl border p-8 rounded-[2.5rem] flex flex-col items-center gap-4 transition-all shadow-xl group hover:bg-slate-800/60
-                            ${staffState === 'calling' ? 'border-yellow-500/50' : staffState === 'confirmed' ? 'border-green-500/50' : 'border-white/5'}`}
+                            className={`bg-bg-surface-1/60 backdrop-blur-xl border p-8 rounded-[2.5rem] flex flex-col items-center gap-4 transition-all shadow-xl group
+                            ${staffState === 'calling' ? 'border-status-warning/50' : staffState === 'confirmed' ? 'border-status-success/50' : 'border-border-default'}`}
                         >
-                            <div className={`w-16 h-16 rounded-3xl flex items-center justify-center transition-all group-hover:scale-110 ${staffState === 'calling' ? 'bg-yellow-500/20 animate-pulse' : staffState === 'confirmed' ? 'bg-green-500/20' : 'bg-indigo-500/10'}`}>
-                                {staffState === 'calling' ? <Loader2 className="w-8 h-8 text-yellow-500 animate-spin" /> : staffState === 'confirmed' ? <CheckCircle2 className="w-8 h-8 text-green-500" /> : <BellRing className="w-8 h-8 text-indigo-400" />}
+                            <div className={`w-16 h-16 rounded-3xl flex items-center justify-center transition-all group-hover:scale-110 ${staffState === 'calling' ? 'bg-status-warning/20 animate-pulse' : staffState === 'confirmed' ? 'bg-status-success/20' : 'bg-primary-main/10'}`}>
+                                {staffState === 'calling' ? <Loader2 className="w-8 h-8 text-status-warning animate-spin" /> : staffState === 'confirmed' ? <CheckCircle2 className="w-8 h-8 text-status-success" /> : <BellRing className="w-8 h-8 text-primary-main" />}
                             </div>
                             <div className="text-center">
-                                <span className={`text-xs font-black uppercase tracking-widest block ${staffState === 'calling' ? 'text-yellow-500' : staffState === 'confirmed' ? 'text-green-500' : 'text-white'}`}>
-                                    {staffState === 'calling' ? 'CHAMANDO' : staffState === 'confirmed' ? 'VINDO!' : 'GARÇOM'}
+                                <span className={`text-xs font-black uppercase tracking-widest block ${staffState === 'calling' ? 'text-status-warning' : staffState === 'confirmed' ? 'text-status-success' : 'text-white'}`}>
+                                    {staffState === 'calling' ? 'CHAMANDO' : staffState === 'confirmed' ? 'VINDO!' : 'STAFF'}
                                 </span>
-                                <span className="text-[8px] text-slate-500 font-bold uppercase mt-1 tracking-tighter">Chamar Ajuda</span>
+                                <span className="text-[9px] text-text-tertiary font-bold uppercase mt-1 tracking-tighter">Chamar Ajuda</span>
                             </div>
                         </motion.button>
                     </div>
 
-                    <div className="bg-[#111827]/60 backdrop-blur-md rounded-[2.5rem] p-8 border border-white/5 shadow-inner space-y-4">
-                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">DETALHES DO LOCAL</h4>
+                    <div className="bg-bg-surface-1/40 backdrop-blur-md rounded-[2.5rem] p-8 border border-border-default shadow-inner space-y-4">
+                        <h4 className="text-[11px] font-black text-text-tertiary uppercase tracking-widest mb-2 flex items-center gap-2">DETALHES DO LOCAL</h4>
                         <p className="text-slate-300 text-sm leading-relaxed font-medium">
                             {place.description || "O melhor rolê da região! Vibe incrível, música selecionada e ambiente premium para você e seus amigos."}
                         </p>
                         <div className="flex flex-wrap gap-2 pt-4">
                             {place.tags?.map(tag => (
-                                <span key={tag} className="px-3 py-1 bg-slate-800/80 rounded-lg text-[9px] font-black text-slate-400 uppercase border border-white/5">{tag}</span>
+                                <span key={tag} className="px-3 py-1 bg-bg-surface-2/80 rounded-lg text-[9px] font-black text-text-tertiary uppercase border border-white/5">{tag}</span>
                             ))}
                         </div>
                     </div>

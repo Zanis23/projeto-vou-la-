@@ -14,6 +14,7 @@ import { Avatar } from '../src/components/ui/Avatar';
 import { Button } from '../src/components/ui/Button';
 import { Badge } from '../src/components/ui/Badge';
 import { Card } from '../src/components/ui/Card';
+import { Header } from '../src/components/ui/Header';
 
 interface ProfileProps {
   currentUser?: User;
@@ -200,26 +201,45 @@ export const Profile: React.FC<ProfileProps> = ({ currentUser = MOCK_USER, onLog
       >
         <div className="absolute top-0 left-0 right-0 h-[400px] bg-[var(--primary-main)] opacity-10 blur-[100px] pointer-events-none"></div>
 
-        <div className="pt-safe px-4 py-2 flex justify-between gap-3 sticky top-0 z-30">
-          <div className="flex gap-2">
-            {user.ownedPlaceId && (
-              <Button variant="ghost" className="bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600 hover:text-white border border-indigo-500/20" onClick={() => setShowDashboard(true)}>
+        <Header
+          left={
+            user.ownedPlaceId && (
+              <Button
+                variant="ghost"
+                className="bg-indigo-600/10 text-indigo-400 hover:bg-indigo-600 hover:text-white border border-indigo-500/20 rounded-xl"
+                onClick={() => setShowDashboard(true)}
+              >
                 <LayoutDashboard className="w-5 h-5 mr-2" />
-                <span className="text-[10px] font-black uppercase tracking-widest">Painel Dono</span>
+                <span className="text-[9px] font-black uppercase tracking-widest">Painel</span>
               </Button>
-            )}
-          </div>
-          <div className="flex gap-2">
-            <Button variant="danger" className="bg-red-500/10 text-red-500 border-red-500/20 p-2 h-auto" onClick={() => setShowSafety(true)}>
-              <Shield className="w-5 h-5 mr-2" />
-              <span className="text-[10px] font-black uppercase block">Segurança</span>
-            </Button>
+            )
+          }
+          center={
+            <h1 className="text-xl font-black text-white italic tracking-tighter uppercase">
+              PERFIL
+            </h1>
+          }
+          right={
+            <div className="flex items-center gap-2">
+              <Button
+                variant="danger"
+                className="bg-red-500/10 text-red-500 border-red-500/20 p-2.5 h-auto rounded-xl"
+                onClick={() => setShowSafety(true)}
+              >
+                <Shield className="w-5 h-5" />
+              </Button>
 
-            <Button variant="secondary" size="icon" className="glass-card" onClick={() => setShowSettings(true)}>
-              <Settings className="w-5 h-5" />
-            </Button>
-          </div>
-        </div>
+              <Button
+                variant="secondary"
+                size="icon"
+                className="bg-white/5 border border-white/10 rounded-xl"
+                onClick={() => setShowSettings(true)}
+              >
+                <Settings className="w-5 h-5" />
+              </Button>
+            </div>
+          }
+        />
 
         <div className="px-6 pt-4 relative z-10">
           <div className="flex flex-col items-center mb-8">
