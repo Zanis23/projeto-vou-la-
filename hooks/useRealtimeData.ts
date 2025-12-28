@@ -73,6 +73,10 @@ export function useRealtimeData(appState: string, currentUser: User | null) {
                     }
                 }
             })
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload: any) => {
+                const msg = toCamel(payload.new);
+                window.dispatchEvent(new CustomEvent('voula_message_received', { detail: msg }));
+            })
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'friend_requests' }, (payload: any) => {
                 const req = toCamel(payload.new);
                 if (req.receiverId === currentUser.id) {

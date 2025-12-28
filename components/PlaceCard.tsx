@@ -1,9 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Place, MenuItem, OrderItem } from '../types';
-import { MapPin, Crown, Check, Music, Star, Clock, Bookmark, Flame, Utensils, BellRing, ThumbsUp, ThumbsDown, Zap, Users, X, Beer, Pizza, Loader2, CheckCircle2, Disc, Plus, Minus, Receipt, HelpCircle, History, BarChart3, Sparkles, ClipboardList, CreditCard, QrCode, ShoppingBag } from 'lucide-react';
+import { MapPin, Music, Flame, Star, Bookmark, Share2, Clock, CheckCircle2, Loader2, Zap, ThumbsUp, ThumbsDown, Users, Utensils, BellRing, Check, Car, Navigation, Minus, Plus, X, BarChart3, Sparkles, ClipboardList, CreditCard, QrCode, ShoppingBag, Receipt, HelpCircle, Disc, Crown, History, Beer, Pizza } from 'lucide-react';
 import { Skeleton } from './Skeleton';
+import { Badge } from '../src/components/ui/Badge';
 import { useHaptic } from '../hooks/useHaptic';
+import { useToast } from './ToastProvider';
 import { FALLBACK_IMAGE, getUserById } from '../constants';
 import { MatchMode } from './MatchMode';
 import { db } from '../utils/storage';
@@ -99,6 +101,7 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
     place, rank, onCheckIn, expanded = false, isCheckedIn = false, isSaved = false, onToggleSave, loading = false, onClick, currentUser
 }) => {
     const { trigger } = useHaptic();
+    const { showToast } = useToast();
     const [imgLoaded, setImgLoaded] = useState(false);
     const [imgError, setImgError] = useState(false);
     const [votedVibe, setVotedVibe] = useState<'up' | 'down' | null>(null);
@@ -167,10 +170,10 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                 setCheckingDistance(false);
                 if (d <= 200) {
                     trigger('success');
-                    onCheckIn(place.id);
+                    onCheckIn(place?.id || '');
                 } else {
                     trigger('heavy');
-                    alert(`Você está muito longe! Aproximadamente ${Math.round(d)}m de distância. Chegue mais perto do ${place.name} para fazer check-in.`);
+                    alert(`Você está muito longe! Aproximadamente ${Math.round(d)}m de distância. Chegue mais perto do ${place?.name} para fazer check-in.`);
                 }
             },
             (err) => {
@@ -182,14 +185,50 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
         );
     };
 
+    const handleOpenMaps = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!place) return;
+        const query = encodeURIComponent(place.address || place.name);
+        window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
+    };
+
+    const handleOpenUber = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!place || !place.lat || !place.lng) {
+            alert("Localização não disponível para Uber.");
+            return;
+        }
+        const nickname = encodeURIComponent(place.name);
+        const url = `https://m.uber.com/ul/?action=setPickup&pickup=my_location&dropoff[latitude]=${place.lat}&dropoff[longitude]=${place.lng}&dropoff[nickname]=${nickname}`;
+        window.open(url, '_blank');
+    };
+
+    const handleShare = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!place) return;
+        const text = `Confira o ${place.name} no Vou Lá!`;
+        const url = window.location.href;
+        if (navigator.share) {
+            navigator.share({ title: 'Vou Lá', text, url });
+        } else {
+            alert("Copiado para a área de transferência!");
+        }
+    };
+
     if (loading) {
         return (
-            <div className="bg-[var(--bg-card)]/40 p-4 rounded-3xl border border-[var(--border-default)] mb-3">
-                <div className="flex gap-4">
-                    <Skeleton variant="circular" className="w-20 h-20 rounded-2xl shrink-0" />
-                    <div className="flex-1 space-y-2 py-1">
-                        <Skeleton className="h-5 w-3/4" /><Skeleton className="h-4 w-1/2" />
+            <div className={`w-full bg-[var(--bg-card)]/40 rounded-[2rem] p-3 border border-white/5 shadow-2xl ${expanded ? 'h-[500px]' : 'h-32'}`}>
+                <div className="flex gap-4 h-full">
+                    <Skeleton className="w-24 h-24 rounded-2xl shrink-0" />
+                    <div className="flex-1 flex flex-col justify-center gap-3">
+                        <Skeleton className="h-6 w-3/4 rounded-lg" />
+                        <Skeleton className="h-4 w-1/2 rounded-lg" />
+                        <div className="flex gap-2">
+                            <Skeleton className="h-4 w-12 rounded-lg" />
+                            <Skeleton className="h-4 w-12 rounded-lg" />
+                        </div>
                     </div>
+                    {!expanded && <Skeleton className="w-14 h-full rounded-[1.5rem] shrink-0" />}
                 </div>
             </div>
         );
@@ -210,13 +249,13 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
         });
     };
 
-    const cartTotal = useMemo(() => (!place.menu ? 0 : place.menu.reduce((acc: number, item: MenuItem) => acc + (item.price * (cart[item.id] || 0)), 0)), [cart, place.menu]);
+    const cartTotal = useMemo(() => (!place?.menu ? 0 : place.menu.reduce((acc: number, item: MenuItem) => acc + (item.price * (cart[item.id] || 0)), 0)), [cart, place?.menu]);
     const cartCount = (Object.values(cart) as number[]).reduce((a: number, b: number) => a + b, 0);
 
     const comandaTotal = useMemo(() => (orderedItems as OrderItem[]).reduce((acc: number, item: OrderItem) => acc + (item.price * item.quantity), 0), [orderedItems]);
 
     const filteredMenu = useMemo(() => {
-        if (!place.menu) return [];
+        if (!place?.menu) return [];
         if (menuCategory === 'all') return place.menu;
         if (menuCategory === 'orders') return [];
         return place.menu.filter(m => m.category === menuCategory);
@@ -228,6 +267,7 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
         setIsOrdering(true);
 
         setTimeout(async () => {
+            if (!currentUser) return;
             const newOrders: OrderItem[] = [];
             Object.entries(cart).forEach(([id, qty]) => {
                 const item = place.menu?.find(m => m.id === id);
@@ -243,8 +283,8 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
 
             await db.places.addCall(place.id, {
                 id: `c_${Date.now()}`,
-                userId: 'u1',
-                userName: 'Gabriel Vou Lá',
+                userId: currentUser.id,
+                userName: currentUser.name,
                 type: 'Pedido',
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 status: 'pending'
@@ -254,6 +294,10 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
             setCart({});
             setIsOrdering(false);
             setMenuCategory('orders');
+            showToast({
+                type: 'success',
+                message: 'Pedido enviado com sucesso! 🍻'
+            });
             trigger('success');
         }, 1500);
     };
@@ -270,18 +314,30 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
     };
 
     const handleCallStaff = async (reason: string) => {
+        if (!currentUser) return;
         trigger('medium');
         setStaffState('calling');
         setShowStaffOptions(false);
+
         await db.places.addCall(place.id, {
             id: `c_${Date.now()}`,
-            userId: 'u1',
-            userName: 'Gabriel Vou Lá',
+            userId: currentUser.id,
+            userName: currentUser.name,
             type: reason as any,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             status: 'pending'
         });
-        setTimeout(() => { trigger('success'); setStaffState('confirmed'); setTimeout(() => setStaffState('idle'), 5000); }, 2000);
+
+        // Mock success response from staff
+        setTimeout(() => {
+            trigger('success');
+            setStaffState('confirmed');
+            showToast({
+                type: 'success',
+                message: `O Staff do ${place.name} já está a caminho! 🏃‍♂️`
+            });
+            setTimeout(() => setStaffState('idle'), 5000);
+        }, 2000);
     };
 
     const handleVoteMusic = (genre: string) => {
@@ -580,73 +636,100 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F19] via-transparent to-[#0B0F19]/40"></div>
 
-                    <div className="absolute bottom-0 left-0 right-0 p-6 xs:p-8">
-                        <div className="flex justify-between items-end mb-4 gap-4">
+                    <div className="absolute bottom-0 left-0 right-0 p-8 xs:p-10">
+                        <div className="flex justify-between items-end mb-6 gap-6">
                             <div className="min-w-0">
-                                <div className="flex flex-wrap items-center gap-2 mb-2">
-                                    <span className="bg-indigo-600 text-white text-[9px] font-black px-2 py-0.5 rounded uppercase">{place.type}</span>
-                                    {place.isTrending && <span className="bg-orange-600 text-white text-[9px] font-black px-2 py-0.5 rounded uppercase flex items-center gap-1"><Flame className="w-2.5 h-2.5 fill-current" /> Hype</span>}
+                                <div className="flex flex-wrap items-center gap-2 mb-3">
+                                    <span className="bg-indigo-600/30 backdrop-blur-md text-white text-[10px] font-black px-3 py-1 rounded-lg uppercase border border-white/10">{place.type}</span>
+                                    {place.isTrending && <span className="bg-orange-600 text-white text-[10px] font-black px-3 py-1 rounded-lg uppercase flex items-center gap-1.5 shadow-lg shadow-orange-600/20"><Flame className="w-3 h-3 fill-current" /> Hype</span>}
                                 </div>
-                                <h1 className="text-3xl xs:text-4xl sm:text-5xl font-black text-white italic tracking-tighter leading-[0.9] drop-shadow-xl truncate">{place.name.toUpperCase()}</h1>
+                                <h1 className="text-4xl xs:text-5xl sm:text-6xl font-black text-white italic tracking-tighter leading-[0.85] drop-shadow-2xl truncate mb-1">{place.name.toUpperCase()}</h1>
+                                <p className="text-slate-300/80 text-xs font-medium flex items-center gap-1.5 mt-2"><MapPin className="w-3.5 h-3.5" /> {place.address || 'Endereço não disponível'}</p>
                             </div>
-                            <div className="bg-white/10 backdrop-blur-xl px-3 py-2 rounded-2xl border border-white/10 flex flex-col items-center shrink-0">
-                                <span className="text-[8px] font-black text-slate-300 uppercase mb-0.5">Vibe</span>
-                                <div className="flex items-center gap-1 text-[var(--primary)] font-black text-base xs:text-xl"><Star className="w-4 h-4 xs:w-5 xs:h-5 fill-current" /> {place.rating}</div>
+                            <div className="bg-white/10 backdrop-blur-2xl p-4 rounded-3xl border border-white/20 flex flex-col items-center shrink-0 shadow-2xl">
+                                <span className="text-[9px] font-black text-slate-300 uppercase mb-1 tracking-widest">Vibe Score</span>
+                                <div className="flex items-center gap-1.5 text-[var(--primary)] font-black text-xl xs:text-2xl"><Star className="w-5 h-5 xs:w-6 xs:h-6 fill-current" /> {place.rating}</div>
                             </div>
                         </div>
-                        <div className="flex flex-wrap gap-2 text-[10px] text-slate-300 font-bold uppercase tracking-wider">
-                            <span className="flex items-center gap-1.5 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5"><MapPin className="w-3.5 h-3.5 text-[var(--primary)]" /> {place.distance}</span>
-                            <span className="flex items-center gap-1.5 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5"><Clock className="w-3.5 h-3.5 text-[var(--primary)]" /> {place.openingHours}</span>
+                        <div className="flex flex-wrap gap-3">
+                            <span className="flex items-center gap-2 bg-black/50 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 text-[10px] text-white font-black uppercase tracking-wider"><MapPin className="w-4 h-4 text-[var(--primary)]" /> {place.distance}</span>
+                            <span className="flex items-center gap-2 bg-black/50 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 text-[10px] text-white font-black uppercase tracking-wider"><Clock className="w-4 h-4 text-[var(--primary)]" /> {place.openingHours}</span>
                         </div>
                     </div>
                 </div>
 
                 {/* BODY */}
-                <div className="px-5 xs:px-6 -mt-4 relative z-10 space-y-6 pb-40">
-                    <button onClick={(e) => { e.stopPropagation(); handleGeoCheckIn(); }} disabled={isCheckedIn || checkingDistance} className={`w-full py-5 xs:py-6 rounded-2xl xs:rounded-[2rem] font-black uppercase text-sm xs:text-base tracking-widest flex items-center justify-center gap-3 shadow-2xl transition-all active:scale-[0.97]
-                ${isCheckedIn
-                            ? 'bg-emerald-500 text-white shadow-[0_0_25px_rgba(16,185,129,0.4)]'
-                            : 'bg-[var(--primary)] text-[var(--on-primary)] shadow-[0_0_25px_var(--primary-glow)]'} ${checkingDistance ? 'opacity-80' : ''}`}>
-                        {checkingDistance
-                            ? <><Loader2 className="w-5 h-5 animate-spin" /> VERIFICANDO GPS...</>
-                            : isCheckedIn
-                                ? (<><CheckCircle2 className="w-5 h-5 xs:w-6 xs:h-6" /> ESTOU AQUI!</>)
-                                : (<><MapPin className="w-5 h-5 xs:w-6 xs:h-6" /> VOU LÁ!</>)
-                        }
-                    </button>
+                <div className="px-5 xs:px-6 -mt-10 relative z-20 space-y-6 pb-40">
+                    <div className="flex flex-col gap-3">
+                        {/* Main Check-in Button */}
+                        <button
+                            onClick={(e) => { e.stopPropagation(); handleGeoCheckIn(); }}
+                            disabled={isCheckedIn || checkingDistance}
+                            className={`w-full min-h-[56px] py-5 rounded-[var(--radius-cta)] font-black uppercase text-base tracking-[0.2em] flex items-center justify-center gap-3 shadow-2xl transition-all active:scale-[0.97] border border-white/20
+                            ${isCheckedIn
+                                    ? 'bg-emerald-500 text-white shadow-[0_10px_25px_rgba(16,185,129,0.3)]'
+                                    : 'bg-[var(--primary)] text-black shadow-[0_10px_30px_rgba(var(--primary-rgb),0.3)]'}`}
+                        >
+                            {checkingDistance ? (
+                                <><Loader2 className="w-5 h-5 animate-spin" /> VERIFICANDO...</>
+                            ) : isCheckedIn ? (
+                                <><CheckCircle2 className="w-5 h-5" /> ESTOU AQUI</>
+                            ) : (
+                                <><MapPin className="w-5 h-5" /> VOU LÁ AGORA</>
+                            )}
+                        </button>
+
+                        {/* Secondary Actions Row */}
+                        {!isCheckedIn && (
+                            <div className="grid grid-cols-3 gap-3">
+                                <button onClick={handleOpenMaps} className="bg-slate-800/80 backdrop-blur-xl border border-white/10 rounded-2xl py-4 flex flex-col items-center justify-center gap-1 active:scale-95 transition-all text-white group">
+                                    <Navigation className="w-5 h-5 text-cyan-400 group-active:scale-110" />
+                                    <span className="text-[8px] font-black uppercase tracking-tighter">MAPS</span>
+                                </button>
+                                <button onClick={handleOpenUber} className="bg-slate-800/80 backdrop-blur-xl border border-white/10 rounded-2xl py-4 flex flex-col items-center justify-center gap-1 active:scale-95 transition-all text-white group">
+                                    <Car className="w-5 h-5 text-[var(--primary)] group-active:scale-110" />
+                                    <span className="text-[8px] font-black uppercase tracking-tighter">UBER</span>
+                                </button>
+                                <button onClick={handleShare} className="bg-slate-800/80 backdrop-blur-xl border border-white/10 rounded-2xl py-4 flex flex-col items-center justify-center gap-1 active:scale-95 transition-all text-white group">
+                                    <Share2 className="w-5 h-5 text-indigo-400 group-active:scale-110" />
+                                    <span className="text-[8px] font-black uppercase tracking-tighter">SHARE</span>
+                                </button>
+                            </div>
+                        )}
+                    </div>
 
                     {isCheckedIn && (
                         <div className="space-y-4">
-                            <button onClick={() => { trigger('medium'); setShowMatchMode(true); }} className="w-full bg-gradient-to-br from-indigo-900 to-[#12122b] border border-indigo-500/20 rounded-2xl xs:rounded-[2.5rem] p-4 xs:p-5 flex items-center justify-between active:scale-[0.98] transition-all">
+                            <button onClick={() => { trigger('medium'); setShowMatchMode(true); }} className="w-full bg-gradient-to-br from-indigo-900/90 to-[#12122b] backdrop-blur-xl border border-indigo-500/20 rounded-[2.5rem] p-5 flex items-center justify-between active:scale-[0.98] transition-all shadow-xl">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-14 h-14 rounded-2xl bg-indigo-500/20 flex items-center justify-center border border-indigo-400/20">
-                                        <Users className="w-7 h-7 text-indigo-300" />
+                                    <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center border border-indigo-400/20">
+                                        <Users className="w-7 h-7 text-indigo-400" />
                                     </div>
                                     <div className="text-left min-w-0">
-                                        <h4 className="text-lg font-black text-white italic truncate">QUEM TÁ AQUI?</h4>
-                                        <p className="text-[9px] text-indigo-300 font-bold uppercase tracking-wider mt-0.5">Encontre sua galera</p>
+                                        <h4 className="text-xl font-black text-white italic truncate">QUEM TÁ AQUI?</h4>
+                                        <p className="text-[10px] text-indigo-300/60 font-black uppercase tracking-widest mt-0.5">Vibe Tinder ativada</p>
                                     </div>
                                 </div>
-                                <div className="bg-white/10 px-3 py-1.5 rounded-full text-[10px] font-black text-white border border-white/5 shrink-0">12+ ON</div>
+                                <div className="bg-indigo-500/20 px-4 py-2 rounded-2xl text-[10px] font-black text-indigo-300 border border-indigo-500/20 shadow-inner">12+ ON</div>
                             </button>
 
-                            <div className="bg-slate-800/30 p-4 xs:p-5 rounded-2xl xs:rounded-[2.5rem] border border-slate-700/40">
-                                <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] mb-4 flex items-center gap-2"><Zap className="w-3.5 h-3.5 text-yellow-400 animate-pulse" /> Vibe Check</h4>
+                            <div className="bg-slate-800/40 backdrop-blur-md p-6 rounded-[2.5rem] border border-white/5 shadow-inner">
+                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4 flex items-center gap-2"><Zap className="w-4 h-4 text-yellow-400 animate-pulse" /> Vibe Check Realtime</h4>
                                 {!votedVibe ? (
-                                    <div className="flex gap-3">
-                                        <button onClick={() => { trigger('success'); setVotedVibe('up'); }} className="flex-1 bg-green-500/10 border border-green-500/20 p-3 rounded-xl flex flex-col items-center gap-1 active:bg-green-500 active:text-black transition-all">
-                                            <ThumbsUp className="w-5 h-5" />
-                                            <span className="text-[9px] font-black uppercase">Bombando</span>
+                                    <div className="flex gap-4">
+                                        <button onClick={() => { trigger('success'); setVotedVibe('up'); }} className="flex-1 bg-green-500/5 border border-green-500/10 p-4 rounded-2xl flex flex-col items-center gap-1.5 active:bg-green-500 active:text-black transition-all group">
+                                            <ThumbsUp className="w-6 h-6 text-green-500 group-active:text-black" />
+                                            <span className="text-[10px] font-black uppercase tracking-tighter">BOMBANDO</span>
                                         </button>
-                                        <button onClick={() => { trigger('success'); setVotedVibe('down'); }} className="flex-1 bg-red-500/10 border border-red-500/20 p-3 rounded-xl flex flex-col items-center gap-1 active:bg-red-500 active:text-black transition-all">
-                                            <ThumbsDown className="w-5 h-5" />
-                                            <span className="text-[9px] font-black uppercase">Vazio</span>
+                                        <button onClick={() => { trigger('success'); setVotedVibe('down'); }} className="flex-1 bg-red-500/5 border border-red-500/10 p-4 rounded-2xl flex flex-col items-center gap-1.5 active:bg-red-500 active:text-black transition-all group">
+                                            <ThumbsDown className="w-6 h-6 text-red-500 group-active:text-black" />
+                                            <span className="text-[10px] font-black uppercase tracking-tighter">FLOPADO</span>
                                         </button>
                                     </div>
                                 ) : (
-                                    <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-4 text-center">
-                                        <p className="text-xs font-black text-white italic">FEEDBACK RECEBIDO!</p>
-                                    </div>
+                                    <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-[var(--primary)]/10 border border-[var(--primary)]/20 rounded-2xl p-5 text-center shadow-inner">
+                                        <p className="text-xs font-black text-[var(--primary)] italic tracking-widest">FEEDBACK ENVIADO COM SUCESSO!</p>
+                                    </motion.div>
                                 )}
                             </div>
                         </div>
@@ -683,12 +766,14 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                         <motion.button
                             whileTap={{ scale: 0.95 }}
                             onClick={() => { trigger('light'); setShowMenu(true); }}
-                            className="bg-[#1e293b]/80 backdrop-blur-md border border-white/5 p-6 rounded-[2.5rem] flex flex-col items-center gap-4 active:border-cyan-400/50 transition-all shadow-2xl group"
+                            className="bg-slate-800/40 backdrop-blur-xl border border-white/5 p-8 rounded-[2.5rem] flex flex-col items-center gap-4 transition-all shadow-xl group hover:bg-slate-800/60"
                         >
-                            <div className="p-4 bg-slate-900 rounded-[1.5rem] group-hover:scale-110 transition-transform"><Utensils className="w-8 h-8 text-cyan-400" /></div>
+                            <div className="w-16 h-16 bg-cyan-500/10 rounded-3xl flex items-center justify-center border border-cyan-500/10 group-hover:scale-110 transition-transform">
+                                <Utensils className="w-8 h-8 text-cyan-400" />
+                            </div>
                             <div className="text-center">
-                                <span className="text-[11px] font-black text-white uppercase tracking-[0.2em]">Cardápio</span>
-                                <p className="text-[8px] text-slate-500 font-bold uppercase mt-1">Pedir agora</p>
+                                <span className="text-xs font-black text-white uppercase tracking-widest block">CARDÁPIO</span>
+                                <span className="text-[8px] text-slate-500 font-bold uppercase mt-1 tracking-tighter">Pedidos Online</span>
                             </div>
                         </motion.button>
 
@@ -696,19 +781,31 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                             whileTap={{ scale: 0.95 }}
                             onClick={() => { if (staffState === 'idle') { trigger('light'); setShowStaffOptions(true); } }}
                             disabled={staffState !== 'idle'}
-                            className={`bg-[#1e293b]/80 backdrop-blur-md border p-6 rounded-[2.5rem] flex flex-col items-center gap-4 transition-all shadow-2xl group
+                            className={`bg-slate-800/40 backdrop-blur-xl border p-8 rounded-[2.5rem] flex flex-col items-center gap-4 transition-all shadow-xl group hover:bg-slate-800/60
                             ${staffState === 'calling' ? 'border-yellow-500/50' : staffState === 'confirmed' ? 'border-green-500/50' : 'border-white/5'}`}
                         >
-                            <div className={`p-4 rounded-[1.5rem] transition-all group-hover:scale-110 ${staffState === 'calling' ? 'bg-yellow-500/20 animate-pulse' : staffState === 'confirmed' ? 'bg-green-500/20' : 'bg-slate-900'}`}>
+                            <div className={`w-16 h-16 rounded-3xl flex items-center justify-center transition-all group-hover:scale-110 ${staffState === 'calling' ? 'bg-yellow-500/20 animate-pulse' : staffState === 'confirmed' ? 'bg-green-500/20' : 'bg-indigo-500/10'}`}>
                                 {staffState === 'calling' ? <Loader2 className="w-8 h-8 text-yellow-500 animate-spin" /> : staffState === 'confirmed' ? <CheckCircle2 className="w-8 h-8 text-green-500" /> : <BellRing className="w-8 h-8 text-indigo-400" />}
                             </div>
                             <div className="text-center">
-                                <span className={`text-[11px] font-black uppercase tracking-[0.2em] ${staffState === 'calling' ? 'text-yellow-500' : staffState === 'confirmed' ? 'text-green-500' : 'text-white'}`}>
-                                    {staffState === 'calling' ? 'Chamando' : staffState === 'confirmed' ? 'Vindo!' : 'Garçom'}
+                                <span className={`text-xs font-black uppercase tracking-widest block ${staffState === 'calling' ? 'text-yellow-500' : staffState === 'confirmed' ? 'text-green-500' : 'text-white'}`}>
+                                    {staffState === 'calling' ? 'CHAMANDO' : staffState === 'confirmed' ? 'VINDO!' : 'GARÇOM'}
                                 </span>
-                                <p className="text-[8px] text-slate-500 font-bold uppercase mt-1">Chamar Staff</p>
+                                <span className="text-[8px] text-slate-500 font-bold uppercase mt-1 tracking-tighter">Chamar Ajuda</span>
                             </div>
                         </motion.button>
+                    </div>
+
+                    <div className="bg-[#111827]/60 backdrop-blur-md rounded-[2.5rem] p-8 border border-white/5 shadow-inner space-y-4">
+                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">DETALHES DO LOCAL</h4>
+                        <p className="text-slate-300 text-sm leading-relaxed font-medium">
+                            {place.description || "O melhor rolê da região! Vibe incrível, música selecionada e ambiente premium para você e seus amigos."}
+                        </p>
+                        <div className="flex flex-wrap gap-2 pt-4">
+                            {place.tags?.map(tag => (
+                                <span key={tag} className="px-3 py-1 bg-slate-800/80 rounded-lg text-[9px] font-black text-slate-400 uppercase border border-white/5">{tag}</span>
+                            ))}
+                        </div>
                     </div>
 
                     {kingUser && (
@@ -736,11 +833,11 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
             animate="animate"
             whileTap={{ scale: 0.98 }}
             onClick={() => { trigger('light'); if (onClick) onClick(); }}
-            className="bg-[#1e293b]/60 rounded-[2.5rem] p-4 border border-white/5 shadow-2xl cursor-pointer mb-5 relative overflow-hidden group hover:bg-[#1e293b]/80 transition-all"
+            className="bg-[#1e293b]/60 rounded-[2.2rem] p-3.5 border border-white/5 shadow-2xl cursor-pointer mb-4 relative overflow-hidden group hover:bg-[#1e293b]/80 transition-all"
         >
-            <div className="flex gap-5">
+            <div className="flex gap-4 items-stretch">
                 {/* Left side: Image */}
-                <div className="relative w-32 h-40 xs:w-36 xs:h-44 shrink-0 rounded-[1.8rem] overflow-hidden bg-slate-900 border border-white/10 shadow-lg">
+                <div className="relative w-28 xs:w-32 shrink-0 rounded-[1.6rem] overflow-hidden bg-slate-900 border border-white/10 shadow-lg aspect-[3/4]">
                     {!imgLoaded && !imgError && <Skeleton className="absolute inset-0 w-full h-full" />}
                     <img
                         src={imgError ? FALLBACK_IMAGE : (place.imageUrl || FALLBACK_IMAGE)}
@@ -752,58 +849,79 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                     />
 
                     {/* Occupancy Badge overlaying image */}
-                    <div className="absolute bottom-2 left-2 right-2 bg-black/60 backdrop-blur-md rounded-xl py-1.5 flex items-center justify-center gap-2 border border-white/10 shadow-lg">
-                        <div className={`w-2 h-2 rounded-full ${isHot ? 'bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]'}`}></div>
-                        <span className="text-[10px] font-black text-white">{place.capacityPercentage}% ON</span>
+                    <div className="absolute bottom-2 left-2 right-2 bg-black/70 backdrop-blur-md rounded-xl py-1.5 flex items-center justify-center gap-1.5 border border-white/10 shadow-lg">
+                        <div className={`w-1.5 h-1.5 rounded-full ${isHot ? 'bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]' : 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]'}`}></div>
+                        <span className="text-[9px] font-black text-white italic">{place.capacityPercentage}% ON</span>
                     </div>
 
-                    {rank && (<div className={`absolute top-0 left-0 px-3 py-1.5 rounded-br-2xl text-[10px] font-black uppercase shadow-lg ${rank === 1 ? 'bg-[var(--primary)] text-black' : 'bg-slate-900 text-white'}`}>#{rank}</div>)}
+                    {rank && (<div className={`absolute top-0 left-0 px-2.5 py-1.5 rounded-br-2xl text-[9px] font-black uppercase shadow-lg ${rank === 1 ? 'bg-[var(--primary)] text-black' : 'bg-slate-900 text-white'}`}>#{rank}</div>)}
                 </div>
 
                 {/* Center: Info */}
-                <div className="flex-1 min-w-0 flex flex-col justify-center py-1">
-                    <span className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.2em] mb-1.5">{place.type.toUpperCase()}</span>
-                    <h3 className="text-xl xs:text-2xl font-black text-white italic truncate pr-4 leading-none uppercase mb-2 tracking-tight drop-shadow-sm">{place.name}</h3>
+                <div className="flex-1 min-w-0 flex flex-col justify-between py-1.5">
+                    <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="text-[9px] font-black text-cyan-400 uppercase tracking-widest">{place.type}</span>
+                            {place.isTrending && <Flame className="w-3 h-3 text-orange-500 fill-current animate-pulse" />}
+                        </div>
+                        <h3 className="text-lg xs:text-xl font-black text-white italic truncate leading-none uppercase mb-2 tracking-tight drop-shadow-sm">{place.name}</h3>
 
-                    <div className="space-y-1.5 mt-1">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                            <MapPin className="w-3.5 h-3.5 text-slate-600" /> {place.distance}
-                        </p>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2 truncate pr-4">
-                            <Music className="w-3.5 h-3.5 text-slate-600" /> {place.currentMusic || 'Vibe do Local'}
-                        </p>
+                        <div className="space-y-1.5 mt-2">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                                <MapPin className="w-3 h-3 text-slate-600" /> {place.distance}
+                            </p>
+                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2 truncate pr-2">
+                                <Music className="w-3 h-3 text-slate-600" /> {place.currentMusic || 'Vibe do Local'}
+                            </p>
+                        </div>
                     </div>
 
-                    <div className="mt-4 flex items-center gap-3">
-                        <img src={currentUser?.avatar} className="w-5 h-5 rounded-full border border-white/20 blur-[0.5px]" alt="" />
-                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest bg-slate-900/50 px-2 py-0.5 rounded-full border border-white/5">Check-in p/ ver</span>
+                    {/* BADGES SECTION - SPRINT 2 */}
+                    <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-2">
+                        {place.capacityPercentage >= 80 && (
+                            <Badge variant="destructive" className="py-1 px-3">
+                                <Flame className="w-3.5 h-3.5 fill-current mr-1.5" /> BOMBANDO
+                            </Badge>
+                        )}
+                        {place.friendsPresent.length > 0 && (
+                            <Badge variant="default" className="py-1 px-3">
+                                <Users className="w-3.5 h-3.5 fill-current mr-1.5" /> AMIGOS
+                            </Badge>
+                        )}
+                    </div>
+
+                    <div className="mt-auto flex items-center gap-2 opacity-80">
+                        <div className="flex -space-x-1">
+                            {[1, 2, 3].map(i => (
+                                <img key={i} src={`https://i.pravatar.cc/100?u=${place.id}${i}`} className="w-4 h-4 rounded-full border border-slate-900" alt="" />
+                            ))}
+                        </div>
+                        <span className="text-[8px] font-black text-slate-500 uppercase tracking-tighter bg-slate-900/40 px-1.5 py-0.5 rounded border border-white/5">Check-in p/ ver</span>
                     </div>
                 </div>
 
                 {/* Right: Actions Column */}
-                <div className="flex flex-col items-center justify-between py-1 shrink-0">
-                    <div className="flex flex-col gap-4 items-center">
+                <div className="flex flex-col items-center justify-between shrink-0 py-0.5">
+                    <div className="flex flex-col gap-2 items-center">
                         <button
                             onClick={(e) => { e.stopPropagation(); onToggleSave?.(place.id); }}
-                            className={`p-1.5 active:scale-90 transition-transform ${isSaved ? 'text-[var(--primary)]' : 'text-slate-600'}`}
+                            className={`p-2 active:scale-90 transition-transform ${isSaved ? 'text-[var(--primary)]' : 'text-slate-700'}`}
                         >
-                            <Bookmark className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />
+                            <Bookmark className={`w-4.5 h-4.5 ${isSaved ? 'fill-current' : ''}`} />
                         </button>
-                        <button onClick={(e) => { e.stopPropagation(); }} className="p-1.5 text-slate-600 active:scale-90 transition-transform">
-                            <MapPin className="w-5 h-5" />
-                        </button>
-                        <button onClick={(e) => { e.stopPropagation(); }} className="p-1.5 text-slate-600 active:scale-90 transition-transform">
-                            <Beer className="w-5 h-5" /> {/* Car was specified in plan, but beer is also relevant */}
+                        <button onClick={handleOpenMaps} className="p-2 text-slate-700 hover:text-cyan-400 active:scale-90 transition-transform">
+                            <MapPin className="w-4.5 h-4.5" />
                         </button>
                     </div>
 
                     {/* Big VOU Button */}
                     <motion.div
                         whileTap={{ scale: 0.9 }}
-                        className="w-14 h-14 rounded-2xl bg-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.4)] flex flex-col items-center justify-center gap-0.5 mt-4"
+                        className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-400 to-indigo-600 shadow-[0_8px_20px_rgba(34,211,238,0.3)] flex flex-col items-center justify-center gap-0 group relative overflow-hidden"
                     >
-                        <MapPin className="w-5 h-5 text-black" />
-                        <span className="text-[9px] font-black text-black">VOU</span>
+                        <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <MapPin className="w-5 h-5 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]" />
+                        <span className="text-[9px] font-black text-white italic tracking-tighter">VOU!</span>
                     </motion.div>
                 </div>
             </div>

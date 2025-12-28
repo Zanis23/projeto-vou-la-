@@ -64,7 +64,7 @@ export const Profile: React.FC<ProfileProps> = ({ currentUser = MOCK_USER, onLog
     setIsEditing(false);
   };
 
-  const handleSettingsUpdate = (settings: PrivacySettings, theme?: 'purple' | 'neon' | 'cyan' | 'pink') => {
+  const handleSettingsUpdate = (settings: PrivacySettings, theme?: 'purple' | 'neon' | 'cyan' | 'pink' | 'light' | 'black') => {
     if (onUpdateProfile) {
       onUpdateProfile({
         settings,
@@ -247,10 +247,17 @@ export const Profile: React.FC<ProfileProps> = ({ currentUser = MOCK_USER, onLog
             </motion.p>
 
             <motion.div variants={slideUp} className="flex gap-4 mt-6">
-              {user.instagram && <SocialButton icon={<Instagram className="w-5 h-5" />} />}
-              {user.tiktok && <SocialButton icon={<Video className="w-5 h-5" />} />}
-              {user.twitter && <SocialButton icon={<Twitter className="w-5 h-5" />} />}
-              <Button variant="secondary" size="icon" className="w-12 h-12 rounded-2xl">
+              {user.instagram && <SocialButton icon={<Instagram className="w-5 h-5" />} onClick={() => window.open(`https://instagram.com/${user.instagram?.replace('@', '')}`, '_blank')} />}
+              {user.tiktok && <SocialButton icon={<Video className="w-5 h-5" />} onClick={() => window.open(`https://tiktok.com/@${user.tiktok?.replace('@', '')}`, '_blank')} />}
+              {user.twitter && <SocialButton icon={<Twitter className="w-5 h-5" />} onClick={() => window.open(`https://twitter.com/${user.twitter?.replace('@', '')}`, '_blank')} />}
+              <Button variant="secondary" size="icon" className="w-12 h-12 rounded-2xl" onClick={() => {
+                if (navigator.share) {
+                  navigator.share({
+                    title: `Perfil de ${user.name} no Vou Lá`,
+                    url: window.location.href
+                  });
+                }
+              }}>
                 <Share2 className="w-5 h-5" />
               </Button>
             </motion.div>
@@ -335,8 +342,8 @@ export const Profile: React.FC<ProfileProps> = ({ currentUser = MOCK_USER, onLog
   );
 };
 
-const SocialButton = ({ icon }: { icon: React.ReactNode }) => (
-  <Button variant="secondary" size="icon" className="w-12 h-12 rounded-2xl p-0">
+const SocialButton = ({ icon, onClick }: { icon: React.ReactNode, onClick?: () => void }) => (
+  <Button variant="secondary" size="icon" className="w-12 h-12 rounded-2xl p-0 hover:bg-[var(--primary-main)] hover:text-black transition-all active:scale-95" onClick={onClick}>
     {icon}
   </Button>
 );

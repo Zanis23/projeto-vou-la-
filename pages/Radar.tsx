@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Place } from '../types';
-import { Navigation, Loader2, Camera } from 'lucide-react';
+import { Navigation, Loader2, Camera, Zap } from 'lucide-react';
 import { FALLBACK_IMAGE } from '../constants';
 import { Button } from '../src/components/ui/Button';
 import { fadeIn, scaleIn } from '../src/styles/animations';
@@ -83,6 +83,7 @@ export const Radar: React.FC<RadarProps> = ({ places, onPlaceSelect }) => {
   const [currentZoom, setCurrentZoom] = useState(14);
   const [gpsActive, setGpsActive] = useState(false);
   const [findingLocation, setFindingLocation] = useState(false);
+  const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const userMarkerRef = useRef<any>(null);
 
   useEffect(() => {
@@ -155,7 +156,7 @@ export const Radar: React.FC<RadarProps> = ({ places, onPlaceSelect }) => {
         if (!place.lat || !place.lng) return;
         const container = document.createElement('div');
         const root = ReactDOM.createRoot(container);
-        root.render(<PinMarker place={place} zoom={currentZoom} onSelect={onPlaceSelect} />);
+        root.render(<PinMarker place={place} zoom={currentZoom} onSelect={setSelectedPlace} />);
         const icon = window.L.divIcon({ html: container, className: '', iconSize: [40, 40], iconAnchor: [20, 20] });
         const marker = window.L.marker([place.lat, place.lng], { icon }).addTo(map);
         markersRef.current.push(marker);
@@ -197,6 +198,24 @@ export const Radar: React.FC<RadarProps> = ({ places, onPlaceSelect }) => {
     >
       <div ref={mapContainerRef} className="w-full h-full z-0" style={{ backgroundColor: 'var(--bg-default)' }} />
 
+      {/* HEATMAP LEGEND - SPRINT 1 */}
+      <div className="absolute top-20 left-4 z-[400] flex flex-col gap-2 pointer-events-none">
+        <div className="bg-[var(--bg-card)]/80 backdrop-blur-xl border border-white/10 rounded-2xl p-3 flex flex-col gap-2 shadow-2xl">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-[#ff0055] animate-pulse shadow-[0_0_8px_#ff0055]" />
+            <span className="text-[10px] font-black text-white italic uppercase tracking-tighter">BOMBANDO</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-[#ccff00] shadow-[0_0_8px_#ccff00]" />
+            <span className="text-[10px] font-black text-white italic uppercase tracking-tighter">AGITADO</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-[#00ddeb] shadow-[0_0_8px_#00ddeb]" />
+            <span className="text-[10px] font-black text-white italic uppercase tracking-tighter">TRANQUILO</span>
+          </div>
+        </div>
+      </div>
+
       <div className="absolute bottom-24 right-4 z-[400] flex flex-col gap-3">
         <motion.div variants={scaleIn}>
           <Button
@@ -219,6 +238,46 @@ export const Radar: React.FC<RadarProps> = ({ places, onPlaceSelect }) => {
           </Button>
         </motion.div>
       </div>
+
+      {/* COMPACT PREVIEW MODAL - SPRINT 1 */}
+      <AnimatePresence>
+        {selectedPlace && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            className="absolute bottom-28 left-4 right-20 z-[500]"
+          >
+            <div
+              onClick={() => onPlaceSelect(selectedPlace)}
+              className="bg-slate-900 border border-white/10 rounded-3xl p-4 flex gap-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)] active:scale-95 transition-transform"
+            >
+              <div className="w-20 h-20 rounded-2xl overflow-hidden shrink-0">
+                <img src={selectedPlace.imageUrl} className="w-full h-full object-cover" alt="" />
+              </div>
+              <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
+                <h4 className="text-white font-black italic uppercase tracking-tight truncate">{selectedPlace.name}</h4>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 text-[var(--primary-main)]">
+                    <Zap className="w-3 h-3 fill-current" />
+                    <span className="text-[10px] font-bold">{selectedPlace.capacityPercentage}%</span>
+                  </div>
+                  <span className="text-[10px] text-slate-500 font-bold">• {selectedPlace.type}</span>
+                </div>
+                <button className="mt-1 w-full py-2 bg-[var(--primary-main)] text-black rounded-xl text-[10px] font-black uppercase tracking-widest">
+                  VER DETALHES
+                </button>
+              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); setSelectedPlace(null); }}
+                className="absolute -top-2 -right-2 w-8 h-8 bg-black/50 backdrop-blur-md rounded-full border border-white/10 flex items-center justify-center"
+              >
+                <span className="text-white text-xs">✕</span>
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };

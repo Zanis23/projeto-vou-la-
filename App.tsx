@@ -19,11 +19,11 @@ import { MoreOptionsModal } from './components/MoreOptionsModal';
 import { BusinessDashboard } from './components/BusinessDashboard';
 import { PWAUpdateNotification } from './components/PWAUpdateNotification';
 import { db } from './utils/storage';
-import { Toast, ToastProps } from './src/components/ui/Toast';
 
 // UI Components
 import { BottomNav, BottomNavItem } from './src/components/ui/BottomNav';
 import { ContextualOnboarding } from './src/components/ContextualOnboarding';
+import { ToastProvider } from './components/ToastProvider';
 
 // Custom Hooks
 import { useAuth } from './hooks/useAuth';
@@ -33,6 +33,7 @@ import { useFeed } from './hooks/useFeed';
 import { useCheckIn } from './hooks/useCheckIn';
 import { usePushNotifications } from './hooks/usePushNotifications';
 import { useBackgroundGeo } from './hooks/useBackgroundGeo';
+import { useToast } from './components/ToastProvider';
 
 // Loading component for lazy-loaded pages
 const PageLoader = () => (
@@ -74,22 +75,20 @@ export default function App() {
   usePushNotifications(currentUser?.id);
   useBackgroundGeo();
 
+  const { showToast } = useToast();
+
   const [activeTab, setActiveTab] = useState<Tab>(Tab.HOME);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [homeFilter, setHomeFilter] = useState<PlaceType | 'ALL' | 'SAVED'>('ALL');
-  const [toast, setToast] = useState<ToastProps | null>(null);
 
-  // Apply theme to document element
+  // Apply mode and accent color to document element
   useEffect(() => {
-    const theme = currentUser.appMode || 'dark';
-    document.documentElement.setAttribute('data-theme', theme);
-    if (theme === 'light') {
-      document.documentElement.classList.add('light-mode');
-    } else {
-      document.documentElement.classList.remove('light-mode');
-    }
-  }, [currentUser.appMode]);
+    const mode = currentUser.appMode || 'dark';
+    const accent = currentUser.accentColor || 'neon';
+    document.documentElement.setAttribute('data-mode', mode);
+    document.documentElement.setAttribute('data-accent', accent);
+  }, [currentUser.appMode, currentUser.accentColor]);
 
   // Lógica para lidar com botão Voltar no Android (Nativo)
   useEffect(() => {
@@ -106,15 +105,6 @@ export default function App() {
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, [selectedPlace, showMoreMenu, activeTab]);
-
-  // Global Toast Listener
-  useEffect(() => {
-    const handleNotification = (e: any) => {
-      setToast(e.detail);
-    };
-    window.addEventListener('voula_notification', handleNotification);
-    return () => window.removeEventListener('voula_notification', handleNotification);
-  }, []);
 
   // Push state when opening modals to enable Back Button
   useEffect(() => {
@@ -184,7 +174,7 @@ export default function App() {
   );
 
   return (
-    <>
+    <ToastProvider>
       <PWAUpdateNotification />
       <Suspense fallback={<PageLoader />}>
         <div className="flex flex-col h-[100dvh] bg-[var(--bg-default)] text-[var(--text-primary)] overflow-hidden relative transition-colors duration-500">
@@ -224,12 +214,18 @@ export default function App() {
                     onOpenNotifications={() => { }}
                     savedPlaces={currentUser.savedPlaces || []}
                     initialFilter={homeFilter}
-                    onToggleSave={(id) => {
-                      const next = currentUser.savedPlaces.includes(id) ? currentUser.savedPlaces.filter(x => x !== id) : [...currentUser.savedPlaces, id];
+                    onToggleSave={(id: string) => {
+                      const isFavorited = currentUser.savedPlaces.includes(id);
+                      const next = isFavorited ? currentUser.savedPlaces.filter(x => x !== id) : [...currentUser.savedPlaces, id];
                       const u = { ...currentUser, savedPlaces: next };
                       setCurrentUser(u);
                       db.user.save(u);
+                      showToast({
+                        type: isFavorited ? 'info' : 'success',
+                        message: isFavorited ? 'Removido dos favoritos' : 'Adicionado aos favoritos!'
+                      });
                     }}
+                    onNavigateToIA={() => setActiveTab(Tab.AI_FINDER)}
                   />
                 )}
                 {activeTab === Tab.RADAR && <Radar places={places} onPlaceSelect={setSelectedPlace} />}
@@ -237,8 +233,14 @@ export default function App() {
                 {activeTab === Tab.SOCIAL && <Social feed={feed} onToggleLike={async () => { /* update */ }} onComment={() => { /* logic */ }} onPlaceSelect={setSelectedPlace} places={places} />}
                 {activeTab === Tab.PROFILE && <Profile currentUser={currentUser} places={places} onLogout={logout} onUpdateProfile={(upd) => { const u = { ...currentUser, ...upd }; setCurrentUser(u); db.user.save(u); }} />}
                 {activeTab === Tab.RANKING && <Ranking currentUser={currentUser} />}
-                {activeTab === Tab.CHALLENGES && <Challenges />}
-                {activeTab === Tab.STORE && <Store currentUser={currentUser} onPurchase={(cost) => { const u = { ...currentUser, points: currentUser.points - cost }; setCurrentUser(u); db.user.save(u); }} />}
+                {activeTab === Tab.CHALLENGES && <Challenges currentUser={currentUser} />}
+                {activeTab === Tab.STORE && <Store currentUser={currentUser} onPurchase={(cost) => {
+                  // When buying something that isn't a ticket/voucher, it updates here
+                  // The Store handles the local wallet state, but we need to ensure THE PARENT knows
+                  const u = { ...currentUser, points: currentUser.points - cost };
+                  setCurrentUser(u);
+                  db.user.save(u);
+                }} />}
                 {activeTab === Tab.DASHBOARD && currentUser.ownedPlaceId && (
                   <BusinessDashboard
                     placeId={currentUser.ownedPlaceId}
@@ -348,23 +350,8 @@ export default function App() {
             />
           </BottomNav>
 
-          {/* Global Notification Toast */}
-          <div className="fixed top-safe left-0 right-0 z-[1000] flex justify-center pointer-events-none px-4 pt-4">
-            <AnimatePresence>
-              {toast && (
-                <motion.div
-                  initial={{ opacity: 0, y: -20, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                  className="pointer-events-auto"
-                >
-                  <Toast {...toast} onClose={() => setToast(null)} />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
         </div>
       </Suspense>
-    </>
+    </ToastProvider>
   );
 }

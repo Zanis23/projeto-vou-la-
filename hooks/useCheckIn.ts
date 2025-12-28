@@ -1,15 +1,32 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { db } from '../utils/storage';
 import { Place, FeedItem, User, FeedCheckIn } from '../types';
+import { useToast } from '../components/ToastProvider';
 
 export function useCheckIn(currentUser: User | null) {
     const queryClient = useQueryClient();
+    const { showToast } = useToast();
 
     return useMutation({
         mutationFn: async ({ placeId, target }: { placeId: string, target: Place }) => {
             if (!currentUser) throw new Error('User not logged in');
 
             const xp = 50;
+            const newPoints = currentUser.points + xp;
+            let newLevel = currentUser.level;
+
+            // Simple leveling logic: level up every 250 XP
+            const levelThreshold = 250;
+            const calculatedLevel = Math.floor(newPoints / levelThreshold) + 1;
+
+            if (calculatedLevel > currentUser.level) {
+                newLevel = calculatedLevel;
+                showToast({
+                    type: 'success',
+                    message: `PARABÉNS! Você subiu para o Nível ${newLevel}! 🏆`
+                });
+            }
+
             const checkin: FeedCheckIn = {
                 id: Date.now().toString(),
                 placeId,
@@ -21,7 +38,8 @@ export function useCheckIn(currentUser: User | null) {
 
             const updatedUser = {
                 ...currentUser,
-                points: currentUser.points + xp,
+                points: newPoints,
+                level: newLevel,
                 history: [checkin, ...currentUser.history]
             };
 
@@ -60,7 +78,6 @@ export function useCheckIn(currentUser: User | null) {
             // Invalidate queries to refetch fresh data
             queryClient.invalidateQueries({ queryKey: ['places'] });
             queryClient.invalidateQueries({ queryKey: ['feed'] });
-            // We could also update the user profile cache if we had a useUser hook
         },
     });
 }

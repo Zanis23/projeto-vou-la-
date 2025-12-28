@@ -52,9 +52,15 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({ onComple
     const current = STEPS[step];
 
     return (
-        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-[fadeIn_0.3s_ease-out]">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md animate-[fadeIn_0.5s_ease-out]">
+            {/* Background Decorative Elements */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute -top-[10%] -left-[10%] w-[60%] h-[60%] bg-[var(--primary)]/20 rounded-full blur-[120px] animate-pulse"></div>
+                <div className="absolute -bottom-[10%] -right-[10%] w-[60%] h-[60%] bg-fuchsia-500/10 rounded-full blur-[120px] animate-pulse"></div>
+            </div>
+
             {/* Content Card */}
-            <div className="bg-[#1F2937] w-full max-w-sm rounded-[2rem] p-8 relative shadow-2xl border border-slate-700 overflow-hidden transform transition-all duration-300">
+            <div className="bg-[#111827]/80 w-full max-w-sm rounded-[2.5rem] p-10 relative shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-slate-700/50 backdrop-blur-2xl overflow-hidden transform transition-all duration-300">
                 {/* Background Glow */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--primary)] rounded-full blur-[60px] opacity-20 pointer-events-none"></div>
                 <div className="absolute bottom-0 left-0 w-32 h-32 bg-fuchsia-500 rounded-full blur-[60px] opacity-10 pointer-events-none"></div>
@@ -62,34 +68,37 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({ onComple
                 {/* Close Button */}
                 <button
                     onClick={handleFinish}
-                    className="absolute top-4 right-4 p-2 text-slate-500 hover:text-white transition-colors"
+                    className="absolute top-6 right-6 p-2 text-slate-500 hover:text-white transition-colors z-10"
                 >
                     <X className="w-6 h-6" />
                 </button>
 
                 {/* Icon Area */}
-                <div className="w-24 h-24 bg-slate-800/50 rounded-full flex items-center justify-center mb-6 mx-auto border border-slate-700 shadow-inner group">
-                    <div className="group-hover:scale-110 transition-transform duration-500">
-                        {current.icon}
+                <div className="relative w-28 h-28 mb-8 mx-auto">
+                    <div className="absolute inset-0 bg-[var(--primary)]/20 rounded-full blur-xl animate-pulse"></div>
+                    <div className="relative w-full h-full bg-slate-800/80 rounded-full flex items-center justify-center border border-slate-700 shadow-inner group overflow-hidden">
+                        <div className="group-hover:scale-110 transition-transform duration-500 transform">
+                            {current.icon}
+                        </div>
                     </div>
                 </div>
 
                 {/* Text Content */}
-                <div className="text-center mb-8">
-                    <h2 key={current.title} className="text-2xl font-black text-white italic tracking-tight mb-3 animate-[slideUp_0.3s_ease-out]">
-                        {current.title}
+                <div className="text-center mb-10">
+                    <h2 key={current.title} className="text-3xl font-black text-white italic tracking-tighter mb-4 animate-[slideUp_0.3s_ease-out]">
+                        {current.title.toUpperCase()}
                     </h2>
-                    <p key={current.desc} className="text-slate-400 text-sm leading-relaxed animate-[slideUp_0.4s_ease-out]">
+                    <p key={current.desc} className="text-slate-400 text-base leading-relaxed animate-[slideUp_0.4s_ease-out] font-medium">
                         {current.desc}
                     </p>
                 </div>
 
                 {/* Progress Indicators */}
-                <div className="flex justify-center gap-2 mb-8">
+                <div className="flex justify-center gap-3 mb-10">
                     {STEPS.map((_, i) => (
                         <div
                             key={i}
-                            className={`h-1.5 rounded-full transition-all duration-300 ${i === step ? 'w-8 bg-[var(--primary)]' : 'w-2 bg-slate-700'}`}
+                            className={`h-1.5 rounded-full transition-all duration-500 ${i === step ? 'w-12 bg-[var(--primary)] shadow-[0_0_10px_var(--primary)]' : 'w-2 bg-slate-700'}`}
                         />
                     ))}
                 </div>
@@ -97,12 +106,13 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({ onComple
                 {/* Action Button */}
                 <button
                     onClick={handleNext}
-                    className="w-full py-4 bg-[var(--primary)] hover:bg-indigo-500 active:scale-95 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2"
+                    className="relative w-full py-5 bg-[var(--primary)] hover:brightness-110 active:scale-95 text-black font-black uppercase tracking-widest rounded-2xl transition-all shadow-[0_10px_30px_rgba(var(--primary-rgb),0.3)] flex items-center justify-center gap-2 overflow-hidden group"
                 >
+                    <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                     {step === STEPS.length - 1 ? (
-                        <>COMEÇAR <Check className="w-5 h-5" /></>
+                        <>COMEÇAR <Check className="w-5 h-5 stroke-[3px]" /></>
                     ) : (
-                        <>PRÓXIMO <ChevronRight className="w-5 h-5" /></>
+                        <>PRÓXIMO <ChevronRight className="w-5 h-5 stroke-[3px]" /></>
                     )}
                 </button>
             </div>

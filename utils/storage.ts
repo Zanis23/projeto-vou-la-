@@ -277,7 +277,10 @@ export const db = {
           level: user.level,
           bio: user.bio,
           history: user.history,
-          ownedPlaceId: user.ownedPlaceId
+          ownedPlaceId: user.ownedPlaceId,
+          theme: user.theme,
+          app_mode: user.appMode,
+          accent_color: user.accentColor
         });
         const { error } = await supabase.from('profiles').upsert(dbProfile);
 
@@ -410,15 +413,18 @@ export const db = {
             .order('updated_at', { ascending: false });
 
           if (data) {
-            return data.map(c => ({
-              id: c.id,
-              userId: c.user_id,
-              userName: c.user_name,
-              userAvatar: c.user_avatar,
-              lastMessage: c.last_message,
-              unreadCount: c.unread_count,
-              messages: c.messages
-            }));
+            return data.map(c => {
+              const iAmUserId = c.user_id === user.id;
+              return {
+                id: c.id,
+                userId: iAmUserId ? c.target_id : c.user_id,
+                userName: iAmUserId ? (c.target_name || 'Usuário') : (c.user_name || 'Usuário'),
+                userAvatar: iAmUserId ? (c.target_avatar || MOCK_USER.avatar) : (c.user_avatar || MOCK_USER.avatar),
+                lastMessage: c.last_message,
+                unreadCount: c.unread_count,
+                messages: [] // Now strictly fetched via getMessages
+              };
+            });
           }
         }
       } catch (e) { }
@@ -427,19 +433,71 @@ export const db = {
     save: async (chats: Chat[]) => {
       await saveLocal(KEYS.CHATS, chats);
     },
+    getMessages: async (chatId: string): Promise<any[]> => {
+      try {
+        const { data, error } = await supabase.from('messages')
+          .select('*')
+          .eq('chat_id', chatId)
+          .order('created_at', { ascending: true });
+
+        if (error) throw error;
+        return data?.map(m => ({
+          id: m.id,
+          senderId: m.sender_id,
+          text: m.content,
+          timestamp: m.created_at,
+          read: m.is_read
+        })) || [];
+      } catch (e) {
+        console.error("Erro ao buscar mensagens:", e);
+        return [];
+      }
+    },
+    sendMessage: async (chatId: string, text: string) => {
+      try {
+        const me = await db.user.get();
+        if (!me) return null;
+
+        const { data, error } = await supabase.from('messages').insert({
+          chat_id: chatId,
+          sender_id: me.id,
+          content: text
+        }).select().single();
+
+        if (error) throw error;
+
+        // Also update the chat's last_message
+        await supabase.from('chats').update({
+          last_message: text,
+          updated_at: new Date().toISOString()
+        }).eq('id', chatId);
+
+        return {
+          id: data.id,
+          senderId: data.sender_id,
+          text: data.content,
+          timestamp: data.created_at,
+          read: data.is_read
+        };
+      } catch (e) {
+        console.error("Erro ao enviar mensagem:", e);
+        return null;
+      }
+    },
     add: async (chat: Chat) => {
       try {
-        const user = await db.user.get();
-        if (!user) return;
+        const me = await db.user.get();
+        if (!me) return;
 
         await supabase.from('chats').upsert({
           id: chat.id,
-          user_id: user.id, // Current user is sender
-          target_id: chat.userId, // Map UI userId to DB target_id
-          user_name: chat.userName, // Target name
-          user_avatar: chat.userAvatar, // Target avatar
+          user_id: me.id,
+          target_id: chat.userId,
+          user_name: me.name,
+          user_avatar: me.avatar,
+          target_name: chat.userName,
+          target_avatar: chat.userAvatar,
           last_message: chat.lastMessage,
-          messages: chat.messages,
           updated_at: new Date().toISOString()
         });
       } catch (e) {

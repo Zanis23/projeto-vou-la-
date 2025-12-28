@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Place, PlaceType, User } from '../types';
-import { Bell, Bookmark } from 'lucide-react';
+import { Bell, Bookmark, Search, Music, Navigation, Zap, SlidersHorizontal, Trash2, Sparkles } from 'lucide-react';
 import { PlaceCard } from '../components/PlaceCard';
 import { useHaptic } from '../hooks/useHaptic';
+import { useToast } from '../components/ToastProvider';
 import { fadeIn, slideUp } from '../src/styles/animations';
 
 // UI Components
@@ -11,6 +12,8 @@ import { Avatar } from '../src/components/ui/Avatar';
 import { Button } from '../src/components/ui/Button';
 import { Skeleton } from '../src/components/ui/Skeleton';
 import { Card } from '../src/components/ui/Card';
+import { Badge } from '../src/components/ui/Badge';
+import { Tab } from '../types';
 
 interface HomeProps {
   currentUser: User;
@@ -21,6 +24,7 @@ interface HomeProps {
   savedPlaces: string[];
   onToggleSave: (id: string) => void;
   initialFilter?: PlaceType | 'ALL' | 'SAVED';
+  onNavigateToIA: () => void;
 }
 
 export const Home: React.FC<HomeProps> = ({
@@ -31,11 +35,15 @@ export const Home: React.FC<HomeProps> = ({
   onOpenNotifications,
   savedPlaces,
   onToggleSave,
-  initialFilter = 'ALL'
+  initialFilter = 'ALL',
+  onNavigateToIA
 }) => {
   const { trigger } = useHaptic();
+  const { showToast } = useToast();
   const [filter, setFilter] = useState<PlaceType | 'ALL' | 'SAVED'>(initialFilter);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeSubFilters, setActiveSubFilters] = useState<string[]>([]);
 
   useEffect(() => {
     setFilter(initialFilter);
@@ -54,9 +62,14 @@ export const Home: React.FC<HomeProps> = ({
   };
 
   const filteredPlaces = places.filter(p => {
-    if (filter === 'ALL') return true;
-    if (filter === 'SAVED') return savedPlaces.includes(p.id);
-    return p.type === filter;
+    const matchesFilter = filter === 'ALL' ? true : filter === 'SAVED' ? savedPlaces.includes(p.id) : (p.type as string) === (filter as string);
+    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.address?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSubFilters = activeSubFilters.length === 0 || activeSubFilters.every(sf => {
+      if (sf === 'HYPE') return p.capacityPercentage >= 80;
+      if (sf === 'CLOSE') return true;
+      return true;
+    });
+    return matchesFilter && matchesSearch && matchesSubFilters;
   });
 
   const sortedPlaces = [...filteredPlaces].sort((a, b) => {
@@ -72,11 +85,6 @@ export const Home: React.FC<HomeProps> = ({
     { id: PlaceType.EVENTO, label: 'Eventos' },
     { id: PlaceType.RESTAURANTE, label: 'Comer' },
   ];
-
-  const getGreeting = () => {
-    const h = new Date().getHours();
-    return h < 12 ? 'BOM DIA,' : h < 18 ? 'BOA TARDE,' : 'BOA NOITE,';
-  };
 
   const firstName = currentUser.name.split(' ')[0] || 'Visitante';
 
@@ -121,27 +129,17 @@ export const Home: React.FC<HomeProps> = ({
             </motion.div>
 
             <div className="flex flex-col justify-center">
-              <motion.p
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.3em] mb-1"
-              >
-                {getGreeting()}
-              </motion.p>
-              <div className="flex items-center gap-2">
-                <motion.h2
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="text-4xl font-black text-[var(--text-primary)] tracking-tighter leading-none"
-                >
+              <p className="text-[10px] font-black text-[var(--text-tertiary)] uppercase tracking-[0.3em] mb-1">
+                Bem-vindo
+              </p>
+              <div className="flex items-center gap-3">
+                <h2 className="text-xl font-black text-white italic truncate tracking-tight">
                   {firstName}
-                </motion.h2>
+                </h2>
                 <div className="w-1 h-8 bg-[var(--primary-main)] rounded-full glow-primary opacity-80" />
               </div>
             </div>
           </div>
-
           <div className="relative">
             <motion.div whileTap={{ scale: 0.9 }}>
               <Button
@@ -159,29 +157,128 @@ export const Home: React.FC<HomeProps> = ({
           </div>
         </div>
 
-        {/* Filters Carousel */}
-        <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
-          {filters.map((f, i) => {
-            const isActive = filter === f.id;
-            return (
-              <motion.div
-                key={f.id}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.05 }}
-              >
-                <Button
-                  variant={isActive ? 'primary' : 'secondary'}
-                  size="sm"
-                  onClick={() => handleFilterChange(f.id as any)}
-                  className={`rounded-2xl px-5 text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all ${isActive ? 'shadow-lg border-transparent glow-primary bg-[var(--primary-main)] text-[var(--primary-on)]' : 'bg-[var(--bg-card)]/40 text-[var(--text-secondary)] border-[var(--border-default)]'}`}
-                  leftIcon={f.icon}
+        {/* Search, Sub-filters and Categories */}
+        <div className="space-y-4">
+          {/* Search Bar */}
+          <div className="flex gap-3">
+            <div className="relative flex-1 group">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Search className={`w-5 h-5 transition-colors ${searchQuery ? 'text-[var(--primary-main)]' : 'text-slate-500'}`} />
+              </div>
+              <input
+                type="text"
+                placeholder="Buscar por lugar ou estilo..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-[var(--bg-card)]/50 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[var(--primary-main)]/30 focus:bg-[var(--bg-card)] transition-all placeholder:text-slate-600 shadow-inner"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center"
                 >
-                  {f.label}
-                </Button>
-              </motion.div>
-            );
-          })}
+                  <Trash2 className="w-4 h-4 text-slate-500 hover:text-white transition-colors" />
+                </button>
+              )}
+            </div>
+            <Button variant="secondary" size="icon" className="rounded-2xl w-14 h-14 bg-[var(--bg-card)]/50 border border-white/5 shadow-2xl shrink-0">
+              <SlidersHorizontal className="w-6 h-6 text-[var(--text-secondary)]" />
+            </Button>
+          </div>
+
+          {/* Recommendations Section - SPRINT 2 */}
+          {filter === 'ALL' && !searchQuery && (
+            <div className="space-y-4 pt-1">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-black text-white italic uppercase tracking-widest flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-cyan-400 animate-pulse" /> Recomendados
+                </h3>
+                <button
+                  onClick={onNavigateToIA}
+                  className="text-[10px] font-black text-cyan-400 uppercase tracking-tighter bg-cyan-500/10 px-3 py-1.5 rounded-full border border-cyan-500/20 active:scale-95 transition-all"
+                >
+                  IA Concierge
+                </button>
+              </div>
+
+              <div className="flex gap-4 overflow-x-auto hide-scrollbar -mx-2 px-2 pb-2">
+                {places.filter(p => p.isTrending).slice(0, 4).map(p => (
+                  <motion.div
+                    key={p.id}
+                    className="w-48 shrink-0 relative group"
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => onPlaceSelect(p)}
+                  >
+                    <div className="aspect-[4/5] rounded-3xl overflow-hidden border border-white/10 relative shadow-2xl">
+                      <img src={p.imageUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" />
+                      <div className="absolute bottom-4 left-4 right-4">
+                        <h4 className="text-white font-black italic uppercase text-xs truncate mb-1">{p.name}</h4>
+                        <Badge variant="success" className="text-[8px] py-0.5">
+                          {p.capacityPercentage}% ON
+                        </Badge>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Sub-filters */}
+          <div className="flex gap-2 overflow-x-auto hide-scrollbar -mx-2 px-2">
+            {[
+              { id: 'HYPE', label: 'Bombando', icon: <Zap className="w-3.5 h-3.5" /> },
+              { id: 'CLOSE', label: 'Perto de mim', icon: <Navigation className="w-3.5 h-3.5" /> },
+              { id: 'LIVE', label: 'Ao Vivo', icon: <Music className="w-3.5 h-3.5" /> },
+            ].map(sf => {
+              const isActive = activeSubFilters.includes(sf.id);
+              return (
+                <button
+                  key={sf.id}
+                  onClick={() => {
+                    trigger('light');
+                    setActiveSubFilters(prev =>
+                      prev.includes(sf.id) ? prev.filter(x => x !== sf.id) : [...prev, sf.id]
+                    );
+                  }}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full border text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap
+                    ${isActive
+                      ? 'bg-[var(--primary-main)]/10 border-[var(--primary-main)] text-[var(--primary-main)] glow-primary'
+                      : 'bg-transparent border-white/10 text-slate-500 hover:border-white/20'
+                    }`}
+                >
+                  {sf.icon}
+                  {sf.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Categories Carousel */}
+          <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
+            {filters.map((f, i) => {
+              const isActive = filter === f.id;
+              return (
+                <motion.div
+                  key={f.id}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.05 }}
+                >
+                  <Button
+                    variant={isActive ? 'primary' : 'secondary'}
+                    size="sm"
+                    onClick={() => handleFilterChange(f.id as any)}
+                    className={`rounded-2xl px-5 text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all ${isActive ? 'shadow-lg border-transparent glow-primary' : 'bg-[var(--bg-card)]/40'}`}
+                    leftIcon={f.icon}
+                  >
+                    {f.label}
+                  </Button>
+                </motion.div>
+              );
+            })}
+          </div>
         </div>
       </div>
 

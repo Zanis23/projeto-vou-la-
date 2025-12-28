@@ -177,7 +177,9 @@ export interface User {
   badges: string[];
   memberSince: string;
   bio?: string;
-  theme?: 'purple' | 'neon' | 'cyan' | 'pink';
+  appMode: 'light' | 'dark' | 'black';
+  accentColor: 'purple' | 'neon' | 'cyan' | 'pink';
+  theme?: string; // Legacy field, keeping for compatibility temporarily
   history: CheckIn[];
   savedPlaces: string[];
   ownedPlaceId?: string;
@@ -187,7 +189,7 @@ export interface User {
   twitter?: string;
   status?: string;
   wallet?: Ticket[];
-  appMode?: 'light' | 'dark';
+  // Consolidating to theme property
   pushToken?: string;
 }
 
