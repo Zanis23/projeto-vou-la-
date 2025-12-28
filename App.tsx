@@ -174,7 +174,7 @@ export default function App() {
   );
 
   return (
-    <ToastProvider>
+    <>
       <PWAUpdateNotification />
       <Suspense fallback={<PageLoader />}>
         <div className="flex flex-col h-[100dvh] bg-[var(--bg-default)] text-[var(--text-primary)] overflow-hidden relative transition-colors duration-500">
@@ -352,6 +352,6 @@ export default function App() {
 
         </div>
       </Suspense>
-    </ToastProvider>
+    </>
   );
 }
