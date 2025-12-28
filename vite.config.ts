@@ -137,12 +137,7 @@ export default defineConfig(() => {
     build: {
       rollupOptions: {
         output: {
-          manualChunks: {
-            vendor: ['react', 'react-dom'],
-            ui: ['lucide-react'],
-            supabase: ['@supabase/supabase-js'],
-            capacitor: ['@capacitor/core', '@capacitor/haptics', '@capacitor/app']
-          }
+
         }
       }
     }

@@ -9,6 +9,11 @@ interface ToastContextType {
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    // Debug log to confirm provider mounting
+    React.useEffect(() => {
+        console.log('[ToastProvider] Mounted');
+    }, []);
+
     const [toasts, setToasts] = useState<ToastProps[]>([]);
 
     const showToast = useCallback((props: Omit<ToastProps, 'onClose'>) => {

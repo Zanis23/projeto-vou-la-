@@ -18,14 +18,14 @@ import { queryClient } from './src/core/queryClient';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <ErrorBoundary>
-        <ToastProvider>
+    <ToastProvider>
+      <QueryClientProvider client={queryClient}>
+        <ErrorBoundary>
           <App />
           <Analytics />
-        </ToastProvider>
-      </ErrorBoundary>
-      <ReactQueryDevtools initialIsOpen={false} />
-    </QueryClientProvider>
+        </ErrorBoundary>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
+    </ToastProvider>
   </React.StrictMode>
 );
