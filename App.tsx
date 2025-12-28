@@ -23,7 +23,6 @@ import { db } from './utils/storage';
 // UI Components
 import { BottomNav, BottomNavItem } from './src/components/ui/BottomNav';
 import { ContextualOnboarding } from './src/components/ContextualOnboarding';
-import { ToastProvider } from './components/ToastProvider';
 
 // Custom Hooks
 import { useAuth } from './hooks/useAuth';
