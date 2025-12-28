@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/react';
 // import { initSentry, SentryErrorBoundary } from './utils/sentry';
 import { initAnalytics } from './utils/analytics';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { ToastProvider } from './components/ToastProvider';
 import App from './App';
 import './index.css';
 
@@ -19,8 +20,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
-        <App />
-        <Analytics />
+        <ToastProvider>
+          <App />
+          <Analytics />
+        </ToastProvider>
       </ErrorBoundary>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
