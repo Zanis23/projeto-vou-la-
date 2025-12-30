@@ -1,9 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '../src/components/ui/Button';
-import { Input } from '../src/components/ui/Input';
-import { Logo } from '../components/Logo';
-import { Building2, ChevronRight, AlertCircle, Mail, Lock, User as UserIcon, Chrome, Apple, ArrowRight } from 'lucide-react';
+import { Building2, AlertCircle, Mail, Lock, User as UserIcon, Chrome, Apple } from 'lucide-react';
 import { db } from '../utils/storage';
 import { useHaptic } from '../hooks/useHaptic';
 import { User } from '../types';

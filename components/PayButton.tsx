@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Loader2, Check, CreditCard, Wallet, DollarSign } from 'lucide-react';
-import { motion } from 'framer-motion';
+
 
 interface PayButtonProps {
     onClick: () => void;

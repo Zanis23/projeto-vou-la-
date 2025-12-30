@@ -55,7 +55,7 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, qty, onAdd, onRemove }
                             <h4 className="text-white font-black text-sm italic uppercase leading-tight truncate pr-2">{item.name}</h4>
                         </div>
                         <p className="text-[10px] text-gray-500 font-medium line-clamp-2 mt-1 min-h-[2.5em]">
-                            {item.description || "Delicioso e preparado na hora para você."}
+                            Delicioso e preparado na hora para você.
                         </p>
                     </div>
 

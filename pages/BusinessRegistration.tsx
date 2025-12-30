@@ -97,7 +97,9 @@ export const BusinessRegistration: React.FC<BusinessRegistrationProps> = ({ onBa
                     publicProfile: true,
                     allowTagging: true,
                     notifications: { hypeAlerts: true, chatMessages: true, friendActivity: true }
-                }
+                },
+                appMode: 'dark',
+                accentColor: 'neon'
             };
 
             // Create Auth User & Trigger Profile

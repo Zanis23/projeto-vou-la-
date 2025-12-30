@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Place, MenuItem, OrderItem } from '../types';
-import { MapPin, Music, Flame, Star, Bookmark, Share2, CheckCircle2, Loader2, Zap, ThumbsUp, ThumbsDown, Users, Utensils, BellRing, Check, Car, Navigation, Minus, Plus, X, Sparkles, ClipboardList, CreditCard, QrCode, ShoppingBag, Receipt, HelpCircle, Disc, Crown, History, Beer, Pizza } from 'lucide-react';
+import { MapPin, Flame, Star, Bookmark, Share2, CheckCircle2, Loader2, Zap, ThumbsUp, ThumbsDown, Users, Utensils, BellRing, Check, Car, Navigation, X, Sparkles, ClipboardList, CreditCard, ShoppingBag, Receipt, HelpCircle, Disc, Crown, History, Beer, Pizza, Music } from 'lucide-react';
 import { Skeleton } from './Skeleton';
 import { Badge } from '../src/components/ui/Badge';
 import { PayButton } from './PayButton';
@@ -11,7 +11,7 @@ import { useToast } from './ToastProvider';
 import { FALLBACK_IMAGE, getUserById } from '../constants';
 import { MatchMode } from './MatchMode';
 import { db } from '../utils/storage';
-import { fadeIn, slideUp, springTransition } from '../src/styles/animations';
+import { fadeIn, springTransition } from '../src/styles/animations';
 import { User } from '../types';
 
 interface PlaceCardProps {
