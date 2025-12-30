@@ -4,6 +4,8 @@ import { Place, MenuItem, OrderItem } from '../types';
 import { MapPin, Music, Flame, Star, Bookmark, Share2, CheckCircle2, Loader2, Zap, ThumbsUp, ThumbsDown, Users, Utensils, BellRing, Check, Car, Navigation, Minus, Plus, X, Sparkles, ClipboardList, CreditCard, QrCode, ShoppingBag, Receipt, HelpCircle, Disc, Crown, History, Beer, Pizza } from 'lucide-react';
 import { Skeleton } from './Skeleton';
 import { Badge } from '../src/components/ui/Badge';
+import { PayButton } from './PayButton';
+import { MenuCard } from './MenuCard';
 import { useHaptic } from '../hooks/useHaptic';
 import { useToast } from './ToastProvider';
 import { FALLBACK_IMAGE, getUserById } from '../constants';
@@ -40,56 +42,7 @@ const MenuCategoryTab: React.FC<{ label: string; active: boolean; onClick: () =>
     </button>
 );
 
-const MenuItemRow: React.FC<{ item: MenuItem; qty: number; onAdd: () => void; onRemove: () => void }> = ({ item, qty, onAdd, onRemove }) => {
-    const imageSrc = item.imageUrl || FALLBACK_IMAGE;
 
-    return (
-        <motion.div
-            variants={slideUp}
-            className="flex gap-4 p-4 bg-bg-surface-1/40 border border-border-default rounded-[2rem] mb-4 group relative overflow-hidden transition-all hover:bg-bg-surface-1/60"
-        >
-            <div className="relative w-24 h-24 shrink-0 overflow-hidden rounded-2xl shadow-md">
-                <img src={imageSrc} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={item.name} loading="lazy" />
-                {!item.available && (
-                    <div className="absolute inset-0 bg-black/80 backdrop-blur-[2px] flex items-center justify-center">
-                        <span className="text-[9px] font-black text-white uppercase border border-white/20 px-2.5 py-1 rounded-lg">Esgotado</span>
-                    </div>
-                )}
-            </div>
-
-            <div className="flex-1 flex flex-col justify-between py-0.5 min-w-0">
-                <div>
-                    <h4 className="font-black text-white text-lg leading-tight mb-1 italic truncate">{item.name}</h4>
-                    <p className="text-[10px] text-text-tertiary font-medium leading-tight line-clamp-2 pr-2">Sabor intenso, preparado com ingredientes selecionados para sua melhor experiência.</p>
-                </div>
-
-                <div className="flex justify-between items-end mt-2">
-                    <div className="flex flex-col">
-                        <span className="font-black text-primary-main text-xl tracking-tighter">R$ {item.price.toFixed(2)}</span>
-                    </div>
-
-                    {qty === 0 ? (
-                        <motion.button
-                            whileTap={{ scale: 0.94 }}
-                            onClick={(e) => { e.stopPropagation(); onAdd(); }}
-                            disabled={!item.available}
-                            className={`px-5 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all
-                            ${item.available ? 'bg-white text-black hover:bg-primary-main' : 'bg-bg-surface-2 text-text-tertiary cursor-not-allowed opacity-50'}`}
-                        >
-                            ADD
-                        </motion.button>
-                    ) : (
-                        <div className="flex items-center bg-bg-surface-2 rounded-xl p-1 shadow-inner ring-1 ring-border-default">
-                            <button onClick={(e) => { e.stopPropagation(); onRemove(); }} className="p-2 text-text-tertiary hover:text-white transition-colors"><Minus className="w-4 h-4" /></button>
-                            <span className="w-8 text-center text-sm font-black text-white">{qty}</span>
-                            <button onClick={(e) => { e.stopPropagation(); onAdd(); }} className="p-2 text-primary-main hover:text-white transition-colors"><Plus className="w-4 h-4" /></button>
-                        </div>
-                    )}
-                </div>
-            </div>
-        </motion.div>
-    );
-};
 
 export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
     place, rank, onCheckIn, expanded = false, isCheckedIn = false, isSaved = false, onToggleSave, loading = false, onClick, currentUser
@@ -103,73 +56,71 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
     if (!expanded && place) {
         return (
             <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={onClick}
-                className="premium-card relative overflow-hidden flex gap-4 p-4 shadow-lg mb-2"
+                className="relative w-full aspect-[3/4] rounded-[2rem] overflow-hidden group cursor-pointer border border-white/10"
             >
-                {/* Visual Rank Indicator */}
-                {rank && (
-                    <div className="absolute top-0 left-0 w-8 h-8 bg-primary-main flex items-center justify-center text-black font-black italic rounded-br-2xl z-20 shadow-lg">
-                        {rank}
+                {/* Background Structure (UIverse Model Adaptation) */}
+                <div className="absolute inset-0 bg-[#1a1a1a] p-1">
+                    <div className="w-full h-full rounded-[1.8rem] rounded-tr-[5rem] rounded-br-[3rem] bg-[#222] overflow-hidden relative">
+                        {/* Place Image as Background */}
+                        <img
+                            src={imgError ? FALLBACK_IMAGE : place.imageUrl || FALLBACK_IMAGE}
+                            className={`w-full h-full object-cover opacity-60 transition-transform duration-700 group-hover:scale-110 ${imgLoaded ? 'opacity-60' : 'opacity-0'}`}
+                            onLoad={() => setImgLoaded(true)}
+                            onError={() => setImgError(true)}
+                            alt={place.name}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
                     </div>
-                )}
-
-                <div className="relative w-28 h-28 shrink-0 overflow-hidden rounded-[1.5rem] shadow-md border border-white/5">
-                    <img
-                        src={imgError ? FALLBACK_IMAGE : place.imageUrl || FALLBACK_IMAGE}
-                        className={`w-full h-full object-cover transition-all duration-700 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
-                        onLoad={() => setImgLoaded(true)}
-                        onError={() => setImgError(true)}
-                        alt={place.name}
-                    />
-                    {place.capacityPercentage >= 80 && (
-                        <div className="absolute bottom-1 right-1 bg-status-error text-white px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-lg">
-                            <Flame className="w-3 h-3 fill-current" />
-                            <span className="text-[8px] font-black uppercase">VOU!</span>
-                        </div>
-                    )}
                 </div>
 
-                <div className="flex-1 flex flex-col justify-between py-1 min-w-0">
-                    <div>
-                        <div className="flex items-center gap-1.5 mb-1 opacity-60">
-                            <span className="text-[9px] font-bold text-primary-main uppercase tracking-widest">{place.type}</span>
-                            <span className="text-[8px] text-text-tertiary">•</span>
-                            <span className="text-[9px] font-medium text-text-tertiary uppercase">{place.distance}</span>
+                {/* Animated Spinner Background Effect */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-30 blur-3xl">
+                    <div className="w-40 h-40 rounded-full bg-gradient-to-tr from-primary-main to-purple-600 animate-spin" style={{ animationDuration: '10s' }}></div>
+                </div>
+
+                {/* Foreground Content */}
+                <div className="absolute inset-0 p-4 flex flex-col justify-between">
+                    {/* Top Header */}
+                    <div className="flex justify-between items-start">
+                        <div className="flex flex-col">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-primary-main">{place.type}</span>
+                            <span className="text-[9px] text-gray-400 font-bold uppercase">{place.distance} • {place.rating} ★</span>
                         </div>
-                        <h4 className="text-xl font-black text-white italic tracking-tighter truncate leading-none">
-                            {place.name.toUpperCase()}
-                        </h4>
-                        <p className="text-[10px] text-text-tertiary font-medium truncate mt-1">
-                            {place.address}
-                        </p>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                trigger('light');
+                                onToggleSave?.(place.id);
+                            }}
+                            className={`w-8 h-8 rounded-full border flex items-center justify-center backdrop-blur-md transition-all active:scale-90 ${isSaved ? 'bg-primary-main border-primary-main text-black' : 'bg-black/20 border-white/10 text-white'}`}
+                        >
+                            <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
+                        </button>
                     </div>
 
-                    <div className="flex items-center justify-between mt-auto">
-                        <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-1 text-primary-main">
-                                <Star className="w-4 h-4 fill-current" />
-                                <span className="text-sm font-black">{place.rating}</span>
-                            </div>
-                            <div className="h-4 w-[1px] bg-border-default" />
-                            <div className="flex items-center gap-1 text-text-secondary">
-                                <Users className="w-3.5 h-3.5" />
-                                <span className="text-[11px] font-bold uppercase">{place.capacityPercentage}%</span>
-                            </div>
-                        </div>
+                    {/* Bottom Info */}
+                    <div className="relative">
+                        <div className="glass-card !bg-white/5 !border-white/10 p-3 rounded-2xl backdrop-blur-md">
+                            <h4 className="text-xl font-black text-white italic tracking-tighter uppercase leading-none mb-1 truncate">
+                                {place.name}
+                            </h4>
+                            <p className="text-[9px] text-gray-300 font-medium truncate mb-2">
+                                {place.address}
+                            </p>
 
-                        <div className="flex items-center gap-2">
-                            <motion.button
-                                whileTap={{ scale: 0.8 }}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    trigger('light');
-                                    onToggleSave?.(place.id);
-                                }}
-                                className={`p-2.5 rounded-xl border transition-all ${isSaved ? 'bg-primary-main border-primary-main text-black' : 'bg-bg-surface-2/50 border-border-default text-text-tertiary'}`}
-                            >
-                                <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
-                            </motion.button>
+                            <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                                <div className="flex items-center gap-1.5">
+                                    <div className={`w-2 h-2 rounded-full ${place.capacityPercentage >= 80 ? 'bg-status-error animate-pulse' : 'bg-status-success'}`}></div>
+                                    <span className="text-[9px] font-black uppercase text-gray-400">{place.capacityPercentage}% ON</span>
+                                </div>
+                                <div className="w-6 h-6 rounded-full bg-primary-main flex items-center justify-center text-black shadow-[0_0_10px_rgba(204,255,0,0.4)]">
+                                    <Navigation className="w-3 h-3" />
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -467,12 +418,16 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                                             <p className="text-slate-400 text-sm">Total a pagar: <span className="text-[var(--primary)] font-black">R$ {comandaTotal.toFixed(2)}</span></p>
                                         </div>
                                         <div className="space-y-3">
-                                            <button onClick={() => handlePayment('pix')} className="w-full py-4 bg-cyan-600 text-white rounded-2xl font-black uppercase text-xs flex items-center justify-center gap-2 active:scale-95 transition-all">
-                                                <QrCode className="w-4 h-4" /> Pagar via PIX
-                                            </button>
-                                            <button onClick={() => handlePayment('card')} className="w-full py-4 bg-slate-800 text-white rounded-2xl font-black uppercase text-xs flex items-center justify-center gap-2 active:scale-95 transition-all border border-slate-700">
-                                                <CreditCard className="w-4 h-4" /> Cartão (App)
-                                            </button>
+                                            <PayButton
+                                                onClick={() => handlePayment('pix')}
+                                                text="Pagar via PIX"
+                                                className="w-full bg-cyan-600 border-cyan-500"
+                                            />
+                                            <PayButton
+                                                onClick={() => handlePayment('card')}
+                                                text="Cartão (App)"
+                                                className="w-full bg-slate-800"
+                                            />
                                         </div>
                                     </div>
                                 )}
@@ -638,9 +593,15 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                                                 <p className="text-[10px] font-black uppercase tracking-widest">Sem itens disponíveis</p>
                                             </div>
                                         ) : (
-                                            <div className="space-y-1">
+                                            <div className="grid grid-cols-2 gap-3 pb-8">
                                                 {filteredMenu.map(item => (
-                                                    <MenuItemRow key={item.id} item={item} qty={cart[item.id] || 0} onAdd={() => handleAddToCart(item.id)} onRemove={() => handleRemoveFromCart(item.id)} />
+                                                    <MenuCard
+                                                        key={item.id}
+                                                        item={item}
+                                                        qty={cart[item.id] || 0}
+                                                        onAdd={() => handleAddToCart(item.id)}
+                                                        onRemove={() => handleRemoveFromCart(item.id)}
+                                                    />
                                                 ))}
                                             </div>
                                         )
@@ -925,7 +886,7 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
                         </div>
                     )}
                 </div>
-            </div>
+            </div >
         );
     }
 

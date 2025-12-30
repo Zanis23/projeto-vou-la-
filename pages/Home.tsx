@@ -217,10 +217,10 @@ export const Home: React.FC<HomeProps> = ({
                 key="list"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="space-y-4"
+                className="grid grid-cols-2 gap-3 pb-32"
               >
                 {sortedPlaces.length === 0 ? (
-                  <div className="py-20 text-center opacity-40 flex flex-col items-center">
+                  <div className="col-span-2 py-20 text-center opacity-40 flex flex-col items-center">
                     <Search className="w-12 h-12 mb-4 text-text-tertiary" />
                     <p className="text-sm font-black uppercase tracking-widest">Nenhum lugar encontrado</p>
                   </div>

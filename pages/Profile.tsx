@@ -8,6 +8,8 @@ import { SafetyModal } from '../components/SafetyModal';
 import { BusinessDashboard } from '../components/BusinessDashboard';
 import { calculateLevel } from '../utils/core';
 import { slideUp, fadeIn, scaleIn } from '../src/styles/animations';
+import { FlipCard } from '../components/FlipCard';
+import { QrCode } from 'lucide-react';
 
 // UI Components
 import { Avatar } from '../src/components/ui/Avatar';
@@ -242,46 +244,69 @@ export const Profile: React.FC<ProfileProps> = ({ currentUser = MOCK_USER, onLog
         />
 
         <div className="px-6 pt-4 relative z-10">
-          <div className="flex flex-col items-center mb-8">
-            <motion.div variants={scaleIn} className="relative group mb-4">
-              <div className="absolute -inset-1 bg-gradient-to-br from-[var(--primary-main)] to-purple-500 rounded-full opacity-70 blur-md group-hover:opacity-100 transition-opacity"></div>
-              <Avatar src={user.avatar} size="xl" className="w-36 h-36 border-4 border-[var(--bg-default)] shadow-2xl" />
-              <button onClick={handleStartEdit} className="absolute -bottom-2 right-0 bg-[var(--bg-surface)] p-2.5 rounded-xl border border-[var(--border-default)] text-[var(--text-primary)] shadow-lg hover:text-[var(--primary-main)] transition-colors z-20">
-                <Edit3 className="w-4 h-4" />
-              </button>
-            </motion.div>
+          <FlipCard
+            trigger="click"
+            height={350}
+            className="mb-8"
+            front={
+              <div className="flex flex-col items-center justify-center w-full h-full bg-[var(--bg-default)] rounded-[2rem] border border-[var(--border-default)] shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-[var(--primary-main)]/20 to-transparent"></div>
 
-            <motion.h2 variants={slideUp} className="text-3xl font-black text-[var(--text-primary)] italic tracking-tighter drop-shadow-lg text-center mb-1">{user.name}</motion.h2>
+                <motion.div variants={scaleIn} className="relative group mb-4 z-10">
+                  <div className="absolute -inset-1 bg-gradient-to-br from-[var(--primary-main)] to-purple-500 rounded-full opacity-70 blur-md group-hover:opacity-100 transition-opacity"></div>
+                  <Avatar src={user.avatar} size="xl" className="w-36 h-36 border-4 border-[var(--bg-default)] shadow-2xl relative z-10" />
+                  <button onClick={(e) => { e.stopPropagation(); handleStartEdit(); }} className="absolute -bottom-2 right-0 bg-[var(--bg-surface)] p-2.5 rounded-xl border border-[var(--border-default)] text-[var(--text-primary)] shadow-lg hover:text-[var(--primary-main)] transition-colors z-20">
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                </motion.div>
 
-            <motion.div variants={slideUp} className="flex items-center gap-2 mb-4">
-              <Badge variant="secondary" className="pl-3 pr-4 py-1 gap-1">
-                <Award className="w-3 h-3 text-[var(--primary-main)]" /> Nível {level}
-              </Badge>
-              <span className="text-[var(--text-muted)] text-xs font-bold uppercase tracking-wide">
-                {user.points} XP
-              </span>
-            </motion.div>
+                <motion.h2 variants={slideUp} className="text-3xl font-black text-[var(--text-primary)] italic tracking-tighter drop-shadow-lg text-center mb-1 relative z-10">{user.name}</motion.h2>
 
-            <motion.p variants={slideUp} className="text-[var(--text-secondary)] text-sm text-center max-w-xs leading-relaxed font-medium">
-              {user.bio || "Adicione uma bio para a galera te conhecer."}
-            </motion.p>
+                <motion.div variants={slideUp} className="flex items-center gap-2 mb-4 relative z-10">
+                  <Badge variant="secondary" className="pl-3 pr-4 py-1 gap-1">
+                    <Award className="w-3 h-3 text-[var(--primary-main)]" /> Nível {level}
+                  </Badge>
+                  <span className="text-[var(--text-muted)] text-xs font-bold uppercase tracking-wide">
+                    {user.points} XP
+                  </span>
+                </motion.div>
 
-            <motion.div variants={slideUp} className="flex gap-4 mt-6">
-              {user.instagram && <SocialButton icon={<Instagram className="w-5 h-5" />} onClick={() => window.open(`https://instagram.com/${user.instagram?.replace('@', '')}`, '_blank')} />}
-              {user.tiktok && <SocialButton icon={<Video className="w-5 h-5" />} onClick={() => window.open(`https://tiktok.com/@${user.tiktok?.replace('@', '')}`, '_blank')} />}
-              {user.twitter && <SocialButton icon={<Twitter className="w-5 h-5" />} onClick={() => window.open(`https://twitter.com/${user.twitter?.replace('@', '')}`, '_blank')} />}
-              <Button variant="secondary" size="icon" className="w-12 h-12 rounded-2xl" onClick={() => {
-                if (navigator.share) {
-                  navigator.share({
-                    title: `Perfil de ${user.name} no Vou Lá`,
-                    url: window.location.href
-                  });
-                }
-              }}>
-                <Share2 className="w-5 h-5" />
-              </Button>
-            </motion.div>
-          </div>
+                <motion.p variants={slideUp} className="text-[var(--text-secondary)] text-sm text-center max-w-xs leading-relaxed font-medium relative z-10">
+                  {user.bio || "Adicione uma bio para a galera te conhecer."}
+                </motion.p>
+
+                <div className="flex gap-4 mt-6 relative z-10">
+                  {/* Keep interactions inside front, but allow stopPropagation to prevent flip if clicking links */}
+                  {user.instagram && <SocialButton icon={<Instagram className="w-5 h-5" />} onClick={() => window.open(`https://instagram.com/${user.instagram?.replace('@', '')}`, '_blank')} />}
+                  <div onClick={e => e.stopPropagation()}>
+                    <Button variant="secondary" size="icon" className="w-12 h-12 rounded-2xl" onClick={() => {
+                      if (navigator.share) { navigator.share({ title: `Perfil de ${user.name}`, url: window.location.href }); }
+                    }}>
+                      <Share2 className="w-5 h-5" />
+                    </Button>
+                  </div>
+                </div>
+
+                <p className="absolute bottom-4 text-[9px] text-[var(--text-muted)] uppercase tracking-widest animate-pulse">Toque para ver QR Code</p>
+              </div>
+            }
+            back={
+              <div className="flex flex-col items-center justify-center w-full h-full bg-[#111] rounded-[2rem] border border-[var(--primary-main)]/30 shadow-[0_0_30px_var(--primary-main)/20] relative overflow-hidden">
+                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10"></div>
+                <div className="absolute -top-20 -right-20 w-60 h-60 bg-[var(--primary-main)]/20 rounded-full blur-[80px]"></div>
+
+                <div className="relative z-10 bg-white p-4 rounded-3xl shadow-2xl skew-x-1">
+                  <QrCode className="w-40 h-40 text-black" />
+                </div>
+
+                <div className="relative z-10 mt-8 text-center space-y-2">
+                  <h3 className="text-2xl font-black text-white italic tracking-tighter uppercase">SEU PASSE VIP</h3>
+                  <p className="text-[10px] text-[var(--primary-main)] font-bold uppercase tracking-[0.2em]">Membro ID: {user.id.slice(0, 8)}</p>
+                </div>
+                <p className="absolute bottom-4 text-[9px] text-[var(--text-muted)] uppercase tracking-widest">Toque para voltar</p>
+              </div>
+            }
+          />
 
           <motion.div variants={slideUp} className="grid grid-cols-2 gap-3 mb-8">
             <Card variant="glass" className="h-32 flex flex-col justify-between p-4">
