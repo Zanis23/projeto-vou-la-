@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardTitle, CardDescription, CardFooter } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
+import { Card, CardContent, CardTitle, CardDescription, CardFooter } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
 import { X, ArrowRight, MapPin, Search, User } from 'lucide-react';
 
 interface OnboardingStep {

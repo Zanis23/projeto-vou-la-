@@ -131,7 +131,7 @@ export default defineConfig(() => {
     // All Gemini API calls now go through /api/gemini-proxy
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
+        '@': path.resolve(__dirname, './src'),
       }
     },
     build: {

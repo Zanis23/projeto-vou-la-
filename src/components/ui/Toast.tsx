@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { CheckCircle2, XCircle, Info, X } from 'lucide-react';
 
 export interface ToastProps {
@@ -21,6 +21,7 @@ export const Toast = ({
             const timer = setTimeout(onClose, duration);
             return () => clearTimeout(timer);
         }
+        return undefined;
     }, [duration, onClose]);
 
     const variants = {

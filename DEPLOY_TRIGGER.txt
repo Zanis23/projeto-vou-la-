@@ -1,7 +1,0 @@
-DEPLOY TRIGGER v0.0.8 - FINAL CHAT POLISH
-Timestamp: 2025-12-27T16:27:00-03:00
-Fixes:
-- Social.tsx detail header layout (hides main nav in detail)
-- Social.tsx detail CSS variables (--bg-surface replaced by --bg-card)
-- Social.tsx name/avatar fallbacks
-- Social.tsx smoother state transitions

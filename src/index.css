@@ -1,0 +1,145 @@
+@import "tailwindcss";
+@import "./styles/theme.css";
+@import "./styles/animations.css";
+
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    user-select: none;
+    outline: none;
+}
+
+body,
+html {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background-color: var(--bg-default);
+    color: var(--text-primary);
+    position: fixed;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    overscroll-behavior: none;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+/* Utilities */
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.scroll-container {
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    height: 100%;
+}
+
+.scroll-container::-webkit-scrollbar {
+    display: none;
+}
+
+/* Safe Areas */
+.pt-safe {
+    padding-top: var(--sat);
+}
+
+.pb-safe {
+    padding-bottom: var(--sab);
+}
+
+.pl-safe {
+    padding-left: var(--sal);
+}
+
+.pr-safe {
+    padding-right: var(--sar);
+}
+
+/* Premium Glass Effect */
+.glass-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid var(--border-default);
+    box-shadow: var(--shadow-lg);
+}
+
+.glass-morphism {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Brand Utilities */
+.text-neon {
+    color: var(--primary-main);
+    text-shadow: 0 0 15px var(--primary-glow);
+}
+
+.bg-brand-gradient {
+    background: linear-gradient(135deg, var(--primary-main) 0%, var(--primary-light) 100%);
+}
+
+.glow-primary {
+    box-shadow: 0 0 25px var(--primary-glow);
+}
+
+.border-neon {
+    border-color: var(--primary-main);
+    box-shadow: inset 0 0 8px var(--primary-glow), 0 0 10px var(--primary-glow);
+}
+
+/* Premium Interaction */
+.premium-card {
+    background: var(--bg-surface-1);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-xl);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--shadow-md);
+}
+
+.premium-card:active {
+    transform: scale(0.96);
+    background: var(--bg-surface-2);
+    border-color: var(--primary-main);
+    box-shadow: var(--shadow-sm);
+}
+
+.clickable {
+    cursor: pointer;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.clickable:active {
+    transform: scale(0.95);
+    opacity: 0.8;
+}
+
+/* Layout Utilities */
+.full-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+}
