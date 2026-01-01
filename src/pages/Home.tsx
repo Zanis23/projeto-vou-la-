@@ -206,17 +206,31 @@ export const Home: React.FC<HomeProps> = ({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="space-y-4"
+                className="grid grid-cols-2 gap-3 pb-32"
               >
-                {[1, 2, 3, 4].map((_, i) => (
-                  <div key={i} className="h-32 bg-white/5 rounded-[2rem] animate-pulse border border-white/5" />
+                {[1, 2, 3, 4, 5, 6].map((_, i) => (
+                  <div key={i} className="relative aspect-[3/4] rounded-[2rem] bg-white/5 animate-pulse border border-white/5 p-4 flex flex-col justify-end">
+                    <div className="space-y-2">
+                      <div className="h-4 w-3/4 bg-white/10 rounded-lg" />
+                      <div className="h-3 w-1/2 bg-white/5 rounded-lg" />
+                    </div>
+                  </div>
                 ))}
               </motion.div>
             ) : (
               <motion.div
                 key="list"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+                initial="hidden"
+                animate="show"
+                variants={{
+                  hidden: { opacity: 0 },
+                  show: {
+                    opacity: 1,
+                    transition: {
+                      staggerChildren: 0.1
+                    }
+                  }
+                }}
                 className="grid grid-cols-2 gap-3 pb-32"
               >
                 {sortedPlaces.length === 0 ? (
@@ -226,14 +240,21 @@ export const Home: React.FC<HomeProps> = ({
                   </div>
                 ) : (
                   sortedPlaces.map((place) => (
-                    <PlaceCard
+                    <motion.div
                       key={place.id}
-                      place={place}
-                      onClick={() => onPlaceSelect(place)}
-                      isSaved={savedPlaces.includes(place.id)}
-                      onToggleSave={onToggleSave}
-                      currentUser={currentUser}
-                    />
+                      variants={{
+                        hidden: { opacity: 0, y: 20 },
+                        show: { opacity: 1, y: 0 }
+                      }}
+                    >
+                      <PlaceCard
+                        place={place}
+                        onClick={() => onPlaceSelect(place)}
+                        isSaved={savedPlaces.includes(place.id)}
+                        onToggleSave={onToggleSave}
+                        currentUser={currentUser}
+                      />
+                    </motion.div>
                   ))
                 )}
               </motion.div>

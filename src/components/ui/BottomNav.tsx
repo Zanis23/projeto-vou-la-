@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { triggerHaptic } from '../../utils/haptics';
+import { triggerHaptic } from '@/utils/haptics';
 
 export const BottomNav = ({ children, className = '' }: { children: React.ReactNode, className?: string }) => {
     return (

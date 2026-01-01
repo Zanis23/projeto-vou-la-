@@ -687,38 +687,61 @@ export const PlaceCard: React.FC<PlaceCardProps> = React.memo(({
 
                     {/* Top Actions */}
                     <div className="absolute top-12 left-6 right-6 flex justify-between items-center z-30">
-                        <button onClick={onClick} className="w-12 h-12 rounded-2xl bg-black/40 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white active:scale-90 transition-all">
+                        <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={onClick}
+                            className="w-12 h-12 rounded-2xl bg-black/40 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white shadow-xl transition-all"
+                        >
                             <X className="w-6 h-6" />
-                        </button>
-                        <button
+                        </motion.button>
+                        <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 onToggleSave?.(place.id);
                             }}
-                            className={`w-12 h-12 rounded-2xl backdrop-blur-xl border flex items-center justify-center transition-all active:scale-90
-                            ${isSaved ? 'bg-primary-main border-primary-main text-black' : 'bg-black/40 border-white/10 text-white'}`}
+                            className={`w-12 h-12 rounded-2xl backdrop-blur-xl border flex items-center justify-center transition-all
+                            ${isSaved ? 'bg-primary-main border-primary-main text-black shadow-[0_0_20px_rgba(204,255,0,0.4)]' : 'bg-black/40 border-white/10 text-white shadow-xl'}`}
                         >
                             <Bookmark className={`w-6 h-6 ${isSaved ? 'fill-current' : ''}`} />
-                        </button>
+                        </motion.button>
                     </div>
 
                     <div className="absolute bottom-0 left-0 right-0 p-8 pt-20">
-                        <div className="flex flex-col gap-4">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                            className="flex flex-col gap-4"
+                        >
                             <div className="flex flex-wrap items-center gap-2">
-                                <span className="glass-card !bg-primary-main/20 text-primary-main text-[10px] font-black px-3 py-1.5 rounded-xl uppercase border border-primary-main/20">{place.type}</span>
-                                {place.isTrending && <span className="bg-status-warning text-black text-[10px] font-black px-3 py-1.5 rounded-xl uppercase flex items-center gap-1.5 shadow-lg shadow-status-warning/20"><Flame className="w-3.5 h-3.5 fill-current" /> Hype</span>}
+                                <span className="glass-card !bg-primary-main/20 text-primary-main text-[10px] font-black px-3 py-1.5 rounded-xl uppercase border border-primary-main/20 backdrop-blur-md">{place.type}</span>
+                                {place.isTrending && (
+                                    <motion.span
+                                        animate={{ scale: [1, 1.05, 1] }}
+                                        transition={{ repeat: Infinity, duration: 2 }}
+                                        className="bg-status-warning text-black text-[10px] font-black px-3 py-1.5 rounded-xl uppercase flex items-center gap-1.5 shadow-lg shadow-status-warning/20"
+                                    >
+                                        <Flame className="w-3.5 h-3.5 fill-current" /> Hype
+                                    </motion.span>
+                                )}
                             </div>
                             <div className="flex justify-between items-end gap-6">
                                 <div className="min-w-0">
                                     <h1 className="text-4xl xs:text-5xl font-black text-white italic tracking-tighter leading-[0.85] drop-shadow-2xl truncate uppercase">{place.name}</h1>
                                     <p className="text-text-secondary text-xs font-medium flex items-center gap-2 mt-3"><MapPin className="w-4 h-4 text-primary-main" /> {place.address}</p>
                                 </div>
-                                <div className="glass-card !bg-bg-default/40 p-4 rounded-3xl border border-white/10 flex flex-col items-center shrink-0 shadow-2xl">
-                                    <span className="text-[9px] font-black text-text-tertiary uppercase mb-1 tracking-widest">Score</span>
+                                <motion.div
+                                    whileHover={{ scale: 1.05 }}
+                                    className="glass-card !bg-white/5 p-4 rounded-3xl border border-white/10 flex flex-col items-center shrink-0 shadow-2xl backdrop-blur-xl"
+                                >
+                                    <span className="text-[9px] font-black text-text-tertiary uppercase mb-1 tracking-widest leading-none">Score</span>
                                     <div className="flex items-center gap-1.5 text-primary-main font-black text-2xl"><Star className="w-5 h-5 fill-current" /> {place.rating}</div>
-                                </div>
+                                </motion.div>
                             </div>
-                        </div>
+                        </motion.div>
                     </div>
                 </div>
 

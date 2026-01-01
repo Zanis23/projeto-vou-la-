@@ -107,19 +107,8 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBusinessClick }) => {
   ];
 
   return (
-    <div className="full-screen bg-[#e0e5ec] flex flex-col items-center justify-center p-6 relative overflow-hidden">
-      {/* Background (light/neumorphic base as requested, but adapted to dark mode if app is dark, 
-          BUT user requested "Baseado no modelo" which is light. 
-          However, app identity is "Vou Lá" (Dark/Neon). 
-          I will blend them: White/Glass card on Dark Background as implemented in Plan.
-          Wait, user said: "gostaria desse modelo... adaptando para Vou Lá identity"
-          So: Dark background, Glass Card, Neon accents.
-      */}
-
-      <div className="absolute inset-0 bg-[#050505]">
-        <div className="absolute top-0 left-0 w-full h-[50vh] bg-gradient-to-b from-primary-main/10 to-transparent blur-[120px]"></div>
-        <div className="absolute inset-0 opacity-[0.03] bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
-      </div>
+    <div className="full-screen mesh-gradient flex flex-col items-center justify-center p-6 relative overflow-hidden">
+      <div className="absolute inset-0 opacity-[0.03] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] pointer-events-none"></div>
 
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
@@ -127,7 +116,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBusinessClick }) => {
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className="w-full max-w-[350px] relative z-10"
       >
-        <div className="bg-[#101010] rounded-[40px] p-[35px] border-[5px] border-[#1a1a1a] shadow-[0_30px_30px_-20px_rgba(0,0,0,0.5)] relative overflow-hidden">
+        <div className="bg-[#101010]/80 backdrop-blur-2xl rounded-[40px] p-[35px] border border-white/5 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.8)] relative overflow-hidden neon-glow">
 
           {/* Header */}
           <div className="text-center mb-8">
@@ -156,7 +145,11 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBusinessClick }) => {
 
             <div className="space-y-4">
               {isRegister && (
-                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
                   <div className="w-full bg-[#1a1a1a] border-none px-5 py-4 rounded-[20px] shadow-[inset_0_2px_5px_rgba(0,0,0,0.2)] focus-within:ring-2 focus-within:ring-primary-main transition-all flex items-center gap-3">
                     <UserIcon className="w-4 h-4 text-gray-500" />
                     <input
@@ -169,7 +162,12 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBusinessClick }) => {
                 </motion.div>
               )}
 
-              <div className="w-full bg-[#1a1a1a] border-none px-5 py-4 rounded-[20px] shadow-[inset_0_2px_5px_rgba(0,0,0,0.2)] focus-within:ring-2 focus-within:ring-primary-main transition-all flex items-center gap-3">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                className="w-full bg-[#1a1a1a] border-none px-5 py-4 rounded-[20px] shadow-[inset_0_2px_5px_rgba(0,0,0,0.2)] focus-within:ring-2 focus-within:ring-primary-main transition-all flex items-center gap-3"
+              >
                 <Mail className="w-4 h-4 text-gray-500" />
                 <input
                   type="email"
@@ -178,9 +176,14 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBusinessClick }) => {
                   value={formData.email}
                   onChange={e => handleChange('email', e.target.value)}
                 />
-              </div>
+              </motion.div>
 
-              <div className="w-full bg-[#1a1a1a] border-none px-5 py-4 rounded-[20px] shadow-[inset_0_2px_5px_rgba(0,0,0,0.2)] focus-within:ring-2 focus-within:ring-primary-main transition-all flex items-center gap-3">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+                className="w-full bg-[#1a1a1a] border-none px-5 py-4 rounded-[20px] shadow-[inset_0_2px_5px_rgba(0,0,0,0.2)] focus-within:ring-2 focus-within:ring-primary-main transition-all flex items-center gap-3"
+              >
                 <Lock className="w-4 h-4 text-gray-500" />
                 <input
                   type="password"
@@ -189,7 +192,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBusinessClick }) => {
                   value={formData.password}
                   onChange={e => handleChange('password', e.target.value)}
                 />
-              </div>
+              </motion.div>
             </div>
 
             {!isRegister && (
@@ -211,27 +214,35 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBusinessClick }) => {
             </motion.button>
 
             {/* Social Accounts */}
-            <div className="mt-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="mt-6"
+            >
               <span className="block text-center text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-4">Or Sign in with</span>
               <div className="flex justify-center gap-4">
                 {socialLogins.map((social, idx) => (
                   <motion.button
                     key={idx}
-                    whileHover={{ scale: 1.2 }}
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.6 + (idx * 0.1) }}
+                    whileHover={{ scale: 1.1, translateY: -5 }}
                     whileTap={{ scale: 0.9 }}
                     onClick={() => {
                       trigger('light');
                       if (social.action) social.action();
                     }}
-                    className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1a1a1a] to-[#000] border border-white/10 flex items-center justify-center shadow-[0_12px_10px_-8px_rgba(0,0,0,0.5)] transition-all hover:border-primary-main group"
+                    className="w-12 h-12 rounded-2xl bg-[#1a1a1a] border border-white/5 flex items-center justify-center shadow-xl transition-all hover:border-primary-main/50 group"
                   >
-                    <div className="text-gray-400 group-hover:text-white transition-colors">
+                    <div className="text-gray-400 group-hover:text-primary-main transition-colors">
                       {social.icon}
                     </div>
                   </motion.button>
                 ))}
               </div>
-            </div>
+            </motion.div>
 
             {/* Switcher & Business */}
             <div className="mt-8 pt-4 border-t border-white/5 space-y-4">

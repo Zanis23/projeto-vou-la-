@@ -1,107 +1,174 @@
-import { useState } from 'react';
-import { Sparkles, Send, Loader2, MapPin, Globe } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Sparkles, Loader2, MapPin, Globe, MessageSquare, ArrowRight } from 'lucide-react';
 import { getGeminiRecommendation, AIRecommendation } from '@/services/geminiService';
+import { fadeIn, slideUp } from '@/styles/animations';
 
 export const AiConcierge: React.FC = () => {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AIRecommendation | null>(null);
+  const [displayedText, setDisplayedText] = useState('');
 
   const handleSearch = async () => {
     if (!query.trim()) return;
 
     setLoading(true);
     setResult(null);
+    setDisplayedText('');
     const recommendation = await getGeminiRecommendation(query);
     setResult(recommendation);
     setLoading(false);
   };
 
+  // Simple typing effect
+  useEffect(() => {
+    if (!result?.text) return;
+
+    let i = 0;
+    const interval = setInterval(() => {
+      setDisplayedText(result.text.slice(0, i));
+      i += 4; // Faster typing for better UX
+      if (i > result.text.length) clearInterval(interval);
+    }, 10);
+    return () => clearInterval(interval);
+  }, [result]);
+
   return (
-    <div className="p-4 pb-24 min-h-screen bg-slate-900 flex flex-col pt-safe">
-      <div className="text-center mb-8 mt-4">
-        <div className="inline-block p-3 rounded-full bg-gradient-to-br from-indigo-500 to-cyan-500 shadow-lg shadow-cyan-500/20 mb-4 animate-float">
-          <Sparkles className="w-8 h-8 text-white" />
-        </div>
-        <h2 className="text-2xl font-black text-white italic">IA CONCIERGE</h2>
-        <p className="text-sm text-slate-400">Powered by Gemini 2.5 Flash</p>
-      </div>
+    <div className="full-screen bg-[#050505] overflow-y-auto pb-safe">
+      <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/10 via-transparent to-transparent pointer-events-none" />
 
-      <div className="flex-1 max-w-md mx-auto w-full space-y-6">
-        <div className="bg-slate-800 rounded-2xl p-2 flex items-center border border-slate-700 shadow-lg focus-within:border-cyan-500 transition-colors">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            placeholder="Ex: Onde tem show de rock hoje em Dourados?"
-            className="bg-transparent w-full text-white px-4 py-2 focus:outline-none placeholder-slate-500 text-base"
-          />
-          <button
-            onClick={handleSearch}
-            disabled={loading}
-            className="p-3 bg-cyan-600 rounded-xl text-white hover:bg-cyan-500 disabled:opacity-50 transition-colors active:scale-95"
+      <div className="px-6 py-12 flex flex-col items-center">
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          className="w-20 h-20 rounded-[2rem] bg-gradient-to-br from-indigo-600 to-cyan-400 flex items-center justify-center shadow-[0_20px_40px_rgba(79,70,229,0.3)] mb-8"
+        >
+          <Sparkles className="w-10 h-10 text-white" />
+        </motion.div>
+
+        <motion.div variants={slideUp} initial="initial" animate="animate" className="text-center mb-10">
+          <h2 className="text-4xl font-black text-white italic tracking-tighter uppercase leading-none">VOU LÁ<br />CONCIERGE</h2>
+          <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-[0.3em] mt-3">Advanced Intelligence</p>
+        </motion.div>
+
+        <div className="w-full max-w-md space-y-8">
+          <motion.div
+            whileFocus={{ scale: 1.02 }}
+            className="relative group"
           >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-          </button>
-        </div>
+            <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-cyan-500 rounded-[2rem] blur opacity-20 group-focus-within:opacity-40 transition-opacity" />
+            <div className="relative bg-bg-surface-1/40 backdrop-blur-2xl rounded-[2rem] p-3 border border-white/10 flex items-center shadow-2xl">
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                placeholder="O que você quer fazer hoje?"
+                className="bg-transparent w-full text-white px-5 py-3 focus:outline-none placeholder-text-tertiary text-sm font-medium"
+              />
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={handleSearch}
+                disabled={loading}
+                className="w-12 h-12 bg-primary-main rounded-2xl text-black flex items-center justify-center disabled:opacity-50 transition-colors shadow-lg"
+              >
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
+              </motion.button>
+            </div>
+          </motion.div>
 
-        {result && (
-          <div className="bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700 rounded-3xl p-6 shadow-2xl animate-[fadeIn_0.5s_ease-out]">
+          <AnimatePresence mode="wait">
+            {result ? (
+              <motion.div
+                key="result"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="space-y-6"
+              >
+                <div className="glass-card !bg-white/5 border-white/5 p-8 rounded-[2.5rem] backdrop-blur-3xl shadow-2xl">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center">
+                      <MessageSquare className="w-4 h-4 text-indigo-400" />
+                    </div>
+                    <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Recomendação IA</span>
+                  </div>
 
-            <p className="text-lg text-white font-medium leading-relaxed mb-6 whitespace-pre-wrap">
-              {result.text}
-            </p>
+                  <p className="text-white text-base font-medium leading-[1.6] whitespace-pre-wrap">
+                    {displayedText}
+                    {displayedText.length < (result.text?.length || 0) && (
+                      <motion.span
+                        animate={{ opacity: [0, 1, 0] }}
+                        transition={{ repeat: Infinity, duration: 0.5 }}
+                        className="inline-block w-2 h-5 bg-primary-main ml-1 align-middle"
+                      />
+                    )}
+                  </p>
 
-            {/* GROUNDING DATA DISPLAY */}
-            {result.groundingMetadata && result.groundingMetadata.groundingChunks && (
-              <div className="mt-4 pt-4 border-t border-slate-700/50 space-y-3">
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Fontes & Locais</h4>
-
-                {result.groundingMetadata.groundingChunks.map((chunk: any, i: number) => {
-                  if (chunk.web) {
-                    return (
-                      <a key={i} href={chunk.web.uri} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-slate-900/50 p-3 rounded-xl border border-slate-800 hover:border-cyan-500 transition-colors">
-                        <Globe className="w-4 h-4 text-cyan-400" />
-                        <div className="overflow-hidden">
-                          <p className="text-sm font-bold text-white truncate">{chunk.web.title}</p>
-                          <p className="text-xs text-slate-500 truncate">{chunk.web.uri}</p>
-                        </div>
-                      </a>
-                    );
-                  }
-                  if (chunk.maps?.placeAnswerSources?.[0]?.reviewSnippets?.[0]) {
-                    // Handling simplified Maps snippet
-                    const mapData = chunk.maps.placeAnswerSources[0].reviewSnippets[0];
-                    return (
-                      <div key={i} className="flex items-start gap-2 bg-slate-900/50 p-3 rounded-xl border border-slate-800">
-                        <MapPin className="w-4 h-4 text-red-400 shrink-0 mt-1" />
-                        <div>
-                          <p className="text-sm text-slate-300">"{mapData.snippet}"</p>
-                        </div>
+                  {result.groundingMetadata?.groundingChunks && (
+                    <div className="mt-8 pt-8 border-t border-white/5 space-y-4">
+                      <h4 className="text-[10px] font-black text-white opacity-40 uppercase tracking-widest">Citações e Mapas</h4>
+                      <div className="grid gap-3">
+                        {result.groundingMetadata.groundingChunks.map((chunk: any, i: number) => {
+                          if (chunk.web) {
+                            return (
+                              <motion.a
+                                key={i}
+                                whileHover={{ x: 5 }}
+                                href={chunk.web.uri}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5 hover:border-primary-main/30 group"
+                              >
+                                <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center shrink-0">
+                                  <Globe className="w-5 h-5 text-cyan-400" />
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-xs font-black text-white uppercase truncate">{chunk.web.title}</p>
+                                  <p className="text-[9px] text-text-tertiary truncate mt-0.5">{chunk.web.uri}</p>
+                                </div>
+                              </motion.a>
+                            );
+                          }
+                          return null;
+                        })}
                       </div>
-                    )
-                  }
-                  return null;
-                })}
-              </div>
-            )}
-          </div>
-        )}
+                    </div>
+                  )}
+                </div>
 
-        {/* Suggested Prompts */}
-        {!result && !loading && (
-          <div className="grid grid-cols-2 gap-3 mt-8">
-            <button onClick={() => setQuery("Melhores bares com música ao vivo hoje")} className="bg-slate-800/50 p-4 rounded-xl border border-slate-700 hover:border-cyan-500 text-left transition-colors active:scale-95">
-              <span className="text-2xl mb-2 block">🎸</span>
-              <span className="text-sm font-bold text-slate-300">Música ao Vivo</span>
-            </button>
-            <button onClick={() => setQuery("Restaurantes abertos agora em Dourados")} className="bg-slate-800/50 p-4 rounded-xl border border-slate-700 hover:border-fuchsia-500 text-left transition-colors active:scale-95">
-              <span className="text-2xl mb-2 block">🍽️</span>
-              <span className="text-sm font-bold text-slate-300">Jantar Agora</span>
-            </button>
-          </div>
-        )}
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => { setResult(null); setQuery(''); }}
+                  className="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black text-white uppercase tracking-widest hover:bg-white/10 transition-all"
+                >
+                  Nova Consulta
+                </motion.button>
+              </motion.div>
+            ) : !loading && (
+              <motion.div
+                key="prompts"
+                variants={fadeIn}
+                className="grid grid-cols-2 gap-4"
+              >
+                <button onClick={() => setQuery("Melhores bares com música ao vivo")} className="glass-card !bg-white/5 p-6 rounded-[2rem] border border-white/5 hover:border-indigo-500/50 hover:bg-indigo-500/5 text-left transition-all active:scale-95 group">
+                  <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <Sparkles className="w-6 h-6 text-indigo-400" />
+                  </div>
+                  <span className="text-[10px] font-black text-white uppercase tracking-widest leading-tight block">Música ao Vivo</span>
+                </button>
+                <button onClick={() => setQuery("Restaurantes abertos agora")} className="glass-card !bg-white/5 p-6 rounded-[2rem] border border-white/5 hover:border-cyan-500/50 hover:bg-cyan-500/5 text-left transition-all active:scale-95 group">
+                  <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <MapPin className="w-6 h-6 text-cyan-400" />
+                  </div>
+                  <span className="text-[10px] font-black text-white uppercase tracking-widest leading-tight block">Jantar Agora</span>
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );

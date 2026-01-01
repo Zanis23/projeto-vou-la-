@@ -140,6 +140,15 @@ export default defineConfig(() => {
 
         }
       }
+    },
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      setupFiles: ['./src/vitest.setup.ts'],
+      include: ['src/**/*.{test,spec}.{ts,tsx}'],
+      alias: {
+        '@': path.resolve(__dirname, './src'),
+      }
     }
   };
 });

@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Place } from '@/types';
 import { Navigation, Loader2, Camera, Zap, Compass } from 'lucide-react';
-import { FALLBACK_IMAGE } from '../constants';
+import { FALLBACK_IMAGE } from '@/constants';
 import { fadeIn, scaleIn } from '@/styles/animations';
 import { Header } from '@/components/ui/Header';
 
@@ -207,6 +207,16 @@ export const Radar: React.FC<RadarProps> = ({ places, onPlaceSelect }) => {
 
       <div className="flex-1 relative overflow-hidden">
         <div ref={mapContainerRef} className="w-full h-full z-0" style={{ backgroundColor: 'var(--bg-default)' }} />
+
+        {/* Radar Scanning Overlay */}
+        <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+            className="absolute top-1/2 left-1/2 w-[200%] h-[2px] bg-gradient-to-r from-primary-main/20 to-transparent origin-left -translate-y-1/2"
+          />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(5,5,5,0.4)_100%)]" />
+        </div>
 
         <div className="absolute top-6 left-6 z-[400] pointer-events-none">
           <div className="glass-card !bg-black/60 !backdrop-blur-2xl rounded-2xl p-4 flex flex-col gap-3 shadow-2xl border-white/5">
