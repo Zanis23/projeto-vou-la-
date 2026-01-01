@@ -12,18 +12,18 @@ interface SocialLoginButtonProps {
 export const SocialLoginButton: React.FC<SocialLoginButtonProps> = ({ icon, label, onClick }) => {
     return (
         <motion.button
-            whileHover={{ scale: 1.02, backgroundColor: 'rgba(0,0,0,0.02)' }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ y: -1, backgroundColor: 'rgba(217, 255, 0, 0.05)', borderColor: 'rgba(217, 255, 0, 0.2)' }}
+            whileTap={{ scale: 0.97 }}
             onClick={() => {
                 triggerHaptic('light');
                 onClick();
             }}
-            className="flex-1 flex items-center justify-center gap-3 py-3.5 px-6 rounded-2xl border border-gray-100 bg-white shadow-sm transition-all"
+            className="group flex-1 flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-2xl border border-gray-100 bg-white/50 backdrop-blur-sm shadow-sm transition-all duration-300"
         >
-            <span className="w-5 h-5 flex items-center justify-center">
+            <div className="w-5 h-5 flex items-center justify-center text-gray-900">
                 {icon}
-            </span>
-            <span className="text-sm font-bold text-gray-800 tracking-tight">
+            </div>
+            <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest">
                 {label}
             </span>
         </motion.button>
