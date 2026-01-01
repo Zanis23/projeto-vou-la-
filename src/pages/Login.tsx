@@ -1,9 +1,17 @@
+
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Building2, AlertCircle, Mail, Lock, User as UserIcon, Chrome, Apple } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, ChevronRight, Moon, Store, Chrome, Apple as AppleIcon } from 'lucide-react';
 import { db } from '@/utils/storage';
-import { useHaptic } from '@/hooks/useHaptic';
+import { triggerHaptic } from '@/utils/haptics';
 import { User } from '@/types';
+
+// UI Components
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Card } from '@/components/ui/Card';
+import { SocialLoginButton } from '@/components/ui/SocialLoginButton';
+import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 
 interface LoginProps {
   onLogin: (name: string, isNewUser: boolean, user?: User) => void;
@@ -11,269 +19,189 @@ interface LoginProps {
 }
 
 export const Login: React.FC<LoginProps> = ({ onLogin, onBusinessClick }) => {
-  const { trigger } = useHaptic();
-
   const [isRegister, setIsRegister] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: ''
-  });
-
-  const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    if (error) setError(null);
-  };
-
-  const handleDemoLogin = async () => {
-    setIsLoading(true);
-    trigger('medium');
-    const res = await db.auth.login('admin', '123');
-    if (res.success && res.user) {
-      trigger('success');
-      onLogin(res.user.name, false, res.user);
-    }
-    setIsLoading(false);
-  };
-
-  const handleSubmit = async () => {
-    if (!formData.email || !formData.password) {
-      setError("Preencha todos os campos.");
-      trigger('error');
-      return;
-    }
-
-    if (isRegister && !formData.name) {
-      setError("Digite seu nome.");
-      trigger('error');
-      return;
-    }
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) return;
 
     setIsLoading(true);
-    trigger('medium');
+    setError(null);
 
     try {
-      if (isRegister) {
-        const newUser: User = {
-          id: `u_${Date.now()}`,
-          name: formData.name,
-          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.name}`,
-          level: 1,
-          points: 0,
-          badges: [],
-          memberSince: new Date().toISOString(),
-          history: [],
-          savedPlaces: [],
-          email: formData.email,
-          appMode: 'dark',
-          accentColor: 'neon'
-        };
-
-        const res = await db.auth.register(newUser, formData.password);
-        if (res.success) {
-          alert("Conta criada! Confirme seu e-mail ou faça login.");
-          setIsRegister(false);
-        } else {
-          setError(res.message || "Erro no cadastro.");
-        }
+      const res = await db.auth.login(email, password);
+      if (res.success && res.user) {
+        triggerHaptic('success');
+        onLogin(res.user.name, false, res.user);
       } else {
-        const res = await db.auth.login(formData.email, formData.password);
-        if (res.success && res.user) {
-          trigger('success');
-          onLogin(res.user.name, false, res.user);
-        } else {
-          let msg = res.message || "Login ou senha incorretos.";
-          if (msg.includes("Email not confirmed")) msg = "Confirme seu e-mail antes de entrar.";
-          if (msg.includes("Invalid login credentials")) msg = "Credenciais inválidas.";
-          setError(msg);
-          trigger('error');
-        }
+        setError(res.message || "Erro ao entrar. Verifique suas credenciais.");
+        triggerHaptic('error');
       }
-    } catch (e) {
-      setError("Erro de conexão.");
-      trigger('error');
+    } catch (err) {
+      setError("Ocorreu um erro inesperado.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const socialLogins = [
-    { icon: <Chrome className="w-5 h-5" />, label: 'Google', color: 'hover:bg-white/10' },
-    { icon: <Apple className="w-5 h-5" />, label: 'Apple', color: 'hover:bg-white/10' },
-    { icon: <UserIcon className="w-5 h-5" />, label: 'Guest', color: 'hover:bg-white/10', action: handleDemoLogin },
-  ];
-
   return (
-    <div className="full-screen mesh-gradient flex flex-col items-center justify-center p-6 relative overflow-hidden">
-      <div className="absolute inset-0 opacity-[0.03] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] pointer-events-none"></div>
+    <div className="min-h-[100dvh] flex flex-col items-center justify-center p-6 bg-[#FDFDFE] relative overflow-x-hidden">
+      <AnimatedBackground />
 
+      {/* Top Controls */}
+      <div className="absolute top-safe right-6 flex items-center gap-4">
+        <button className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center border border-gray-100 active:scale-90 transition-all">
+          <Moon className="w-5 h-5 text-gray-800" />
+        </button>
+      </div>
+
+      {/* Logo & Header */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className="w-full max-w-[350px] relative z-10"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col items-center mb-10 mt-8"
       >
-        <div className="bg-[#101010]/80 backdrop-blur-2xl rounded-[40px] p-[35px] border border-white/5 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.8)] relative overflow-hidden neon-glow">
-
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-black text-primary-main tracking-tighter mb-1">
-              {isRegister ? 'Sign Up' : 'Sign In'}
-            </h1>
-            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
-              {isRegister ? 'Join the Party' : 'Welcome Back'}
-            </p>
+        <div className="relative mb-6">
+          <div className="w-24 h-24 bg-white rounded-[32px] shadow-2xl flex items-center justify-center border border-gray-100 overflow-hidden p-4">
+            <img src="/icons/icon-192x192.png" alt="Vou Lá" className="w-full h-full object-contain" onError={(e) => {
+              (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIHJ4PSIyNCIgZmlsbD0id2hpdGUiLz48cGF0aCBkPSJNNjUgM0w0MCA3MEwyMCAzNUg2NUwiIGZpbGw9ImJsYWNrIi8+PC9zdmc+'; // Fallback V icon
+            }} />
           </div>
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="absolute -top-1 -right-2 bg-[#D9FF00] text-black text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg border-2 border-white"
+          >
+            BETA
+          </motion.div>
+        </div>
 
-          {/* Form */}
-          <div className="space-y-4 mt-5">
-            <AnimatePresence mode="wait">
-              {error && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="bg-red-500/10 border border-red-500/20 p-3 rounded-2xl flex items-center gap-2 text-red-500 text-[10px] font-bold"
-                >
-                  <AlertCircle className="w-3 h-3 shrink-0" /> {error}
-                </motion.div>
-              )}
-            </AnimatePresence>
+        <h1 className="text-3xl font-black text-gray-900 tracking-tight mb-2">Vou Lá</h1>
+        <p className="text-sm text-gray-500 font-medium tracking-tight">Sua conta, seu mundo.</p>
+      </motion.div>
 
+      {/* Main Card */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="w-full max-w-md"
+      >
+        <Card className="rounded-[40px] border border-gray-100/50 bg-white/60 backdrop-blur-2xl shadow-[0_30px_60px_-20px_rgba(0,0,0,0.06)] p-8">
+          <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-4">
-              {isRegister && (
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.1 }}
-                >
-                  <div className="w-full bg-[#1a1a1a] border-none px-5 py-4 rounded-[20px] shadow-[inset_0_2px_5px_rgba(0,0,0,0.2)] focus-within:ring-2 focus-within:ring-primary-main transition-all flex items-center gap-3">
-                    <UserIcon className="w-4 h-4 text-gray-500" />
-                    <input
-                      className="bg-transparent border-none outline-none text-white text-sm font-medium w-full placeholder:text-gray-600"
-                      placeholder="Username"
-                      value={formData.name}
-                      onChange={e => handleChange('name', e.target.value)}
-                    />
-                  </div>
-                </motion.div>
-              )}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">E-mail</label>
+                <div className="relative group">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-[#D9FF00] transition-colors" />
+                  <input
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full h-14 bg-gray-50/50 border border-gray-100 rounded-2xl pl-12 pr-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#D9FF00]/30 focus:bg-white transition-all placeholder:text-gray-300"
+                  />
+                </div>
+              </div>
 
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-                className="w-full bg-[#1a1a1a] border-none px-5 py-4 rounded-[20px] shadow-[inset_0_2px_5px_rgba(0,0,0,0.2)] focus-within:ring-2 focus-within:ring-primary-main transition-all flex items-center gap-3"
-              >
-                <Mail className="w-4 h-4 text-gray-500" />
-                <input
-                  type="email"
-                  className="bg-transparent border-none outline-none text-white text-sm font-medium w-full placeholder:text-gray-600"
-                  placeholder="E-mail"
-                  value={formData.email}
-                  onChange={e => handleChange('email', e.target.value)}
-                />
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
-                className="w-full bg-[#1a1a1a] border-none px-5 py-4 rounded-[20px] shadow-[inset_0_2px_5px_rgba(0,0,0,0.2)] focus-within:ring-2 focus-within:ring-primary-main transition-all flex items-center gap-3"
-              >
-                <Lock className="w-4 h-4 text-gray-500" />
-                <input
-                  type="password"
-                  className="bg-transparent border-none outline-none text-white text-sm font-medium w-full placeholder:text-gray-600"
-                  placeholder="Password"
-                  value={formData.password}
-                  onChange={e => handleChange('password', e.target.value)}
-                />
-              </motion.div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Senha</label>
+                <div className="relative group">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-[#D9FF00] transition-colors" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="........"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full h-14 bg-gray-50/50 border border-gray-100 rounded-2xl pl-12 pr-12 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#D9FF00]/30 focus:bg-white transition-all placeholder:text-gray-300"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
             </div>
 
-            {!isRegister && (
-              <div className="flex justify-end mt-2">
-                <a href="#" className="text-[11px] text-primary-main font-bold no-underline hover:underline">
-                  Forgot Password?
-                </a>
-              </div>
-            )}
-
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleSubmit}
-              disabled={isLoading}
-              className="w-full block font-black bg-gradient-to-r from-primary-main to-cyan-400 text-black py-4 mt-5 rounded-[20px] shadow-[0_20px_10px_-15px_rgba(34,211,238,0.3)] border-none transition-all hover:shadow-[0_23px_10px_-20px_rgba(34,211,238,0.4)] disabled:opacity-50 disabled:grayscale"
-            >
-              {isLoading ? <span className="animate-pulse">PROCESSING...</span> : (isRegister ? 'CREATE ACCOUNT' : 'SIGN IN')}
-            </motion.button>
-
-            {/* Social Accounts */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-              className="mt-6"
-            >
-              <span className="block text-center text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-4">Or Sign in with</span>
-              <div className="flex justify-center gap-4">
-                {socialLogins.map((social, idx) => (
-                  <motion.button
-                    key={idx}
-                    initial={{ opacity: 0, scale: 0.5 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.6 + (idx * 0.1) }}
-                    whileHover={{ scale: 1.1, translateY: -5 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => {
-                      trigger('light');
-                      if (social.action) social.action();
-                    }}
-                    className="w-12 h-12 rounded-2xl bg-[#1a1a1a] border border-white/5 flex items-center justify-center shadow-xl transition-all hover:border-primary-main/50 group"
-                  >
-                    <div className="text-gray-400 group-hover:text-primary-main transition-colors">
-                      {social.icon}
-                    </div>
-                  </motion.button>
-                ))}
-              </div>
-            </motion.div>
-
-            {/* Switcher & Business */}
-            <div className="mt-8 pt-4 border-t border-white/5 space-y-4">
-              <div className="text-center">
-                <span className="text-[10px] text-gray-500">
-                  {isRegister ? "Have an account?" : "Don't have an account?"}
-                </span>
-                <button
-                  onClick={() => { trigger('light'); setIsRegister(!isRegister); setError(null); }}
-                  className="ml-2 text-[10px] text-primary-main font-black uppercase tracking-widest hover:underline"
-                >
-                  {isRegister ? 'Sign In' : 'Sign Up'}
-                </button>
-              </div>
-
-              <button
-                onClick={() => { trigger('medium'); if (onBusinessClick) onBusinessClick(); }}
-                className="w-full py-3 rounded-xl border border-white/5 bg-white/[0.02] flex items-center justify-center gap-2 text-[9px] font-black text-gray-500 hover:text-white hover:bg-white/5 transition-all uppercase tracking-widest"
-              >
-                <Building2 className="w-3 h-3" /> Access Business
+            <div className="flex justify-end">
+              <button type="button" className="text-xs font-bold text-gray-500 hover:text-gray-800 transition-colors">
+                Esqueceu a senha?
               </button>
             </div>
 
-          </div>
-        </div>
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              fullWidth
+              isLoading={isLoading}
+              className="bg-[#D9FF00] text-black shadow-xl shadow-[#D9FF00]/20 h-14 rounded-2xl active:scale-95 transition-transform"
+              rightIcon={<ArrowRight className="w-5 h-5" />}
+            >
+              ACESSAR
+            </Button>
+
+            <div className="relative py-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-100"></div>
+              </div>
+              <div className="relative flex justify-center text-[10px] uppercase font-black tracking-widest text-gray-400 px-2 bg-transparent">
+                <span className="bg-white px-3">Ou continue com</span>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <SocialLoginButton
+                icon={<Chrome className="w-5 h-5 text-red-500" />}
+                label="Google"
+                onClick={() => { }}
+              />
+              <SocialLoginButton
+                icon={<AppleIcon className="w-5 h-5 text-black" />}
+                label="Apple"
+                onClick={() => { }}
+              />
+            </div>
+          </form>
+        </Card>
       </motion.div>
 
-      <div className="absolute bottom-6 text-center">
-        <a href="#" className="text-[9px] text-primary-main no-underline opacity-50 hover:opacity-100 transition-opacity">
-          Vou Lá User License Agreement
-        </a>
+      {/* Footer Actions */}
+      <div className="mt-8 flex flex-col items-center gap-6 w-full max-w-md">
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-gray-500">Ainda não tem uma conta?</span>
+          <button
+            onClick={() => setIsRegister(true)}
+            className="font-bold text-gray-900 hover:underline active:opacity-70"
+          >
+            Criar conta
+          </button>
+        </div>
+
+        <button
+          onClick={onBusinessClick}
+          className="w-full group bg-white border border-gray-100 rounded-3xl p-5 shadow-sm active:scale-[0.98] transition-all flex items-center gap-4 text-left"
+        >
+          <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center group-hover:bg-[#D9FF00]/10 transition-colors">
+            <Store className="w-6 h-6 text-gray-900" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-xs font-black text-gray-900 uppercase tracking-wider mb-0.5">PARA EMPRESAS</h3>
+            <p className="text-[11px] text-gray-500 font-medium">Gerenciar meu negócio</p>
+          </div>
+          <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-gray-900 transition-colors" />
+        </button>
+
+        <p className="text-[10px] text-gray-400 font-medium mt-4">
+          Ao entrar, você concorda com nossos <span className="underline">Termos</span> e <span className="underline">Privacidade</span>.
+        </p>
       </div>
     </div>
   );

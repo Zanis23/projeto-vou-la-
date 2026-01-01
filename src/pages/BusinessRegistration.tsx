@@ -4,21 +4,19 @@ import {
     ArrowLeft, Store, Ticket, Zap, CheckCircle2,
     Users, DollarSign, Clock, Music, Instagram, Camera, FileText, ChevronRight, MapPin
 } from 'lucide-react';
-import { Button } from '@/components/Button';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { AnimatedBackground } from '@/components/ui/AnimatedBackground';
 import { PlaceType, Place, User } from '@/types';
-import { useHaptic } from '@/hooks/useHaptic';
+import { triggerHaptic } from '@/utils/haptics';
 import { db } from '@/utils/storage';
-// import { generateAIImage } from '@/services/geminiService'; // Optional if we want AI avatar
 
 interface BusinessRegistrationProps {
     onBack: () => void;
-    onRegisterSuccess?: (user: User) => void; // New Prop to handle auto-login
+    onRegisterSuccess?: (user: User) => void;
 }
 
 export const BusinessRegistration: React.FC<BusinessRegistrationProps> = ({ onBack, onRegisterSuccess }) => {
-    const { trigger } = useHaptic();
-
-    // Steps: 0=Intro, 1=Identity, 2=Operations, 3=Showcase, 4=Contact, 5=Success
     const [step, setStep] = useState<number>(0);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -35,7 +33,7 @@ export const BusinessRegistration: React.FC<BusinessRegistrationProps> = ({ onBa
         ownerName: '',
         email: '',
         phone: '',
-        password: '', // Added password field for account creation
+        password: '',
         imagePreview: null as string | null
     });
 
@@ -60,12 +58,12 @@ export const BusinessRegistration: React.FC<BusinessRegistrationProps> = ({ onBa
 
     const handleNext = (e?: React.FormEvent) => {
         e?.preventDefault();
-        trigger('medium');
+        triggerHaptic('medium');
         setStep(prev => prev + 1);
     };
 
     const handleBackStep = () => {
-        trigger('light');
+        triggerHaptic('light');
         if (step === 0) onBack();
         else setStep(prev => prev - 1);
     };
@@ -73,13 +71,12 @@ export const BusinessRegistration: React.FC<BusinessRegistrationProps> = ({ onBa
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        trigger('medium');
+        triggerHaptic('medium');
 
         try {
             const pass = formData.password || '123456';
+            const placeId = `p_${Date.now()}`;
 
-            // 1. REGISTER
-            const placeId = `p_${Date.now()}`; // Generate ID upfront
             const newOwnerPartial: User = {
                 id: '',
                 name: formData.ownerName,
@@ -91,28 +88,19 @@ export const BusinessRegistration: React.FC<BusinessRegistrationProps> = ({ onBa
                 memberSince: new Date().toISOString(),
                 history: [],
                 savedPlaces: [],
-                ownedPlaceId: placeId, // Pass the ID immediately
-                settings: {
-                    ghostMode: false,
-                    publicProfile: true,
-                    allowTagging: true,
-                    notifications: { hypeAlerts: true, chatMessages: true, friendActivity: true }
-                },
-                appMode: 'dark',
+                ownedPlaceId: placeId,
+                appMode: 'light',
                 accentColor: 'neon'
             };
 
-            // Create Auth User & Trigger Profile
             let resReg = await db.auth.register(newOwnerPartial, pass);
 
-            // AUTO-RECOVERY: If user exists, try to log in (User might have retried after a previous partial failure)
             if (!resReg.success && resReg.message?.includes("already registered")) {
-                console.log("Usuário já existe. Tentando login automático...");
                 const recoveryLogin = await db.auth.login(formData.email, pass);
                 if (recoveryLogin.success && recoveryLogin.user) {
                     resReg = { success: true, data: { user: { id: recoveryLogin.user.id } } };
                 } else {
-                    alert("Este email já está cadastrado e a senha está incorreta.");
+                    alert("Este email já está cadastrado.");
                     setIsLoading(false);
                     return;
                 }
@@ -125,231 +113,137 @@ export const BusinessRegistration: React.FC<BusinessRegistrationProps> = ({ onBa
             }
 
             const realOwnerId = resReg.data.user.id;
-            // placeId already generated above
+            await db.auth.login(formData.email, pass);
 
-            // 2. LOGIN (Required for RLS to allow INSERT places and UPDATE profile)
-            // If we just recovered via login, we are arguably already logged in, 
-            // but db.auth.login calls signInWithPassword which sets the session.
-            // If we didn't recover, we need to login.
-            // Let's just call login again to be safe and ensure session is active for RLS.
-            const resLogin = await db.auth.login(formData.email, pass);
-            if (!resLogin.success) {
-                alert("Conta criada, mas erro ao logar: " + resLogin.message);
-                setIsLoading(false);
-                return;
-            }
-
-            // 3. New Place Object
             const newPlace: Place = {
                 id: placeId,
                 name: formData.businessName,
                 type: formData.category,
-                distance: '0.1km', // Initial placeholder
+                distance: '0.1km',
                 peopleCount: 0,
                 capacityPercentage: 0,
                 imageUrl: formData.imagePreview ? formData.imagePreview : `https://source.unsplash.com/800x600/?${formData.category.toLowerCase()},nightclub`,
                 isTrending: false,
                 description: formData.description,
-                coordinates: { x: 50, y: 50 }, // Placeholder
+                coordinates: { x: 50, y: 50 },
                 phoneNumber: formData.phone,
                 openingHours: formData.openingHours,
                 currentMusic: formData.musicStyle,
-                activeCalls: [],
+                ownerId: realOwnerId,
                 friendsPresent: [],
-                liveRequests: [],
-                upcomingEvents: [],
-                activePromos: [],
-                sentimentScore: 100,
-                // crowdInsights: undefined, // Optional field
-                ownerId: realOwnerId // bind ownership
-            };
+                history: []
+            } as any;
 
-            // 3. UPDATE PROFILE & CREATE PLACE
-            // Now that we are logged in, we can update our own profile and create the place
             const fullOwner: User = {
                 ...newOwnerPartial,
                 id: realOwnerId,
                 ownedPlaceId: placeId
             };
 
-            // Use Promise.all but checking results
-            // Note: db.places.add returns the Place object or null (it doesn't throw usually)
-            // db.user.save now returns boolean
-            const [saveProfileSuccess] = await Promise.all([
+            await Promise.all([
                 db.user.save(fullOwner),
                 db.places.add(newPlace)
             ]);
 
-            if (!saveProfileSuccess) {
-                // Critical failure: Profile didn't update with ownedPlaceId.
-                // Retry once
-                console.warn("Retrying profile save...");
-                const retrySuccess = await db.user.save(fullOwner);
-                if (!retrySuccess) {
-                    throw new Error("Falha ao vincular conta empresarial. Tente logar novamente.");
-                }
-            }
-
-            setRegisteredUser(fullOwner); // Store for finish step
-
-            // Success
+            setRegisteredUser(fullOwner);
             setIsLoading(false);
-            trigger('success');
+            triggerHaptic('success');
             setStep(5);
 
         } catch (error: any) {
-            console.error("Erro no cadastro", error);
             alert("Erro no processo: " + (error.message || "Tente novamente"));
             setIsLoading(false);
         }
     };
 
-    const handleFinish = async () => {
-        // User is already logged in from handleSubmit
-        // Reset tutorial flag so they see the onboarding
+    const handleFinish = () => {
         localStorage.removeItem('voula_tutorial_seen_v1');
-
-        // Just refresh local state in App
         if (onRegisterSuccess && registeredUser) {
             onRegisterSuccess(registeredUser);
-        } else if (onRegisterSuccess) {
-            // Fallback just in case
-            const user = await db.user.get();
-            onRegisterSuccess(user);
         } else {
             onBack();
         }
     };
 
-
-
-    // --- COMPONENT: PROGRESS BAR ---
     const ProgressBar = () => (
-        <div className="flex gap-1 mb-6 px-1">
+        <div className="flex gap-1.5 mb-8 px-1">
             {[1, 2, 3, 4].map((s) => (
                 <div
                     key={s}
-                    className={`h-1 flex-1 rounded-full transition-all duration-500 ${step >= s ? 'bg-[var(--primary-main)] shadow-[0_0_8px_var(--primary-glow)]' : 'bg-[var(--bg-card)]'}`}
+                    className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${step >= s ? 'bg-[#D9FF00] shadow-[0_0_10px_rgba(217,255,0,0.3)]' : 'bg-gray-100'}`}
                 />
             ))}
         </div>
     );
 
-    // --- MOCK DASHBOARD COMPONENT ---
-    const MockDashboardPreview = () => (
-        <div className="relative mb-8 mx-0 group cursor-default select-none animate-[slideUp_0.4s_ease-out]">
-            <div className="absolute -top-3 right-0 z-20 bg-[var(--primary)] text-[var(--on-primary)] text-[10px] font-black uppercase px-2 py-1 rounded-lg shadow-lg transform rotate-2">
-                Visão do Dono
-            </div>
-            <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border-default)] p-4 shadow-2xl relative overflow-hidden glass-card">
-                <div className="flex justify-between items-center mb-4 border-b border-slate-700/50 pb-3">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center">
-                            <Store className="w-4 h-4 text-indigo-400" />
-                        </div>
-                        <div>
-                            <div className="w-20 h-2 bg-slate-700 rounded-full mb-1"></div>
-                            <div className="w-12 h-1.5 bg-slate-800 rounded-full"></div>
-                        </div>
-                    </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                    <div className="bg-slate-900/50 p-3 rounded-xl border border-slate-800">
-                        <div className="flex items-center gap-1.5 text-slate-400 mb-1">
-                            <Users className="w-3 h-3" />
-                            <span className="text-[9px] font-bold uppercase">Lotação</span>
-                        </div>
-                        <p className="text-lg font-black text-white flex items-end gap-1">
-                            412 <span className="text-[9px] text-green-500 mb-1 font-bold">▲ 92%</span>
-                        </p>
-                    </div>
-                    <div className="bg-slate-900/50 p-3 rounded-xl border border-slate-800">
-                        <div className="flex items-center gap-1.5 text-slate-400 mb-1">
-                            <DollarSign className="w-3 h-3" />
-                            <span className="text-[9px] font-bold uppercase">Vendas</span>
-                        </div>
-                        <p className="text-lg font-black text-[var(--primary)]">R$ 4.2k</p>
-                    </div>
-                </div>
-                <div className="h-16 flex items-end justify-between gap-1 px-1 opacity-80">
-                    {[35, 55, 40, 70, 50, 85, 60, 95, 75].map((h, i) => (
-                        <div key={i} className="w-full bg-slate-800 rounded-t-sm relative overflow-hidden" style={{ height: '100%' }}>
-                            <div
-                                style={{ height: `${h}%` }}
-                                className="absolute bottom-0 w-full bg-gradient-to-t from-indigo-600 to-indigo-400 rounded-t-sm"
-                            ></div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
-
-    // --- SUCCESS SCREEN ---
     if (step === 5) {
         return (
-            <div className="h-[100dvh] bg-[var(--bg-default)] flex flex-col items-center justify-center p-8 text-center animate-[fadeIn_0.5s_ease-out]">
-                <div className="w-24 h-24 bg-green-500/20 rounded-full flex items-center justify-center mb-6 border border-green-500/50 relative">
-                    <div className="absolute inset-0 bg-green-500 blur-xl opacity-20 animate-pulse"></div>
-                    <CheckCircle2 className="w-12 h-12 text-green-500 relative z-10" />
+            <div className="min-h-[100dvh] bg-[#FDFDFE] flex flex-col items-center justify-center p-8 text-center relative overflow-hidden">
+                <AnimatedBackground />
+                <div className="w-24 h-24 bg-[#D9FF00]/10 rounded-full flex items-center justify-center mb-8 border border-[#D9FF00]/30 relative">
+                    <CheckCircle2 className="w-12 h-12 text-[#D9FF00]" />
                 </div>
-                <h2 className="text-3xl font-black text-white italic mb-2">TUDO PRONTO!</h2>
-                <p className="text-slate-400 mb-8 max-w-xs text-sm leading-relaxed">
+                <h2 className="text-3xl font-black text-gray-900 mb-4">TUDO PRONTO!</h2>
+                <p className="text-gray-500 mb-10 max-w-xs text-sm leading-relaxed">
                     O <strong>{formData.businessName}</strong> foi cadastrado com sucesso.
-                    <br /><br />
                     Seu painel de gerenciamento já está disponível.
                 </p>
-                <Button variant="neon" onClick={handleFinish}>ACESSAR PAINEL</Button>
+                <Button variant="primary" size="lg" fullWidth onClick={handleFinish} className="bg-[#D9FF00] text-black shadow-xl shadow-[#D9FF00]/20">
+                    ACESSAR PAINEL
+                </Button>
             </div>
         );
     }
 
-    // --- INTRO SCREEN ---
     if (step === 0) {
         return (
-            <div className="h-[100dvh] bg-[var(--bg-default)] flex flex-col pt-safe relative overflow-hidden animate-[fadeIn_0.3s_ease-out]">
-                <div className="absolute top-0 right-0 w-[90vw] h-[90vw] bg-indigo-600 rounded-full mix-blend-screen filter blur-[120px] opacity-10 pointer-events-none"></div>
-                <div className="flex-1 overflow-y-auto px-6 pt-4 pb-40 hide-scrollbar">
-                    <button onClick={onBack} className="w-10 h-10 flex items-center justify-center bg-[var(--bg-card)]/50 rounded-full text-[var(--text-secondary)] hover:text-white mb-4 backdrop-blur-sm border border-[var(--border-default)]">
-                        <ArrowLeft className="w-5 h-5" />
-                    </button>
-                    <div className="mb-6">
-                        <div className="flex items-center gap-2 mb-3">
-                            <span className="text-[var(--primary)] text-[10px] font-bold uppercase tracking-widest border border-[var(--primary)]/30 bg-[var(--primary)]/10 px-2 py-1 rounded-md">
-                                Vou Lá Business
-                            </span>
-                        </div>
-                        <h1 className="text-4xl font-black text-white italic tracking-tighter leading-none mb-3">
-                            SEU ROLÊ <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--primary)] to-green-500">NO MAPA.</span>
-                        </h1>
-                        <p className="text-slate-400 text-sm leading-relaxed">
-                            Cadastre seu estabelecimento, controle a lotação e venda ingressos direto pelo app.
-                        </p>
+            <div className="min-h-[100dvh] bg-[#FDFDFE] flex flex-col p-6 pt-safe relative overflow-hidden">
+                <AnimatedBackground />
+                <button onClick={onBack} className="w-12 h-12 flex items-center justify-center bg-white rounded-full text-gray-800 shadow-sm border border-gray-100 mb-8 active:scale-95 transition-all">
+                    <ArrowLeft className="w-6 h-6" />
+                </button>
+
+                <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-4">
+                        <span className="bg-[#D9FF00]/10 text-[#D9FF00] text-[10px] font-black uppercase tracking-widest px-2.5 py-1.5 rounded-lg border border-[#D9FF00]/20">
+                            Vou Lá Business
+                        </span>
                     </div>
-                    <MockDashboardPreview />
-                    <div className="space-y-3">
-                        <div className="bg-slate-800/30 p-4 rounded-2xl border border-slate-700/50 flex items-center gap-4">
-                            <div className="p-2 bg-slate-900 rounded-lg border border-slate-800"><Zap className="w-5 h-5 text-[var(--primary)]" /></div>
+                    <h1 className="text-4xl font-black text-gray-900 leading-[1.1] tracking-tight mb-4">
+                        SEU ROLÊ <br />
+                        <span className="text-[#D9FF00] drop-shadow-sm">NO MAPA.</span>
+                    </h1>
+                    <p className="text-gray-500 text-sm leading-relaxed mb-10 max-w-[280px]">
+                        Cadastre seu estabelecimento, controle a lotação e venda ingressos direto pelo app.
+                    </p>
+
+                    <Card className="rounded-[32px] border-gray-100 shadow-xl p-6 bg-white/80 backdrop-blur-xl space-y-4">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-2xl bg-[#D9FF00]/10 flex items-center justify-center">
+                                <Zap className="w-6 h-6 text-gray-900" />
+                            </div>
                             <div>
-                                <h3 className="text-white font-bold text-sm">Radar de Hype</h3>
-                                <p className="text-slate-400 text-xs">Destaque quando a casa encher.</p>
+                                <h3 className="text-sm font-black text-gray-900">Radar de Hype</h3>
+                                <p className="text-xs text-gray-500">Destaque quando a casa encher.</p>
                             </div>
                         </div>
-                        <div className="bg-slate-800/30 p-4 rounded-2xl border border-slate-700/50 flex items-center gap-4">
-                            <div className="p-2 bg-slate-900 rounded-lg border border-slate-800"><Ticket className="w-5 h-5 text-fuchsia-500" /></div>
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center">
+                                <Ticket className="w-6 h-6 text-blue-500" />
+                            </div>
                             <div>
-                                <h3 className="text-white font-bold text-sm">Ingressos & Listas</h3>
-                                <p className="text-slate-400 text-xs">Gestão completa de entrada.</p>
+                                <h3 className="text-sm font-black text-gray-900">Ingressos & Listas</h3>
+                                <p className="text-xs text-gray-500">Gestão completa de entrada.</p>
                             </div>
                         </div>
-                    </div>
+                    </Card>
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 p-6 pt-8 bg-gradient-to-t from-[#0E1121] via-[#0E1121] to-transparent pb-safe z-10">
-                    <Button fullWidth variant="primary" onClick={() => setStep(1)} className="py-4 text-base shadow-xl shadow-[var(--primary-glow)] bg-[var(--primary-main)] border-transparent text-[var(--primary-text)]">
-                        QUERO SER PARCEIRO <ChevronRight className="w-5 h-5 ml-1" />
+
+                <div className="mt-8 pb-safe">
+                    <Button fullWidth size="lg" onClick={() => setStep(1)} className="bg-[#D9FF00] text-black shadow-xl shadow-[#D9FF00]/20 h-14 rounded-2xl" rightIcon={<ChevronRight className="w-5 h-5" />}>
+                        QUERO SER PARCEIRO
                     </Button>
-                    <p className="text-center text-[10px] text-slate-500 mt-3 font-medium">
+                    <p className="text-center text-[10px] text-gray-400 mt-4 font-bold uppercase tracking-widest">
                         Avaliação gratuita • Sem compromisso
                     </p>
                 </div>
@@ -357,187 +251,119 @@ export const BusinessRegistration: React.FC<BusinessRegistrationProps> = ({ onBa
         );
     }
 
-    // --- HELPERS ---
-
-
-    // --- WIZARD STEPS ---
     return (
-        <div className="h-[100dvh] bg-[#0E1121] flex flex-col pt-safe animate-[slideLeft_0.3s_ease-out]">
-            <div className="px-4 py-4 border-b border-[var(--border-default)] flex items-center gap-4 bg-[var(--bg-default)] sticky top-0 z-20 shrink-0">
-                <button onClick={handleBackStep} className="p-2 bg-[var(--bg-card)] rounded-full text-white hover:bg-[var(--bg-subtle)] border border-[var(--border-default)]">
+        <div className="min-h-[100dvh] bg-[#FDFDFE] flex flex-col p-6 pt-safe relative overflow-hidden">
+            <AnimatedBackground />
+
+            <div className="flex items-center gap-4 mb-8">
+                <button onClick={handleBackStep} className="w-10 h-10 flex items-center justify-center bg-white rounded-full text-gray-800 shadow-sm border border-gray-100 active:scale-95 transition-all">
                     <ArrowLeft className="w-5 h-5" />
                 </button>
                 <div>
-                    <h2 className="text-lg font-black text-white italic tracking-tight leading-none">NOVO PARCEIRO</h2>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
-                        Etapa {step} de 4
-                    </p>
+                    <h2 className="text-base font-black text-gray-900 uppercase tracking-tight">Novo Parceiro</h2>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Passo {step} de 4</p>
                 </div>
             </div>
 
-            <form onSubmit={step === 4 ? handleSubmit : handleNext} className="flex-1 flex flex-col overflow-hidden relative">
-                <div className="flex-1 overflow-y-auto p-6 pb-32">
-                    <ProgressBar />
+            <ProgressBar />
 
-                    {/* STEP 1: IDENTITY */}
+            <form onSubmit={step === 4 ? handleSubmit : handleNext} className="flex-1 flex flex-col">
+                <div className="flex-1 space-y-8 overflow-y-auto hide-scrollbar pb-32">
                     {step === 1 && (
-                        <div className="space-y-6 animate-[fadeIn_0.3s_ease-out]">
-                            <div className="mb-6">
-                                <h3 className="text-2xl font-black text-white italic mb-1">IDENTIDADE</h3>
-                                <p className="text-slate-400 text-sm">Informações básicas para validar seu negócio.</p>
-                            </div>
-                            <div className="space-y-4">
-                                <div className="space-y-1">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Nome Fantasia</label>
-                                    <div className="relative">
-                                        <Store className="absolute left-4 top-3.5 w-5 h-5 text-slate-500" />
-                                        <input required type="text" placeholder="Ex: Bar do Zé" value={formData.businessName} onChange={e => handleChange('businessName', e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-12 pr-4 text-white focus:border-[var(--primary)] focus:outline-none placeholder-slate-600" />
-                                    </div>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">CNPJ</label>
-                                    <input required type="text" placeholder="00.000.000/0001-00" value={formData.cnpj} onChange={e => handleChange('cnpj', e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 px-4 text-white focus:border-[var(--primary)] focus:outline-none placeholder-slate-600 font-mono" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Categoria Principal</label>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        {Object.values(PlaceType).map(type => (
-                                            <button key={type} type="button" onClick={() => handleChange('category', type)} className={`p-3 rounded-xl border text-xs font-bold transition-all ${formData.category === type ? 'bg-[var(--primary)] border-[var(--primary)] text-[var(--on-primary)] shadow-lg' : 'bg-slate-800 border-slate-700 text-slate-400'}`}>
-                                                {type}
-                                            </button>
-                                        ))}
-                                    </div>
+                        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Nome Fantasia</label>
+                                <div className="relative">
+                                    <Store className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" />
+                                    <input required placeholder="Ex: Bar do Zé" value={formData.businessName} onChange={e => handleChange('businessName', e.target.value)} className="w-full h-14 bg-gray-50/50 border border-gray-100 rounded-2xl pl-12 pr-4 text-sm font-medium focus:ring-2 focus:ring-[#D9FF00]/30 focus:outline-none focus:bg-white transition-all" />
                                 </div>
                             </div>
-                        </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">CNPJ</label>
+                                <input required placeholder="00.000.000/0001-00" value={formData.cnpj} onChange={e => handleChange('cnpj', e.target.value)} className="w-full h-14 bg-gray-50/50 border border-gray-100 rounded-2xl px-4 text-sm font-medium focus:ring-2 focus:ring-[#D9FF00]/30 focus:outline-none focus:bg-white transition-all" />
+                            </div>
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Categoria</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {Object.values(PlaceType).map(type => (
+                                        <button key={type} type="button" onClick={() => handleChange('category', type)} className={`h-12 rounded-xl text-xs font-bold transition-all border ${formData.category === type ? 'bg-[#D9FF00] border-[#D9FF00] text-black shadow-md' : 'bg-white border-gray-100 text-gray-400'}`}>
+                                            {type}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </motion.div>
                     )}
 
-                    {/* STEP 2: OPERATIONS */}
                     {step === 2 && (
-                        <div className="space-y-6 animate-[fadeIn_0.3s_ease-out]">
-                            <div className="mb-6">
-                                <h3 className="text-2xl font-black text-white italic mb-1">OPERAÇÃO</h3>
-                                <p className="text-slate-400 text-sm">Onde fica e como funciona.</p>
+                        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Endereço</label>
+                                <div className="relative">
+                                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" />
+                                    <input required placeholder="Rua, Número, Bairro" value={formData.address} onChange={e => handleChange('address', e.target.value)} className="w-full h-14 bg-gray-50/50 border border-gray-100 rounded-2xl pl-12 pr-4 text-sm font-medium focus:ring-2 focus:ring-[#D9FF00]/30 focus:outline-none focus:bg-white transition-all" />
+                                </div>
                             </div>
-                            <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Endereço Completo</label>
-                                    <div className="relative">
-                                        <MapPin className="absolute left-4 top-3.5 w-5 h-5 text-slate-500" />
-                                        <input required type="text" placeholder="Rua, Número, Bairro - Cidade/UF" value={formData.address} onChange={e => handleChange('address', e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-12 pr-4 text-white focus:border-[var(--primary)] focus:outline-none placeholder-slate-600" />
-                                    </div>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Lotação</label>
+                                    <input required type="number" placeholder="500" value={formData.capacity} onChange={e => handleChange('capacity', e.target.value)} className="w-full h-14 bg-gray-50/50 border border-gray-100 rounded-2xl px-4 text-sm font-medium focus:ring-2 focus:ring-[#D9FF00]/30 focus:outline-none focus:bg-white transition-all" />
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1">
-                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Lotação Máx</label>
-                                        <input required type="number" placeholder="500" value={formData.capacity} onChange={e => handleChange('capacity', e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 px-4 text-white focus:border-[var(--primary)] focus:outline-none placeholder-slate-600" inputMode="numeric" />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Horário</label>
-                                        <div className="relative">
-                                            <Clock className="absolute left-3 top-3.5 w-4 h-4 text-slate-500" />
-                                            <input required type="text" placeholder="22h - 05h" value={formData.openingHours} onChange={e => handleChange('openingHours', e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-2 text-white focus:border-[var(--primary)] focus:outline-none placeholder-slate-600" />
-                                        </div>
-                                    </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Horário</label>
+                                    <input required placeholder="22h - 05h" value={formData.openingHours} onChange={e => handleChange('openingHours', e.target.value)} className="w-full h-14 bg-gray-50/50 border border-gray-100 rounded-2xl px-4 text-sm font-medium focus:ring-2 focus:ring-[#D9FF00]/30 focus:outline-none focus:bg-white transition-all" />
                                 </div>
                             </div>
-                        </div>
+                        </motion.div>
                     )}
 
-                    {/* STEP 3: SHOWCASE (THE CARD) */}
                     {step === 3 && (
-                        <div className="space-y-6 animate-[fadeIn_0.3s_ease-out]">
-                            <div className="mb-6">
-                                <h3 className="text-2xl font-black text-white italic mb-1">VITRINE</h3>
-                                <p className="text-slate-400 text-sm">Como seu local vai aparecer no app.</p>
-                            </div>
-                            <div className="space-y-4">
-                                <input
-                                    type="file"
-                                    ref={fileInputRef}
-                                    className="hidden"
-                                    accept="image/*"
-                                    onChange={handleImageUpload}
-                                />
-                                <div
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className={`w-full h-32 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-colors ${formData.imagePreview ? 'border-[var(--primary)] bg-[var(--primary)]/10' : 'border-slate-700 bg-slate-800/50 hover:border-slate-500'}`}
-                                >
-                                    {formData.imagePreview ? (
-                                        <div className="flex flex-col items-center text-[var(--primary)]">
-                                            <div className="relative w-full h-32 rounded-2xl overflow-hidden">
-                                                <img src={formData.imagePreview} className="w-full h-full object-cover opacity-60" />
-                                                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                                    <CheckCircle2 className="w-8 h-8 mb-2 drop-shadow-md" />
-                                                    <span className="text-xs font-bold uppercase drop-shadow-md">Foto Selecionada</span>
-                                                </div>
-                                            </div>
+                        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Foto de Capa</label>
+                            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
+                            <div onClick={() => fileInputRef.current?.click()} className="w-full h-40 rounded-[32px] border-2 border-dashed border-gray-100 bg-gray-50/50 flex flex-col items-center justify-center gap-3 overflow-hidden cursor-pointer relative group">
+                                {formData.imagePreview ? (
+                                    <>
+                                        <img src={formData.imagePreview} className="w-full h-full object-cover" />
+                                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Camera className="w-8 h-8 text-white" />
                                         </div>
-                                    ) : (
-                                        <div className="flex flex-col items-center text-slate-500">
-                                            <Camera className="w-8 h-8 mb-2" />
-                                            <span className="text-xs font-bold uppercase">Adicionar Capa</span>
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Pitch (Descrição Curta)</label>
-                                    <div className="relative">
-                                        <FileText className="absolute left-4 top-3.5 w-5 h-5 text-slate-500" />
-                                        <input type="text" placeholder="O melhor sertanejo da cidade..." value={formData.description} onChange={e => handleChange('description', e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-12 pr-4 text-white focus:border-[var(--primary)] focus:outline-none placeholder-slate-600" />
-                                    </div>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Estilo Musical</label>
-                                    <div className="relative">
-                                        <Music className="absolute left-4 top-3.5 w-5 h-5 text-slate-500" />
-                                        <input type="text" placeholder="Ex: Funk, Sertanejo, Rock..." value={formData.musicStyle} onChange={e => handleChange('musicStyle', e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-12 pr-4 text-white focus:border-[var(--primary)] focus:outline-none placeholder-slate-600" />
-                                    </div>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Instagram</label>
-                                    <div className="relative">
-                                        <Instagram className="absolute left-4 top-3.5 w-5 h-5 text-pink-500" />
-                                        <input type="text" placeholder="@seulocal" value={formData.instagram} onChange={e => handleChange('instagram', e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-12 pr-4 text-white focus:border-[var(--primary)] focus:outline-none placeholder-slate-600" />
-                                    </div>
-                                </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Camera className="w-8 h-8 text-gray-300" />
+                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Adicionar Foto</span>
+                                    </>
+                                )}
                             </div>
-                        </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Descrição Curta</label>
+                                <input placeholder="O melhor do centro..." value={formData.description} onChange={e => handleChange('description', e.target.value)} className="w-full h-14 bg-gray-50/50 border border-gray-100 rounded-2xl px-4 text-sm font-medium focus:ring-2 focus:ring-[#D9FF00]/30 focus:outline-none focus:bg-white transition-all" />
+                            </div>
+                        </motion.div>
                     )}
 
-                    {/* STEP 4: CONTACT & PASSWORD */}
                     {step === 4 && (
-                        <div className="space-y-6 animate-[fadeIn_0.3s_ease-out]">
-                            <div className="mb-6">
-                                <h3 className="text-2xl font-black text-white italic mb-1">RESPONSÁVEL</h3>
-                                <p className="text-slate-400 text-sm">Quem vai administrar o painel.</p>
+                        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Nome do Proprietário</label>
+                                <input required placeholder="Nome completo" value={formData.ownerName} onChange={e => handleChange('ownerName', e.target.value)} className="w-full h-14 bg-gray-50/50 border border-gray-100 rounded-2xl px-4 text-sm font-medium focus:ring-2 focus:ring-[#D9FF00]/30 focus:outline-none focus:bg-white transition-all" />
                             </div>
-                            <div className="space-y-4">
-                                <div className="space-y-1">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Seu Nome Completo</label>
-                                    <input required type="text" placeholder="Nome do Dono/Gerente" value={formData.ownerName} onChange={e => handleChange('ownerName', e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 px-4 text-white focus:border-[var(--primary)] focus:outline-none placeholder-slate-600" />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Email Corporativo (Login)</label>
-                                    <input required type="email" placeholder="contato@empresa.com" value={formData.email} onChange={e => handleChange('email', e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 px-4 text-white focus:border-[var(--primary)] focus:outline-none placeholder-slate-600" />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Senha de Acesso</label>
-                                    <input required type="password" minLength={6} placeholder="Mínimo 6 caracteres" value={formData.password} onChange={e => handleChange('password', e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 px-4 text-white focus:border-[var(--primary)] focus:outline-none placeholder-slate-600" />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">WhatsApp</label>
-                                    <input required type="tel" placeholder="(00) 00000-0000" value={formData.phone} onChange={e => handleChange('phone', e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 px-4 text-white focus:border-[var(--primary)] focus:outline-none placeholder-slate-600" />
-                                </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">E-mail de Acesso</label>
+                                <input required type="email" placeholder="contato@local.com" value={formData.email} onChange={e => handleChange('email', e.target.value)} className="w-full h-14 bg-gray-50/50 border border-gray-100 rounded-2xl px-4 text-sm font-medium focus:ring-2 focus:ring-[#D9FF00]/30 focus:outline-none focus:bg-white transition-all" />
                             </div>
-                        </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Senha</label>
+                                <input required type="password" placeholder="Mínimo 6 caracteres" value={formData.password} onChange={e => handleChange('password', e.target.value)} className="w-full h-14 bg-gray-50/50 border border-gray-100 rounded-2xl px-4 text-sm font-medium focus:ring-2 focus:ring-[#D9FF00]/30 focus:outline-none focus:bg-white transition-all" />
+                            </div>
+                        </motion.div>
                     )}
                 </div>
 
-                {/* Sticky Footer */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 bg-[#0E1121] border-t border-slate-800 pb-safe z-30">
-                    <Button fullWidth variant="neon" type="submit" disabled={isLoading}>
-                        {isLoading ? 'ENVIANDO...' : step === 4 ? 'FINALIZAR CADASTRO' : 'PRÓXIMO'} <ChevronRight className="w-5 h-5 ml-1" />
+                <div className="fixed bottom-0 left-0 right-0 p-6 bg-[#FDFDFE]/80 backdrop-blur-lg border-t border-gray-50 pb-safe">
+                    <Button fullWidth size="lg" type="submit" isLoading={isLoading} className="bg-[#D9FF00] text-black h-14 rounded-2xl shadow-xl shadow-[#D9FF00]/20" rightIcon={<ChevronRight className="w-5 h-5" />}>
+                        {step === 4 ? 'FINALIZAR' : 'PRÓXIMO'}
                     </Button>
                 </div>
             </form>
